@@ -1,14 +1,17 @@
 import { createBrowserRouter } from "react-router-dom";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
+import Login from "../pages/auth/Login";
+import Register from "../pages/auth/Register";
 import DefaultLayout from "@/components/layout/defaultLayout";
 import Home from "@/pages/Home";
-import Dashboard from "@/pages/Dashboard";
-import DeviceManagement from "@/pages/DeviceManagement";
-import Groups from "@/pages/Groups";
+import Groups from "@/pages/groups/groupsList";
 import Profile from "@/pages/Profile";
-import Spaces from "@/pages/Spaces";
 import ComponentExamples from "@/pages/ComponentExamples";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
+import EditGroups from "@/pages/groups/groupsEdit";
+import SpaceList from "@/pages/groups/house/space/spaceList";
+import IoTDashboard from "@/pages/home/home";
+import ChangePassword from "@/pages/ChangePassword";
+import DeviceList from "@/pages/groups/house/space/device/deviceList";
 
 export const router = createBrowserRouter([
     {
@@ -20,15 +23,35 @@ export const router = createBrowserRouter([
         element: <Register />
     },
     {
+        path: '/forgot-password',
+        element: <ForgotPassword />
+    },
+    {
         path: '/',
         element: <DefaultLayout />,
         children: [
-            { path: '/', element: <Home /> },
-            { path: '/dashboard', element: <Dashboard /> },
-            { path: '/devices', element: <DeviceManagement /> },
+            { path: '/', element: <IoTDashboard /> },
             { path: '/groups', element: <Groups /> },
-            { path: '/spaces', element: <Spaces /> },
-            { path: '/profile', element: <Profile /> },
+            {
+                path: '/EditGroup',
+                element: <EditGroups />
+            },
+            {
+                path: '/ListSpace',
+                element: <SpaceList />
+            },
+            {
+                path:'/devices',
+                element: <DeviceList />
+            },
+            {
+                path: '/profile', element: <Profile />
+
+            },
+            {
+                path: '/change-password',
+                element: <ChangePassword />
+            },
             // { path: '/settings', element: <Settings /> },
             { path: '/components', element: <ComponentExamples /> }
         ]
