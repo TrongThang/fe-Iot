@@ -12,6 +12,7 @@ import SpaceList from "@/pages/groups/house/space/spaceList";
 import IoTDashboard from "@/pages/home/Home";
 import ChangePassword from "@/pages/ChangePassword";
 import DeviceList from "@/pages/groups/house/space/device/deviceList";
+import NotificationList from "@/pages/notification/notificationList";
 
 export const router = createBrowserRouter([
     {
@@ -51,6 +52,10 @@ export const router = createBrowserRouter([
             {
                 path: '/change-password',
                 element: <ChangePassword />
+            },
+            {
+              path: '/notifications',
+              element: <NotificationList />  
             },
             // { path: '/settings', element: <Settings /> },
             { path: '/components', element: <ComponentExamples /> }

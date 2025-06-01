@@ -9,6 +9,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem
 } from "@/components/ui/dropdown-menu";
+import { Link } from "react-router-dom";
 const Topbar = () => {
     const { isOpen, toggle } = useSidebar()
     const [notifications, setNotifications] = useState(3)
@@ -200,7 +201,9 @@ const Topbar = () => {
                                 })}
                             </div>
                             <div className="p-3 text-center border-t">
-                                <button className="text-blue-600 font-medium hover:text-blue-800 text-sm">Xem tất cả thông báo</button>
+                                <Link to="/notifications" className="text-blue-600 font-medium hover:text-blue-800 text-sm">
+                                    Xem tất cả thông báo
+                                </Link>
                             </div>
                         </div>
                     </div>
