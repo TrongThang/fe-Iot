@@ -198,7 +198,7 @@ export default function IoTDashboard() {
         }
     }
     return (
-        <div className="min-h-screen bg-gray-50 px-10 space-y-6 py-5">
+        <div className="min-h-screen bg-gray-50 px-5 space-y-6 py-5">
             {/* Header Section */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <div>

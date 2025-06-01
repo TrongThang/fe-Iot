@@ -9,7 +9,7 @@ import ComponentExamples from "@/pages/ComponentExamples";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import EditGroups from "@/pages/groups/groupsEdit";
 import SpaceList from "@/pages/groups/house/space/spaceList";
-import IoTDashboard from "@/pages/home/home";
+import IoTDashboard from "@/pages/home/Home";
 import ChangePassword from "@/pages/ChangePassword";
 import DeviceList from "@/pages/groups/house/space/device/deviceList";
 

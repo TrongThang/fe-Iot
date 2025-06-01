@@ -14,7 +14,7 @@ import SpaceList from "./house/space/spaceList"
 import DeviceList from "./house/space/device/deviceList"
 import AddMemberPopup from "./groupPopups/Add-member-popup"
 import EditGroupPopup from "./groupPopups/Edit-groups-popup"
-import AddHousePopup from "./groupPopups/Add-house-popup" // Updated import
+import AddHousePopup from "./house/housePopups/Add-house-popup" // Updated import
 
 export default function EditGroups() {
   const [activeTab, setActiveTab] = useState("members")
@@ -463,10 +463,6 @@ export default function EditGroups() {
                                 <span className="font-medium text-blue-600">{house.devices}</span>
                                 <span className="ml-1">không gian</span>
                               </div>
-
-                              <Badge variant="outline" className={getStatusColor(house.status)}>
-                                {house.status}
-                              </Badge>
                             </div>
                           </div>
                         </div>

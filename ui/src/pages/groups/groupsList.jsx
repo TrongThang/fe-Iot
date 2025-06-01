@@ -49,7 +49,7 @@ export default function GroupsManagement() {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Header */}
             <div className="bg-white shadow-sm border-b">
-                <div className="max-w-7xl mx-auto px-6 py-6">
+                <div className=" px-6 py-6">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold text-gray-900 mb-2">Danh sách nhóm</h1>
@@ -69,7 +69,7 @@ export default function GroupsManagement() {
             </div>
 
             {/* Search and Filters */}
-            <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className=" px-6 py-6">
                 <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
                     <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
                         <div className="flex-1">
@@ -82,10 +82,6 @@ export default function GroupsManagement() {
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <Button variant="outline" className="h-12 px-6">
-                                <Filter className="h-4 w-4 mr-2" />
-                                Bộ lọc
-                            </Button>
                             {/* View Toggle */}
                             <div className="flex border rounded-lg overflow-hidden">
                                 <Button

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Home, MapPin, Palette, X } from "lucide-react"
-import IconColorPickerPopup from "../icon-picker/icon-color-picker-popup"
+import IconColorPickerPopup from "../../icon-picker/icon-color-picker-popup"
 
 export default function AddHousePopup({ open, onOpenChange, onSave }) {
   const [houseData, setHouseData] = useState({

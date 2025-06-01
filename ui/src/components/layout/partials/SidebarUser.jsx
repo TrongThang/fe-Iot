@@ -143,7 +143,7 @@ const SidebarUser = () => {
 
           {(isManagementOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-              <a
+              {/* <a
                 href="/devices"
                 onClick={() => handleItemClick("devices")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "devices" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
@@ -152,7 +152,7 @@ const SidebarUser = () => {
               >
                 <Lightbulb className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Thiết bị</span>}
-              </a>
+              </a> */}
               <a
                 href="/groups"
                 onClick={() => handleItemClick("groups")}
@@ -163,7 +163,7 @@ const SidebarUser = () => {
                 <Users className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Nhóm</span>}
               </a>
-              <a
+              {/* <a
                 href="/spaces"
                 onClick={() => handleItemClick("spaces")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "spaces" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
@@ -172,17 +172,8 @@ const SidebarUser = () => {
               >
                 <Package className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Không gian</span>}
-              </a>
-              <a
-                href="/profile"
-                onClick={() => handleItemClick("profile")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "profile" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tài khoản" : ""}
-              >
-                <UserCog className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Tài khoản</span>}
-              </a>
+              </a> */}
+             
             </div>
           )}
         </div>
@@ -226,16 +217,6 @@ const SidebarUser = () => {
               >
                 <Thermometer className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Cảnh</span>}
-              </a>
-              <a
-                href="/alerts"
-                onClick={() => handleItemClick("alerts")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "alerts" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Cảnh báo" : ""}
-              >
-                <Bell className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Cảnh báo</span>}
               </a>
             </div>
           )}
