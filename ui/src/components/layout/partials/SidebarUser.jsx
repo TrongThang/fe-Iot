@@ -7,12 +7,10 @@ import {
   HelpCircle,
   ChevronDown,
   LayoutDashboard,
-  UserCog,
   Home,
   Gauge,
   Lightbulb,
   Thermometer,
-  Bell,
   Settings,
   Clock,
 } from "lucide-react"
@@ -28,8 +26,8 @@ const SidebarUser = () => {
   const getInitialActiveItem = () => {
     const path = window.location.pathname;
     if (path === "/") return "dashboard";
-    if (path === "/stats") return "stats";
-    if (path === "/devices") return "devices";
+    if (path === "/notifications") return "notifications";
+    if (path === "/ticket") return "ticket";
     if (path === "/groups") return "groups";
     if (path === "/spaces") return "spaces";
     if (path === "/profile") return "profile";
@@ -68,7 +66,17 @@ const SidebarUser = () => {
       <div className={`px-6 flex items-center justify-center py-6 ${!isOpen && "px-3"}`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Home className="w-6 h-6 text-white" />
+            <a
+              href="/"
+              onClick={() => handleItemClick("dashboard")}
+              className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "dashboard"
+                ? "bg-blue-600 text-white font-medium"
+                : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
+              title={!isOpen ? "Dashboard" : ""}
+            >
+              <Home className="w-6 h-6 text-white" />
+            </a>
           </div>
           {isOpen && (
             <div className="overflow-hidden">
@@ -143,16 +151,6 @@ const SidebarUser = () => {
 
           {(isManagementOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-              {/* <a
-                href="/devices"
-                onClick={() => handleItemClick("devices")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "devices" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Thiết bị" : ""}
-              >
-                <Lightbulb className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Thiết bị</span>}
-              </a> */}
               <a
                 href="/groups"
                 onClick={() => handleItemClick("groups")}
@@ -163,17 +161,28 @@ const SidebarUser = () => {
                 <Users className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Nhóm</span>}
               </a>
-              {/* <a
-                href="/spaces"
-                onClick={() => handleItemClick("spaces")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "spaces" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+              <a
+                href="/notifications"
+                onClick={() => handleItemClick("notifications")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors
+                   ${activeItem === "notifications" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
                   } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Không gian" : ""}
+                title={!isOpen ? "Thông báo" : ""}
               >
                 <Package className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Không gian</span>}
-              </a> */}
-             
+                {isOpen && <span>Thông báo</span>}
+              </a>
+              <a
+                href="/ticket"
+                onClick={() => handleItemClick("ticket")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors 
+                  ${activeItem === "ticket" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Yêu Cầu" : ""}
+              >
+                <Lightbulb className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Yêu Cầu</span>}
+              </a>
             </div>
           )}
         </div>

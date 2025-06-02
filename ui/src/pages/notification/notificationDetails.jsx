@@ -106,21 +106,21 @@ export default function NotificationDetail({
                 <DropdownMenuContent align="end" className="bg-white">
                   {notification.is_read ? (
                     <DropdownMenuItem onClick={() => onMarkAsUnread(notification.id)}>
-                      <EyeOff className="h-4 w-4 mr-2" />
+                      <EyeOff className="h-4 w-4 mr-2 hover:bg-white/10" />
                       Đánh dấu chưa đọc
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem onClick={() => onMarkAsRead(notification.id)}>
-                      <Eye className="h-4 w-4 mr-2" />
+                      <Eye className="h-4 w-4 mr-2 hover:bg-white/10" />
                       Đánh dấu đã đọc
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={() => copyToClipboard(notification.text)}>
-                    <Copy className="h-4 w-4 mr-2" />
+                    <Copy className="h-4 w-4 mr-2 hover:bg-white/10" />
                     Sao chép nội dung
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onDelete(notification.id)} className="text-red-600">
-                    <Trash2 className="h-4 w-4 mr-2" />
+                    <Trash2 className="h-4 w-4 mr-2 hover:bg-white/10" />
                     Xóa thông báo
                   </DropdownMenuItem>
                 </DropdownMenuContent>

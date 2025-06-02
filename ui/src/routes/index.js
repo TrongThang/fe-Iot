@@ -2,7 +2,6 @@ import { createBrowserRouter } from "react-router-dom";
 import Login from "../pages/auth/Login";
 import Register from "../pages/auth/Register";
 import DefaultLayout from "@/components/layout/defaultLayout";
-import Home from "@/pages/Home";
 import Groups from "@/pages/groups/groupsList";
 import Profile from "@/pages/Profile";
 import ComponentExamples from "@/pages/ComponentExamples";
@@ -13,6 +12,7 @@ import IoTDashboard from "@/pages/home/Home";
 import ChangePassword from "@/pages/ChangePassword";
 import DeviceList from "@/pages/groups/house/space/device/deviceList";
 import NotificationList from "@/pages/notification/notificationList";
+import TicketList from "@/pages/ticket/ticketList";
 
 export const router = createBrowserRouter([
     {
@@ -56,6 +56,10 @@ export const router = createBrowserRouter([
             {
               path: '/notifications',
               element: <NotificationList />  
+            },
+            {
+                path: '/ticket',
+                element: <TicketList />
             },
             // { path: '/settings', element: <Settings /> },
             { path: '/components', element: <ComponentExamples /> }
