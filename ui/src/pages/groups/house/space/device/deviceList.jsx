@@ -450,14 +450,6 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
               </div>
 
               <div className="flex items-center space-x-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="hidden md:flex items-center space-x-2 border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  <SlidersHorizontal className="h-4 w-4" />
-                  <span>Tự động hóa</span>
-                </Button>
 
                 <Button
                   onClick={handleAddDevice}

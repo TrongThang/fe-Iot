@@ -220,7 +220,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
                     key={device.id}
                     onClick={() => handleDeviceSelect(device)}
                     className={cn(
-                      "p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                      "p-4 rounded-xl border cursor-pointer transition-all duration-200 text-lg",
                       selectedDevice?.id === device.id
                         ? "border-blue-500 bg-blue-500/10"
                         : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10",
@@ -265,7 +265,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
                       key={type.id}
                       onClick={() => handleTypeSelect(type.id)}
                       className={cn(
-                        "p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                        "p-4 rounded-xl border cursor-pointer transition-all duration-200 text-lg",
                         formData.ticket_type_id === type.id
                           ? "border-blue-500 bg-blue-500/10"
                           : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10",
@@ -315,7 +315,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
                 placeholder="Ví dụ: Cảm biến khói báo động liên tục"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full h-12 px-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full h-12 px-4 text-lg bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 required
               />
             </div>

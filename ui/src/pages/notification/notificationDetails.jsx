@@ -197,7 +197,7 @@ export default function NotificationDetail({
                     {getDeviceIcon(notification.device_info.device_type)}
                   </div>
                   <div>
-                    <h4 className="font-semibold text-white">{notification.device_info.device_name}</h4>
+                    <h4 className="font-semibold text-white text-lg">{notification.device_info.device_name}</h4>
                     <p className="text-sm text-blue-200 font-mono">{notification.device_info.serial_number}</p>
                   </div>
                 </div>
@@ -254,7 +254,7 @@ export default function NotificationDetail({
                   <Clock className="h-4 w-4 text-blue-400" />
                 </div>
                 <div>
-                  <p className="font-medium">Thông báo được tạo</p>
+                  <p className="font-medium text-lg">Thông báo được tạo</p>
                   <p className="text-sm text-blue-200">
                     {new Date(notification.created_at).toLocaleString("vi-VN")} ({getTimeAgo(notification.created_at)})
                   </p>
@@ -297,44 +297,6 @@ export default function NotificationDetail({
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Technical Details */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center">
-                <Settings className="h-5 w-5 mr-2" />
-                Chi tiết kỹ thuật
-              </h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="text-blue-300 hover:text-white hover:bg-white/10"
-              >
-                {isExpanded ? "Thu gọn" : "Mở rộng"}
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/5 rounded-xl p-3">
-                <span className="text-blue-200 text-xs">Notification ID</span>
-                <p className="font-mono text-sm">{notification.id}</p>
-              </div>
-              <div className="bg-white/5 rounded-xl p-3">
-                <span className="text-blue-200 text-xs">Type</span>
-                <p className="font-mono text-sm">{notification.type}</p>
-              </div>
-            </div>
-
-            {isExpanded && (
-              <div className="mt-4 space-y-3">
-                <div className="bg-white/5 rounded-xl p-3">
-                  <span className="text-blue-200 text-xs">Raw Data</span>
-                  <pre className="text-xs mt-2 overflow-x-auto">{JSON.stringify(notification, null, 2)}</pre>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </ScrollArea>

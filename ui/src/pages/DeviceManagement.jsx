@@ -287,15 +287,7 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
             </div>
 
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden md:flex items-center space-x-2 border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-                <span>Tự động hóa</span>
-              </Button>
-
+            
               <Button onClick={handleAddDevice} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 <span>Thêm thiết bị</span>
