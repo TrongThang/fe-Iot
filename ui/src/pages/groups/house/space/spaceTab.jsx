@@ -31,7 +31,7 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-export default function SpaceList({ houseId, houseName, onBack, onSpaceClick }) {
+export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
 

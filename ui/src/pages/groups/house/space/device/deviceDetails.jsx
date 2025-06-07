@@ -9,11 +9,10 @@ import {
   Lightbulb,
   Thermometer,
   Flame,
-  Power,
+  Bell,
   ArrowUpRight,
   Wifi,
   WifiOff,
-  Battery,
   Activity,
   Lock,
   Unlock,
@@ -21,6 +20,7 @@ import {
   XCircle,
   Clock,
   Cpu,
+  Settings2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,9 +28,37 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
+import LedControlDialog from "@/pages/device-dialogs/led-control-dialog"
+import AlarmControlDialog from "@/pages/device-dialogs/alarm-control-dialog"
 import { Slider } from "@/components/ui/slider"
 
 export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete, onLockToggle, onClose }) {
+  const [isControlDialogOpen, setIsControlDialogOpen] = useState(false)
+
+  // Map device data to match LedControlDialog and AlarmControlDialog expectations
+  const mappedDevice = {
+    ...device,
+    id: device.device_id,
+    type: device.template_type,
+    status: device.link_status === "linked" ? "online" : "offline",
+    power: device.power_status,
+    brightness: device.current_value?.brightness || 0,
+    color: device.current_value?.color || "#FFFFFF",
+    temperature: device.current_value?.color_temperature || 3200,
+    mode: device.current_value?.mode || "solid",
+    armed: device.current_value?.armed || false,
+    sensitivity: device.attribute?.sensitivity || 70,
+    volume: device.attribute?.alarm_volume || 80,
+    delay: device.attribute?.delay || 30,
+    notifyMethods: device.current_value?.notifyMethods || ["app"],
+    supportedFeatures: {
+      color: device.template_type === "light",
+      temperature: device.template_type === "light",
+      effects: device.template_type === "light",
+    },
+  }
+
   const getDeviceIcon = (templateType, powerStatus = true) => {
     const iconProps = { className: `h-5 w-5 ${powerStatus ? "text-white" : "text-white/70"}` }
     switch (templateType) {
@@ -40,8 +68,10 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
         return <Flame {...iconProps} />
       case "temperature":
         return <Thermometer {...iconProps} />
+      case "alarm":
+        return <Bell {...iconProps} />
       default:
-        return <Power {...iconProps} />
+        return <Bell {...iconProps} />
     }
   }
 
@@ -54,6 +84,8 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
         return `from-red-500${opacity} to-pink-500${opacity}`
       case "temperature":
         return `from-blue-500${opacity} to-cyan-500${opacity}`
+      case "alarm":
+        return `from-purple-500${opacity} to-indigo-500${opacity}`
       default:
         return `from-slate-500${opacity} to-gray-500${opacity}`
     }
@@ -66,6 +98,31 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
       updated_at: new Date().toISOString(),
     }
     onDeviceUpdate(updatedDevice)
+  }
+
+  const handleControlDialogUpdate = (updatedData) => {
+    const updatedDevice = {
+      ...device,
+      power_status: updatedData.power,
+      current_value: {
+        ...device.current_value,
+        brightness: updatedData.brightness,
+        color: updatedData.color,
+        color_temperature: updatedData.temperature,
+        mode: updatedData.mode,
+        armed: updatedData.armed,
+        notifyMethods: updatedData.notifyMethods,
+      },
+      attribute: {
+        ...device.attribute,
+        sensitivity: updatedData.sensitivity,
+        alarm_volume: updatedData.volume,
+        delay: updatedData.delay,
+      },
+      updated_at: new Date().toISOString(),
+    }
+    onDeviceUpdate(updatedDevice)
+    setIsControlDialogOpen(false)
   }
 
   return (
@@ -135,6 +192,20 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
 
           <Separator className="bg-white/10" />
 
+          {/* Control Button */}
+          {(device.template_type === "light" || device.template_type === "alarm") && (
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setIsControlDialogOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={device.link_status === "unlinked" || device.lock_status === "locked"}
+              >
+                <Settings2 className="h-4 w-4 mr-2" />
+                Điều khiển
+              </Button>
+            </div>
+          )}
+
           {/* Device Status Overview */}
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
@@ -169,9 +240,10 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
           </div>
 
           {/* Device Type Specific Controls */}
-          {device.template_type === "light" && <LightDetail device={device} onDeviceUpdate={onDeviceUpdate} />}
+          {/* {device.template_type === "light" && <LightDetail device={device} onDeviceUpdate={onDeviceUpdate} />} */}
           {device.template_type === "smoke" && <SmokeDetectorDetail device={device} />}
           {device.template_type === "temperature" && <TemperatureDetail device={device} />}
+          {device.template_type === "alarm" && <AlarmDetail device={device} />}
 
           {/* Enhanced Device Info */}
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
@@ -230,7 +302,7 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
                 </div>
               )}
 
-              <div className="bg-white/5 rounded-xl p-4">
+              <div className="bg/white/5 rounded-xl p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-blue-200 text-sm">Cập nhật</span>
                   <span className="text-sm">{device.lastActivity}</span>
@@ -275,7 +347,7 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
             <div className="space-y-4">
               <div className="flex items-start space-x-4 p-3 bg-white/5 rounded-xl">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center mt-1">
-                  <Power className="h-5 w-5 text-emerald-400" />
+                  <Bell className="h-5 w-5 text-emerald-400" />
                 </div>
                 <div className="flex-1">
                   <p className="font-medium">Thiết bị được bật</p>
@@ -300,7 +372,7 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">Thiết bị được reset</p>
-                    <p className="text-sm text-blue-200">{new Date(device.last_reset_at).toLocaleString("vi-VN")}</p>
+                    <p className="text-sm text-blue-200">{new Date(device.last_reset_at).toLocaleString()}</p>
                   </div>
                 </div>
               )}
@@ -308,212 +380,136 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
           </div>
         </div>
       </ScrollArea>
-    </div>
-  )
-}
 
-// Enhanced Light Detail Component
-function LightDetail({ device, onDeviceUpdate }) {
-  const [brightness, setBrightness] = useState(device.current_value?.brightness || 0)
-
-  const handleBrightnessChange = (value) => {
-    setBrightness(value[0])
-    // Update device with new brightness
-    const updatedDevice = {
-      ...device,
-      current_value: {
-        ...device.current_value,
-        brightness: value[0],
-      },
-      updated_at: new Date().toISOString(),
-    }
-    onDeviceUpdate(updatedDevice)
-  }
-
-  return (
-    <div className="space-y-8">
-      <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-2xl p-8 text-center border border-amber-500/20">
-        <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 mb-6 relative">
-          <div className="text-4xl font-bold">{brightness}%</div>
-          <div className="absolute inset-0 rounded-full border-4 border-amber-500/30 animate-pulse"></div>
-        </div>
-        <p className="text-blue-200 text-lg">Độ sáng hiện tại</p>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <label className="text-sm font-medium text-blue-200 mb-3 block">Điều chỉnh độ sáng</label>
-          <Slider
-            value={[brightness]}
-            onValueChange={handleBrightnessChange}
-            max={device.attribute?.max_brightness || 100}
-            step={1}
-            className="w-full"
-            disabled={!device.power_status || device.link_status === "unlinked"}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-            <div className="flex items-center justify-center space-x-2 mb-2">
-              <div
-                className="w-4 h-4 rounded-full border border-white/30"
-                style={{ backgroundColor: device.current_value?.color || "#FFFFFF" }}
-              />
-              <div className="text-lg font-semibold">
-                {device.current_value?.color_temperature ? `${device.current_value.color_temperature}K` : "Trắng"}
-              </div>
-            </div>
-            <p className="text-sm text-blue-200">Nhiệt độ màu</p>
-          </div>
-
-          <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-            <div className="text-lg font-semibold mb-1">
-              {device.current_value?.power_consumption ? `${device.current_value.power_consumption}W` : "0W"}
-            </div>
-            <p className="text-sm text-blue-200">Công suất</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Enhanced Smoke Detector Detail Component
-function SmokeDetectorDetail({ device }) {
-  const ppm = device.current_value?.ppm || 0
-  const temperature = device.current_value?.temperature || 0
-  const battery = device.current_value?.battery || 0
-
-  return (
-    <div className="space-y-8">
-      <div className="bg-gradient-to-br from-red-500/10 to-pink-500/10 rounded-2xl p-8 text-center border border-red-500/20">
-        <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-red-500/20 to-pink-500/20 mb-6 relative">
-          <div className="text-4xl font-bold">{ppm}</div>
-          {ppm > 1000 && <div className="absolute inset-0 rounded-full border-4 border-red-500/50 animate-pulse"></div>}
-        </div>
-        <p className="text-blue-200 text-lg">PPM hiện tại</p>
-        {ppm > 1000 && <p className="text-red-400 text-sm mt-2">⚠️ Mức độ cao - Cần kiểm tra</p>}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white/5 rounded-xl p-6 text-center border border-white/10">
-          <div className="flex items-center justify-center mb-2">
-            <Thermometer className="h-5 w-5 text-blue-400 mr-2" />
-            <div className="text-2xl font-semibold">{temperature}°C</div>
-          </div>
-          <p className="text-sm text-blue-200">Nhiệt độ</p>
-        </div>
-
-        <div className="bg-white/5 rounded-xl p-6 text-center border border-white/10">
-          <div className="flex items-center justify-center mb-2">
-            <Battery className="h-5 w-5 text-emerald-400 mr-2" />
-            <div className="text-2xl font-semibold">{battery}%</div>
-          </div>
-          <p className="text-sm text-blue-200">Pin</p>
-          <div className="w-full bg-white/10 rounded-full h-1.5 mt-2">
-            <div
-              className={`h-1.5 rounded-full ${
-                battery > 70 ? "bg-emerald-500" : battery > 30 ? "bg-amber-500" : "bg-red-500"
-              }`}
-              style={{ width: `${battery}%` }}
+      {/* Control Dialog */}
+      <Dialog open={isControlDialogOpen} onOpenChange={setIsControlDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          {device.template_type === "light" && (
+            <LedControlDialog
+              device={mappedDevice}
+              onClose={() => setIsControlDialogOpen(false)}
+              onDeviceUpdate={handleControlDialogUpdate}
             />
-          </div>
-        </div>
-      </div>
-
-      {/* Device Attributes */}
-      {device.attribute && (
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <h4 className="text-sm font-medium text-blue-200 mb-3">Cấu hình cảm biến</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-xs text-blue-200">Độ nhạy</span>
-              <span className="text-xs font-medium">{device.attribute.sensitivity}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-blue-200">Âm lượng báo động</span>
-              <span className="text-xs font-medium">{device.attribute.alarm_volume}%</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-blue-200">Chu kỳ kiểm tra</span>
-              <span className="text-xs font-medium">{device.attribute.test_interval} ngày</span>
-            </div>
-          </div>
-        </div>
-      )}
+          )}
+          {device.template_type === "alarm" && (
+            <AlarmControlDialog
+              device={mappedDevice}
+              onClose={() => setIsControlDialogOpen(false)}
+              onDeviceUpdate={handleControlDialogUpdate}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
-// Enhanced Temperature Detail Component
-function TemperatureDetail({ device }) {
-  const temperature = device.current_value?.temperature || 0
-  const humidity = device.current_value?.humidity || 0
-  const heatIndex = device.current_value?.heat_index || 0
+// Subcomponents
+// function LightDetail({ device, onDeviceUpdate }) {
+//   const handleBrightnessChange = (value) => {
+//     const updatedDevice = {
+//       ...device,
+//       current_value: {
+//         ...device.current_value,
+//         brightness: value[0],
+//       },
+//       updated_at: new Date().toISOString(),
+//     }
+//     onDeviceUpdate(updatedDevice)
+//   }
 
+//   return (
+//     <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+//       <h3 className="text-xl font-semibold mb-6 flex items-center">
+//         <Lightbulb className="h-5 w-5 mr-2" />
+//         Điều khiển đèn
+//       </h3>
+//       <div className="space-y-4">
+//         <div>
+//           <label className="text-blue-200 text-sm">Độ sáng</label>
+//           <Slider
+//             value={[device.current_value?.brightness || 0]}
+//             onValueChange={handleBrightnessChange}
+//             max={100}
+//             step={1}
+//             className="mt-2"
+//             disabled={device.link_status === "unlinked" || device.lock_status === "locked"}
+//           />
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+function SmokeDetectorDetail({ device }) {
   return (
-    <div className="space-y-8">
-      <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-2xl p-8 text-center border border-blue-500/20">
-        <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 mb-6">
-          <div className="text-4xl font-bold">{temperature}°C</div>
+    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+      <h3 className="text-xl font-semibold mb-6 flex items-center">
+        <Flame className="h-5 w-5 mr-2" />
+        Thông tin báo khói
+      </h3>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Nồng độ khói</span>
+          <span className="text-sm font-medium">{device.current_value?.ppm} ppm</span>
         </div>
-        <p className="text-blue-200 text-lg">Nhiệt độ hiện tại</p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-          <div className="text-xl font-semibold mb-1">{humidity}%</div>
-          <p className="text-sm text-blue-200">Độ ẩm</p>
+        <div className="flex justify-between items-center p-3 bg/white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Nhiệt độ</span>
+          <span className="text-sm font-medium">{device.current_value?.temperature}°C</span>
         </div>
-
-        <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-          <div className="text-xl font-semibold mb-1">{heatIndex}°C</div>
-          <p className="text-sm text-blue-200">Chỉ số nhiệt</p>
-        </div>
-
-        <div className="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-          <div className="text-xl font-semibold mb-1">Bình thường</div>
-          <p className="text-sm text-blue-200">Trạng thái</p>
+        <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Pin</span>
+          <span className="text-sm font-medium">{device.current_value?.battery}%</span>
         </div>
       </div>
+    </div>
+  )
+}
 
-      {/* Device Attributes */}
-      {device.attribute && (
-        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-          <h4 className="text-sm font-medium text-blue-200 mb-3">Cấu hình cảm biến</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span className="text-xs text-blue-200">Chu kỳ đo</span>
-              <span className="text-xs font-medium">{device.attribute.measurement_interval}s</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-blue-200">Độ chính xác</span>
-              <span className="text-xs font-medium">{device.attribute.accuracy}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-xs text-blue-200">Phạm vi hoạt động</span>
-              <span className="text-xs font-medium">{device.attribute.operating_range?.join("°C - ")}°C</span>
-            </div>
-          </div>
+function TemperatureDetail({ device }) {
+  return (
+    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+      <h3 className="text-xl font-semibold mb-6 flex items-center">
+        <Thermometer className="h-5 w-5 mr-2" />
+        Thông tin nhiệt độ
+      </h3>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Nhiệt độ</span>
+          <span className="text-sm font-medium">{device.current_value?.temperature}°C</span>
         </div>
-      )}
+        <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Độ ẩm</span>
+          <span className="text-sm font-medium">{device.current_value?.humidity}%</span>
+        </div>
+        <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Chỉ số nhiệt</span>
+          <span className="text-sm font-medium">{device.current_value?.heat_index}°C</span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-      <div className="bg-white/5 rounded-2xl p-6 border border-white/10">
-        <h3 className="text-lg font-medium mb-6 flex items-center">
-          <Activity className="h-5 w-5 mr-2" />
-          Biểu đồ nhiệt độ 24h
-        </h3>
-        <div className="h-48 flex items-end space-x-2">
-          {[28, 27, 29, 30, 32, 31, 29, 28, 27, 28, 29, 28].map((temp, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center">
-              <div
-                className="w-full bg-gradient-to-t from-blue-500/30 to-cyan-500/30 rounded-t-sm transition-all duration-300 hover:from-blue-500/50 hover:to-cyan-500/50"
-                style={{ height: `${(temp - 20) * 8}%` }}
-              />
-              <span className="text-xs mt-2 text-blue-200">{i * 2}h</span>
-            </div>
-          ))}
+function AlarmDetail({ device }) {
+  return (
+    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+      <h3 className="text-xl font-semibold mb-6 flex items-center">
+        <Bell className="h-5 w-5 mr-2" />
+        Thông tin báo động
+      </h3>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center p-3 bg-white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Trạng thái kích hoạt</span>
+          <span className="text-sm font-medium">{device.current_value?.armed ? "Đã kích hoạt" : "Chưa kích hoạt"}</span>
+        </div>
+        <div className="flex justify-between items-center p-3 bg/white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Chế độ</span>
+          <span className="text-sm font-medium">{device.current_value?.mode}</span>
+        </div>
+        <div className="flex justify-between items-center p-3 bg/white/5 rounded-xl">
+          <span className="text-blue-200 text-sm">Phương thức thông báo</span>
+          <span className="text-sm font-medium">{device.current_value?.notifyMethods?.join(", ")}</span>
         </div>
       </div>
     </div>

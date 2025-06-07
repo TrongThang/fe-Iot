@@ -12,8 +12,6 @@ import {
   Home,
   Lightbulb,
   Thermometer,
-  SlidersHorizontal,
-  Smartphone,
   Loader2,
   Wifi,
   WifiOff,
@@ -21,6 +19,7 @@ import {
   Grid3X3,
   List,
   Lock,
+  Bell,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -227,6 +226,43 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
       is_deleted: false,
       lastActivity: "15 phút trước",
     },
+    {
+      device_id: 6,
+      serial_number: "ALARM001-2024-006",
+      template_id: 4,
+      template_name: "Smart Alarm System",
+      template_type: "alarm",
+      space_id: spaceId,
+      account_id: 1,
+      group_id: 1,
+      group_name: "Nhóm An toàn",
+      hub_id: "HUB001-2024-001",
+      firmware_id: 4,
+      firmware_version: "v1.0.0",
+      name: "Báo động phòng khách",
+      power_status: true,
+      attribute: {
+        sensitivity: 70,
+        alarm_volume: 80,
+        delay: 30,
+      },
+      wifi_ssid: "SmartHome_5G",
+      current_value: {
+        armed: false,
+        mode: "home",
+        notifyMethods: ["app", "sms"],
+        signal_strength: 90,
+      },
+      link_status: "linked",
+      last_reset_at: "2024-01-05T08:45:00Z",
+      lock_status: "unlocked",
+      locked_at: null,
+      created_at: "2024-01-06T16:00:00Z",
+      updated_at: "2024-01-19T09:15:00Z",
+      is_deleted: false,
+      lastActivity: "10 phút trước",
+      lastTriggered: "2024-01-15T14:30:00Z",
+    },
   ])
 
   // Simulate loading data
@@ -234,7 +270,6 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 1500)
-
     return () => clearTimeout(timer)
   }, [])
 
@@ -255,14 +290,13 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
       devices.map((device) =>
         device.device_id === deviceId
           ? {
-              ...device,
-              power_status: checked,
-              updated_at: new Date().toISOString(),
-            }
-          : device,
-      ),
+            ...device,
+            power_status: checked,
+            updated_at: new Date().toISOString(),
+          }
+          : device
+      )
     )
-    // Update selected device if it's the one being toggled
     if (selectedDevice?.device_id === deviceId) {
       setSelectedDevice({ ...selectedDevice, power_status: checked })
     }
@@ -273,23 +307,20 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
       devices.map((device) =>
         device.device_id === deviceId
           ? {
-              ...device,
-              lock_status: device.lock_status === "locked" ? "unlocked" : "locked",
-              locked_at: device.lock_status === "unlocked" ? new Date().toISOString() : null,
-              updated_at: new Date().toISOString(),
-            }
-          : device,
-      ),
+            ...device,
+            lock_status: device.lock_status === "locked" ? "unlocked" : "locked",
+            locked_at: device.lock_status === "unlocked" ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString(),
+          }
+          : device
+      )
     )
-    // Update selected device if it's the one being toggled
     if (selectedDevice?.device_id === deviceId) {
-      const updatedDevice = devices.find((d) => d.device_id === deviceId)
-      if (updatedDevice) {
-        setSelectedDevice({
-          ...selectedDevice,
-          lock_status: selectedDevice.lock_status === "locked" ? "unlocked" : "locked",
-        })
-      }
+      setSelectedDevice({
+        ...selectedDevice,
+        lock_status: selectedDevice.lock_status === "locked" ? "unlocked" : "locked",
+        locked_at: selectedDevice.lock_status === "unlocked" ? new Date().toISOString() : null,
+      })
     }
   }
 
@@ -317,8 +348,10 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
         return <Flame {...iconProps} />
       case "temperature":
         return <Thermometer {...iconProps} />
+      case "alarm":
+        return <Bell {...iconProps} />
       default:
-        return <Smartphone {...iconProps} />
+        return <Bell {...iconProps} />
     }
   }
 
@@ -331,6 +364,8 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
         return `from-red-500${opacity} to-pink-500${opacity}`
       case "temperature":
         return `from-blue-500${opacity} to-cyan-500${opacity}`
+      case "alarm":
+        return `from-purple-500${opacity} to-indigo-500${opacity}`
       default:
         return `from-slate-500${opacity} to-gray-500${opacity}`
     }
@@ -450,7 +485,6 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
               </div>
 
               <div className="flex items-center space-x-3">
-
                 <Button
                   onClick={handleAddDevice}
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
@@ -589,7 +623,8 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
                         {type === "light" && "Đèn"}
                         {type === "smoke" && "Báo khói"}
                         {type === "temperature" && "Nhiệt độ"}
-                        {type !== "light" && type !== "smoke" && type !== "temperature" && type}(
+                        {type === "alarm" && "Báo động"}
+                        {type !== "light" && type !== "smoke" && type !== "temperature" && type !== "alarm" && type}(
                         {devicesByType[type].length})
                       </TabsTrigger>
                     ))}
@@ -635,7 +670,7 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
                 {filteredDevices.length === 0 && (
                   <div className="text-center py-16 bg-white/40 backdrop-blur-sm rounded-2xl border border-dashed border-slate-300">
                     <div className="w-20 h-20 bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                      <Smartphone className="h-10 w-10 text-slate-400" />
+                      <Bell className="h-10 w-10 text-slate-400" />
                     </div>
                     <h3 className="text-lg font-semibold text-slate-700 mb-2">Không tìm thấy thiết bị nào</h3>
                     <p className="text-slate-500 mb-6">Thử thay đổi bộ lọc hoặc thêm thiết bị mới</p>
@@ -700,7 +735,7 @@ function DeviceGrid({
             onClick={() => onDeviceClick(device)}
             className={cn(
               "bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-4 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-300 group",
-              selectedDevice?.device_id === device.device_id && "ring-2 ring-blue-500 shadow-lg bg-blue-50/50",
+              selectedDevice?.device_id === device.device_id && "ring-2 ring-blue-500 shadow-lg bg-blue-50/50"
             )}
           >
             <div className="flex items-center justify-between">
@@ -717,7 +752,7 @@ function DeviceGrid({
                       variant="outline"
                       className={cn(
                         "text-xs px-2 py-1",
-                        getStatusColor(device.link_status, device.power_status, device.lock_status),
+                        getStatusColor(device.link_status, device.power_status, device.lock_status)
                       )}
                     >
                       {getStatusText(device.link_status, device.power_status, device.lock_status)}
@@ -775,14 +810,12 @@ function DeviceGrid({
           className={cn(
             "bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-6 cursor-pointer hover:shadow-xl hover:border-blue-300 hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden",
             selectedDevice?.device_id === device.device_id &&
-              "ring-2 ring-blue-500 shadow-xl bg-blue-50/50 -translate-y-1",
+            "ring-2 ring-blue-500 shadow-xl bg-blue-50/50 -translate-y-1"
           )}
         >
-          {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
           <div className="relative z-10">
-            {/* Header */}
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center space-x-3">
                 <div
@@ -821,13 +854,12 @@ function DeviceGrid({
               </div>
             </div>
 
-            {/* Status */}
             <div className="flex items-center justify-between mb-4">
               <Badge
                 variant="outline"
                 className={cn(
                   "text-xs px-3 py-1",
-                  getStatusColor(device.link_status, device.power_status, device.lock_status),
+                  getStatusColor(device.link_status, device.power_status, device.lock_status)
                 )}
               >
                 {getStatusText(device.link_status, device.power_status, device.lock_status)}
@@ -835,7 +867,6 @@ function DeviceGrid({
               <span className="text-xs text-slate-500">{device.lastActivity}</span>
             </div>
 
-            {/* Device Specific Info */}
             <div className="bg-slate-50/80 backdrop-blur-sm rounded-xl p-4 mb-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-slate-600">Template</span>
@@ -853,7 +884,6 @@ function DeviceGrid({
               )}
             </div>
 
-            {/* Connection Status */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 {device.link_status === "linked" ? (

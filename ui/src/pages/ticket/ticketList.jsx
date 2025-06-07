@@ -612,7 +612,7 @@ export default function TicketList() {
   )
 }
 
-// Ticket List Content Component
+// danh sách yêu cầu
 function TicketListContent({
   tickets,
   onTicketClick,

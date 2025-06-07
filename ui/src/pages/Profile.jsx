@@ -1,28 +1,38 @@
 "use client"
 
 import { useState } from "react"
-import { User, CreditCard, Calendar, Phone, MapPin, Plus, Edit, Save, X, Camera, Upload } from "lucide-react"
+import { User, Mail, Calendar, Edit3, Save, X, Camera, Shield, CheckCircle, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge"
 import { Link } from "react-router-dom"
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false)
   const [customerData, setCustomerData] = useState({
-    username: "nguyenvana",
-    fullName: "Nguyễn Văn A",
-    dateOfBirth: "15/01/1990",
-    phoneNumber: "0123456789",
+    id: "CUST001",
+    surname: "Nguyễn",
+    lastname: "Văn A",
+    image: "/placeholder.svg?height=200&width=200",
+    phone: "0123456789",
+    email: "nguyenvana@email.com",
+    email_verified: true,
+    birthdate: "1990-01-15",
+    gender: true,
     address: "123 Đường ABC, Quận 1, TP.HCM",
+    created_at: "2023-01-15T10:30:00",
+    updated_at: "2024-12-05T14:20:00",
   })
 
   const handleInputChange = (field, value) => {
     setCustomerData((prev) => ({
       ...prev,
       [field]: value,
+      updated_at: new Date().toISOString(),
     }))
   }
 
@@ -35,177 +45,283 @@ export default function Profile() {
     setIsEditing(false)
   }
 
-  const customerFields = [
-    {
-      key: "username",
-      label: "Username",
-      icon: User,
-      value: customerData.username,
-      type: "text",
-    },
-    {
-      key: "fullName",
-      label: "Họ tên",
-      icon: CreditCard,
-      value: customerData.fullName,
-      type: "text",
-    },
-    {
-      key: "dateOfBirth",
-      label: "Ngày sinh",
-      icon: Calendar,
-      value: customerData.dateOfBirth,
-      type: "text",
-    },
-    {
-      key: "phoneNumber",
-      label: "Số điện thoại",
-      icon: Phone,
-      value: customerData.phoneNumber,
-      type: "tel",
-    },
-    {
-      key: "address",
-      label: "Địa chỉ",
-      icon: MapPin,
-      value: customerData.address,
-      type: "text",
-    },
-  ]
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("vi-VN")
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="max-w-7xl">
-          <h1 className="text-3xl font-bold text-gray-900">Thông tin khách hàng</h1>
-          <p className="text-gray-600 mt-1 text-sm">Quản lý và cập nhật thông tin cá nhân</p>
+      <div className="bg-white/80 backdrop-blur-sm border-b border-white/20 shadow-sm">
+        <div className="px-6 py-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent">
+                Hồ sơ cá nhân
+              </h1>
+              <p className="text-slate-600 mt-2 text-lg">Quản lý thông tin tài khoản của bạn</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              {isEditing ? (
+                <>
+                  <Button
+                    onClick={handleSave}
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Lưu thay đổi
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                    className="border-slate-300 text-slate-700 hover:bg-slate-50"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Hủy
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
+                >
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Chỉnh sửa
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className=" px-6 py-2">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
-          {/* Left Side - Profile Image */}
-          <div className="flex flex-col rounded-sm">
-            <Card className="flex-1 shadow-lg border-0">
-              <CardHeader className="bg-blue-500 text-white text-center py-6">
-                <CardTitle className="text-xl font-bold mb-4">Ảnh đại diện</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 to-white">
-                <div className="relative group mb-8">
-                  <div className="w-48 h-48 rounded-full bg-white shadow-2xl flex items-center justify-center border-8 border-blue-100">
-                    <Avatar className="w-40 h-40">
-                      <AvatarImage src="/placeholder.svg?height=160&width=160" alt="Customer Avatar" />
-                      <AvatarFallback className="bg-blue-500 text-white text-4xl font-bold">
-                        {customerData.fullName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
+      <div className=" px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Profile Card */}
+          <div className="lg:col-span-1">
+            <Card className="bg-white/70 backdrop-blur-sm border-white/20 shadow-xl">
+              <CardContent className="p-8">
+                <div className="text-center">
+                  {/* Avatar */}
+                  <div className="relative inline-block mb-6">
+                    <div className="relative">
+                      <Avatar className="w-32 h-32 border-4 border-white shadow-2xl">
+                        <AvatarImage src={customerData.image || "/placeholder.svg"} alt="Profile" />
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white text-2xl font-bold">
+                          {customerData.surname.charAt(0)}
+                          {customerData.lastname.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <button className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105">
+                        <Camera className="w-5 h-5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">{customerData.fullName}</h2>
-                  <p className="text-gray-600 text-lg">@{customerData.username}</p>
-                </div>
+                  {/* Name & Email */}
+                  <div className="space-y-3">
+                    <h2 className="text-2xl font-bold text-slate-900">
+                      {customerData.surname} {customerData.lastname}
+                    </h2>
+                    <div className="flex items-center justify-center space-x-2">
+                      <Mail className="w-4 h-4 text-slate-500" />
+                      <span className="text-slate-600">{customerData.email}</span>
+                    </div>
 
-                <div className="w-full space-y-4">
-                  <Button
-                    variant="outline"
-                    className="w-full border-2 border-blue-500 text-blue-600 hover:bg-blue-50 py-3 text-lg font-medium"
-                  >
-                    <Upload className="w-5 h-5 mr-2" />
-                    Tải ảnh lên
-                  </Button>
+                    {/* Email Verification Badge */}
+                    <div className="flex justify-center">
+                      {customerData.email_verified ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Email đã xác thực
+                        </Badge>
+                      ) : (
+                        <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Chưa xác thực
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Right Side - Information Details */}
-          <div className="flex flex-col">
-            <Card className="flex-1 shadow-lg border-0">
-              <CardHeader className="bg-blue-500 text-white py-6">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-bold">Thông tin chi tiết</CardTitle>
-                  <div className="flex items-center space-x-3">
+          {/* Information Cards */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Personal Information */}
+            <Card className="bg-white/70 backdrop-blur-sm border-white/20 shadow-xl">
+              <CardContent className="p-8">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-900">Thông tin cá nhân</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Surname */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-700">Họ</Label>
                     {isEditing ? (
-                      <>
-                        <Button onClick={handleSave} className="bg-white text-blue-600 hover:bg-blue-50 font-medium">
-                          <Save className="w-4 h-4 mr-2" />
-                          Lưu
-                        </Button>
-                        <Button
-                          onClick={handleCancel}
-                          variant="outline"
-                          className="border-white text-white hover:bg-white/10"
-                        >
-                          <X className="w-4 h-4 mr-2" />
-                          Hủy
-                        </Button>
-                      </>
+                      <Input
+                        value={customerData.surname}
+                        onChange={(e) => handleInputChange("surname", e.target.value)}
+                        className="bg-white/50 border-slate-200 focus:border-blue-500 focus:ring-blue-500 "
+                      />
                     ) : (
-                      <Button
-                        onClick={() => setIsEditing(true)}
-                        className="bg-white text-blue-600 hover:bg-blue-50 font-medium"
-                      >
-                        <Edit className="w-4 h-4 mr-2" />
-                        Cập nhật
-                      </Button>
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                        <span className="text-slate-900">{customerData.surname}</span>
+                      </div>
                     )}
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 p-8 bg-white">
-                <div className="space-y-8 h-full">
-                  {customerFields.map((field, index) => {
-                    const IconComponent = field.icon
-                    return (
-                      <div key={field.key} className="space-y-3">
-                        <Label
-                          htmlFor={field.key}
-                          className="flex items-center space-x-3 text-sm font-semibold text-gray-700 uppercase tracking-wide"
-                        >
-                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <IconComponent className="w-4 h-4 text-blue-600" />
-                          </div>
-                          <span>{field.label}</span>
-                        </Label>
-                        {isEditing ? (
-                          <Input
-                            id={field.key}
-                            type={field.type}
-                            value={field.value}
-                            onChange={(e) => handleInputChange(field.key, e.target.value)}
-                            className="w-full h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg text-gray-900 font-medium text-lg"
-                            placeholder={field.label}
-                          />
-                        ) : (
-                          <div className="w-full h-12 flex items-center px-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <span className="text-gray-900 font-medium text-lg">{field.value}</span>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
 
-                  {/* Password Change Section */}
-                  <div className="pt-8 border-t border-gray-200">
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Bảo mật</h3>
-                      <Link to="/change-password" className="text-blue-600 hover:underline">
-                        <Button
-                          variant="outline"
-                          className="w-full border-2 border-blue-500 text-blue-600 hover:bg-blue-50 py-3 text-lg font-medium"
-                        >
-                          Đổi mật khẩu
-                        </Button>
-                      </Link>
-                    </div>
+                  {/* Lastname */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-700">Tên</Label>
+                    {isEditing ? (
+                      <Input
+                        value={customerData.lastname}
+                        onChange={(e) => handleInputChange("lastname", e.target.value)}
+                        className="bg-white/50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                        <span className="text-slate-900">{customerData.lastname}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-700">Email</Label>
+                    {isEditing ? (
+                      <Input
+                        type="email"
+                        value={customerData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
+                        className="bg-white/50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                        disabled
+                      />
+                    ) : (
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                        <span className="text-slate-900">{customerData.email}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-700">Số điện thoại</Label>
+                    {isEditing ? (
+                      <Input
+                        type="tel"
+                        value={customerData.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        className="bg-white/50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                        <span className="text-slate-900">{customerData.phone}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Birthdate */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-700">Ngày sinh</Label>
+                    {isEditing ? (
+                      <Input
+                        type="date"
+                        value={customerData.birthdate}
+                        onChange={(e) => handleInputChange("birthdate", e.target.value)}
+                        className="bg-white/50 border-slate-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    ) : (
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                        <span className="text-slate-900">{formatDate(customerData.birthdate)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Gender */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-slate-700">Giới tính</Label>
+                    {isEditing ? (
+                      <Select
+                        value={customerData.gender ? "male" : "female"}
+                        onValueChange={(value) => handleInputChange("gender", value === "male")}
+                      >
+                        <SelectTrigger className="bg-white/50 border-slate-200 focus:border-blue-500 w-full focus:ring-blue-500">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white">
+                          <SelectItem value="male">Nam</SelectItem>
+                          <SelectItem value="female">Nữ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                        <span className="text-slate-900">{customerData.gender ? "Nam" : "Nữ"}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Address */}
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-sm font-medium text-slate-700">Địa chỉ</Label>
+                    {isEditing ? (
+                      <Input
+                        value={customerData.address}
+                        onChange={(e) => handleInputChange("address", e.target.value)}
+                        className="bg-white/50 border-slate-200 focus:border-blue-500 focus:ring-blue-500 "
+                        placeholder="Nhập địa chỉ của bạn"
+                      />
+                    ) : (
+                      <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                        <span className="text-slate-900">{customerData.address}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Security & Actions */}
+            <div className="">
+              {/* Security */}
+              <Card className="bg-white/70 backdrop-blur-sm border-white/20 shadow-xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-red-600 rounded-lg flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900">Bảo mật</h3>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Link to="/change-password">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start border-red-200 text-red-700 hover:bg-red-50"
+                      >
+                        Đổi mật khẩu
+                      </Button>
+                    </Link>
+                    {!customerData.email_verified && (
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start border-orange-200 text-orange-700 hover:bg-orange-50"
+                      >
+                        Xác thực email
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </div>

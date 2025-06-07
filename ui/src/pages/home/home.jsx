@@ -12,8 +12,6 @@ import {
     TrendingDown,
     Power,
     Eye,
-    MoreHorizontal,
-    Bell,
     Clock,
     MapPin,
 } from "lucide-react"
