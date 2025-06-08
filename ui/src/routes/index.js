@@ -1,25 +1,25 @@
 import { createBrowserRouter } from "react-router-dom";
-import Login from "../pages/auth/Login";
-import Register from "../pages/auth/Register";
+import Login from "../pages/User/auth/Login";
+import Register from "../pages/User/auth/Register";
 import DefaultLayout from "@/components/layout/defaultLayout";
-import Groups from "@/pages/groups/groupsList";
-import Profile from "@/pages/Profile";
-import ComponentExamples from "@/pages/ComponentExamples";
-import ForgotPassword from "@/pages/auth/ForgotPassword";
-import EditGroups from "@/pages/groups/groupsEdit";
-import IoTDashboard from "@/pages/home/Home";
-import ChangePassword from "@/pages/ChangePassword";
-import NotificationList from "@/pages/notification/notificationList";
-import TicketList from "@/pages/ticket/ticketList";
+import Groups from "@/pages/User/groups/groupsList";
+import Profile from "@/pages/User/Profile";
+import ComponentExamples from "@/pages/User/ComponentExamples";
+import ForgotPassword from "@/pages/User/auth/ForgotPassword";
+import EditGroups from "@/pages/User/groups/groupsEdit";
+import IoTDashboard from "@/pages/User/home/Home";
+import ChangePassword from "@/pages/User/ChangePassword";
+import NotificationList from "@/pages/User/notification/notificationList";
+import TicketList from "@/pages/User/ticket/ticketList";
 import DefaultLayoutAdmin from "@/components/layout/defaultLayoutAdmin";
-import AdminTicketsDashboard from "@/pages/admin/ticket_manager/ticket-list-manager";
-import NotFoundPage from "@/pages/404";
-import HouseList from "@/pages/house/houseList";
-import SpaceList from "@/pages/space/spaceList";
-import AlarmControlDialog from "@/pages/device-dialogs/alarm-control-dialog";
-import AdminCustomerDashboard from "@/pages/admin/customer_manager/customerList";
-import SearchDevice from "@/pages/admin/search/searchDevice";
-import SearchGroup from "@/pages/admin/search/searchGroup";
+import AdminTicketsDashboard from "@/pages/Admin/ticket_manager/ticket-list-manager";
+import NotFoundPage from "@/pages/User/404";
+import HouseList from "@/pages/User/house/houseList";
+import SpaceList from "@/pages/User/space/spaceList";
+import AdminCustomerDashboard from "@/pages/Admin/customer_manager/customerList";
+import SearchDevice from "@/pages/Admin/search/searchDevice";
+import SearchGroup from "@/pages/Admin/search/searchGroup";
+import UserActivity from "@/pages/User/setting/user-activity";
 
 export const router = createBrowserRouter([
     {
@@ -95,6 +95,10 @@ export const router = createBrowserRouter([
             {
                 path: '/ticket',
                 element: <TicketList />
+            },
+            {
+                path: '/settings',
+                element: <UserActivity />
             },
             {
                 path: '*',

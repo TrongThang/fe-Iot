@@ -21,6 +21,8 @@ import {
   Clock,
   Cpu,
   Settings2,
+  Share,
+  Share2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,13 +31,13 @@ import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
-import LedControlDialog from "@/pages/device-dialogs/led-control-dialog"
-import AlarmControlDialog from "@/pages/device-dialogs/alarm-control-dialog"
-import { Slider } from "@/components/ui/slider"
+import LedControlDialog from "@/pages/User/device-dialogs/led-control-dialog"
+import AlarmControlDialog from "@/pages/User/device-dialogs/alarm-control-dialog"
+import DeviceSharingDialog from "@/pages/User/share/share_device"
 
 export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete, onLockToggle, onClose }) {
   const [isControlDialogOpen, setIsControlDialogOpen] = useState(false)
-
+  const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false)
   // Map device data to match LedControlDialog and AlarmControlDialog expectations
   const mappedDevice = {
     ...device,
@@ -180,6 +182,10 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
                         Khóa thiết bị
                       </>
                     )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsSharingDialogOpen(true)}>
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Chia sẻ thiết bị
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onDelete(device.device_id)} className="text-red-600">
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -398,6 +404,12 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
               onDeviceUpdate={handleControlDialogUpdate}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSharingDialogOpen} onOpenChange={setIsSharingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DeviceSharingDialog deviceId={device.device_id} onClose={() => setIsSharingDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>
