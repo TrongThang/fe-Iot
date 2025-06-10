@@ -23,6 +23,7 @@ import {
   Settings2,
   Share,
   Share2,
+  List,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,11 +34,13 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import LedControlDialog from "@/pages/User/device-dialogs/led-control-dialog"
 import AlarmControlDialog from "@/pages/User/device-dialogs/alarm-control-dialog"
-import DeviceSharingDialog from "@/pages/User/share/share_device"
+import DeviceSharingDialog from "@/pages/User/share/shareDeviceDialog"
+import { useNavigate } from "react-router-dom"
 
-export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete, onLockToggle, onClose }) {
+export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete, onLockToggle }) {
   const [isControlDialogOpen, setIsControlDialogOpen] = useState(false)
   const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false)
+  const navigate = useNavigate()
   // Map device data to match LedControlDialog and AlarmControlDialog expectations
   const mappedDevice = {
     ...device,
@@ -91,6 +94,11 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
       default:
         return `from-slate-500${opacity} to-gray-500${opacity}`
     }
+  }
+
+
+  const hanleViewSharingList = () => {
+    navigate("/share/device-sharing-list")
   }
 
   const handlePowerToggle = (checked) => {
@@ -183,9 +191,13 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
                       </>
                     )}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => hanleViewSharingList()}>
+                    <List className="h-4 w-4 mr-2" />
+                    Danh sách chia sẽ
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsSharingDialogOpen(true)}>
                     <Share2 className="h-4 w-4 mr-2" />
-                    Chia sẻ thiết bị
+                    Chia sẻ thiết b ị
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => onDelete(device.device_id)} className="text-red-600">
                     <Trash2 className="h-4 w-4 mr-2" />

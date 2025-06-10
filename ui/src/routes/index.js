@@ -20,6 +20,7 @@ import AdminCustomerDashboard from "@/pages/Admin/customer_manager/customerList"
 import SearchDevice from "@/pages/Admin/search/searchDevice";
 import SearchGroup from "@/pages/Admin/search/searchGroup";
 import UserActivity from "@/pages/User/setting/user-activity";
+import DeviceSharingList from "@/pages/User/share/shareDeviceList";
 
 export const router = createBrowserRouter([
     {
@@ -99,6 +100,10 @@ export const router = createBrowserRouter([
             {
                 path: '/settings',
                 element: <UserActivity />
+            },
+            {
+                path: '/share/device-sharing-list',
+                element: <DeviceSharingList />
             },
             {
                 path: '*',
