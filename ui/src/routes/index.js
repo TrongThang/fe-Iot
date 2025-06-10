@@ -21,6 +21,9 @@ import SearchDevice from "@/pages/Admin/search/searchDevice";
 import SearchGroup from "@/pages/Admin/search/searchGroup";
 import UserActivity from "@/pages/User/setting/user-activity";
 import DeviceSharingList from "@/pages/User/share/shareDeviceList";
+import DeviceTransferHistory from "@/pages/Admin/device_manager/deviceTransferHistory";
+import DashboardAdmin from "@/pages/Admin/Dashboard/dashboard";
+import CustomerShare from "@/pages/Admin/customer_manager/customerShareList";
 
 export const router = createBrowserRouter([
     {
@@ -40,6 +43,10 @@ export const router = createBrowserRouter([
         element: <DefaultLayoutAdmin />,
         children: [
             {
+                path: '',
+                element: <DashboardAdmin />
+            },
+            {
                 path: 'tickets',
                 element: <AdminTicketsDashboard />
             },
@@ -48,12 +55,20 @@ export const router = createBrowserRouter([
                 element: <AdminCustomerDashboard />
             },
             {
+                path: 'share-permissions',
+                element: <CustomerShare />
+            },
+            {
                 path: 'search-device',
                 element: <SearchDevice />
             },
             {
                 path: 'search-group',
                 element: <SearchGroup />
+            },
+            {
+                path: 'device-transfer-history',
+                element: <DeviceTransferHistory />
             },
             {
                 path: '*',

@@ -129,22 +129,6 @@ const TopbarAdmin = () => {
                     </button>
                 </div>
 
-                {/* Center - IoT Status */}
-                <div className="hidden lg:flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
-                        {isOnline ? <Wifi className="w-4 h-4 text-green-400" /> : <WifiOff className="w-4 h-4 text-red-400" />}
-                        <span className="text-sm text-white font-medium">
-                            {iotStatus.connectedDevices}/{iotStatus.activeDevices} thiết bị
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
-                        <Thermometer className="w-4 h-4 text-blue-300" />
-                        <span className="text-sm text-white font-medium">{iotStatus.temperature}</span>
-                    </div>
-                    <div className="bg-green-500/20 text-green-300 border border-green-400/30 rounded-lg px-3 py-1 text-sm">
-                        {iotStatus.securityStatus}
-                    </div>
-                </div>
 
                 {/* Right Side - Time, Notifications, User */}
                 <div className="flex items-center gap-2 md:gap-6">

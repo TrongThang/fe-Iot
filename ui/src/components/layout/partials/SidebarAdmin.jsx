@@ -3,16 +3,18 @@
 import { useState, useEffect } from "react"
 import {
   Users,
-  Package,
   HelpCircle,
   ChevronDown,
   LayoutDashboard,
   Home,
-  Gauge,
-  Lightbulb,
   Thermometer,
   Settings,
   Clock,
+  Monitor,
+  FileText,
+  User,
+  History,
+  Search,
 } from "lucide-react"
 import { useSidebar } from "./contexts/Sidebar-context"
 import { Link } from "react-router-dom"
@@ -31,6 +33,8 @@ const SidebarAdmin = () => {
     if (path === "/admin/customers") return "customers"
     if (path === "/admin/search-device") return "search-device"
     if (path === "/admin/search-group") return "search-group"
+    if (path === "/admin/device-transfer-history") return "device-transfer-history"
+    if (path === "/admin/share-permissions") return "share-permissions"
     return "dashboard" // Default to dashboard
   }
 
@@ -83,7 +87,7 @@ const SidebarAdmin = () => {
       </div>
 
       {/* Sidebar Content */}
-      <div className={`py-4 h-[calc(100vh-140px)] overflow-y-auto ${isOpen ? "px-3" : "px-2"}`}>
+      <div className={`py-4 h-[calc(100vh-250px)] overflow-y-auto ${isOpen ? "px-3" : "px-2"}`}>
         {/* Overview Section */}
         <div className="mb-4">
           {isOpen ? (
@@ -145,7 +149,7 @@ const SidebarAdmin = () => {
                   } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Khách hàng" : ""}
               >
-                <Users className="w-4 h-4 flex-shrink-0" />
+                <User className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Khách hàng</span>}
               </Link>
               <Link
@@ -157,7 +161,7 @@ const SidebarAdmin = () => {
                   } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Yêu cầu" : ""}
               >
-                <Users className="w-4 h-4 flex-shrink-0" />
+                <FileText className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Yêu Cầu</span>}
               </Link>
               <Link
@@ -169,7 +173,7 @@ const SidebarAdmin = () => {
                   } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Tra Cứu Thiết Bị" : ""}
               >
-                <Users className="w-4 h-4 flex-shrink-0" />
+                <Monitor className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Tra Cứu Thiết Bị Của Khách Hàng</span>}
               </Link>
               <Link
@@ -179,10 +183,34 @@ const SidebarAdmin = () => {
                   ? "bg-blue-600 text-white font-medium"
                   : "text-blue-200 hover:bg-blue-800/40"
                   } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tra   Cứu Nhóm" : ""}
+                title={!isOpen ? "Tra Cứu Nhóm" : ""}
               >
                 <Users className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Tra Cứu Nhóm Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/device-transfer-history"
+                onClick={() => handleItemClick("device-transfer-history")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "device-transfer-history"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Lịch Sử" : ""}
+              >
+                <History className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Lịch Sử Chuyển Nhượng</span>}
+              </Link>
+              <Link
+                to="/admin/share-permissions"
+                onClick={() => handleItemClick("share-permissions")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "share-permissions"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Chia Sẽ Quyền" : ""}
+              >
+                <Search className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Chia Sẽ Quyền Của Khách Hàng</span>}
               </Link>
             </div>
           )}
