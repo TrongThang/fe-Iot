@@ -12,15 +12,19 @@ import ChangePassword from "@/pages/User/ChangePassword";
 import NotificationList from "@/pages/User/notification/notificationList";
 import TicketList from "@/pages/User/ticket/ticketList";
 import DefaultLayoutAdmin from "@/components/layout/defaultLayoutAdmin";
-import AdminTicketsDashboard from "@/pages/Admin/ticket_manager/ticket-list-manager";
+import AdminTicketsDashboard from "@/pages/admin/ticket_manager/ticket-list-manager";
 import NotFoundPage from "@/pages/User/404";
 import HouseList from "@/pages/User/house/houseList";
 import SpaceList from "@/pages/User/space/spaceList";
-import AdminCustomerDashboard from "@/pages/Admin/customer_manager/customerList";
-import SearchDevice from "@/pages/Admin/search/searchDevice";
-import SearchGroup from "@/pages/Admin/search/searchGroup";
+import AdminCustomerDashboard from "@/pages/admin/customer_manager/customerList";
+import SearchDevice from "@/pages/admin/search/searchDevice";
+import SearchGroup from "@/pages/admin/search/searchGroup";
 import UserActivity from "@/pages/User/setting/user-activity";
 import DeviceSharingList from "@/pages/User/share/shareDeviceList";
+import SearchCustomerGroups from "@/pages/admin/search/searchCustomerGroups";
+import SearchCustomerHouses from "@/pages/admin/search/searchCustomerHouses";
+import SearchCustomerSpaces from "@/pages/admin/search/searchCustomerSpaces";
+import SearchCustomerDevices from "@/pages/admin/search/searchCustomerDevices";
 
 export const router = createBrowserRouter([
     {
@@ -54,6 +58,22 @@ export const router = createBrowserRouter([
             {
                 path: 'search-group',
                 element: <SearchGroup />
+            },
+            {
+                path: 'search-customer-groups',
+                element: <SearchCustomerGroups />
+            },
+            {
+                path: 'search-customer-houses',
+                element: <SearchCustomerHouses />
+            },
+            {
+                path: 'search-customer-spaces',
+                element: <SearchCustomerSpaces />
+            },
+            {
+                path: 'search-customer-devices',
+                element: <SearchCustomerDevices />
             },
             {
                 path: '*',
