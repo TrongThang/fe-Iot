@@ -18,7 +18,7 @@ import {
 
 export default function IconPickerPopup({ open, onOpenChange, onSelectIcon, selectedIcon }) {
   const [tempSelectedIcon, setTempSelectedIcon] = useState(
-    selectedIcon || { icon: Home, color: "bg-blue-500", name: "Nhà" },
+    selectedIcon || { icon: Home, color: "bg-blue-500", name: "Nhà", id: "home" },
   )
 
   const icons = [
@@ -43,11 +43,20 @@ export default function IconPickerPopup({ open, onOpenChange, onSelectIcon, sele
   ]
 
   const handleIconSelect = (iconData) => {
-    setTempSelectedIcon((prev) => ({ ...prev, icon: iconData.icon, name: iconData.name, id: iconData.id }))
+    setTempSelectedIcon((prev) => ({
+      ...prev,
+      icon: iconData.icon,
+      name: iconData.name,
+      id: iconData.id,
+    }))
   }
 
   const handleColorSelect = (colorData) => {
-    setTempSelectedIcon((prev) => ({ ...prev, color: colorData.value, colorId: colorData.id }))
+    setTempSelectedIcon((prev) => ({
+      ...prev,
+      color: colorData.value,
+      colorId: colorData.id,
+    }))
   }
 
   const handleConfirm = () => {
@@ -56,13 +65,13 @@ export default function IconPickerPopup({ open, onOpenChange, onSelectIcon, sele
   }
 
   const handleCancel = () => {
-    setTempSelectedIcon(selectedIcon || { icon: Home, color: "bg-blue-500", name: "Nhà" })
+    setTempSelectedIcon(selectedIcon || { icon: Home, color: "bg-blue-500", name: "Nhà", id: "home" })
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0 rounded-2xl" >
+      <DialogContent className="sm:max-w-[500px] p-0 rounded-2xl">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="text-lg font-medium text-center">Chọn biểu tượng:</DialogTitle>
         </DialogHeader>

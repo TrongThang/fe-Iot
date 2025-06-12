@@ -1,61 +1,134 @@
 "use client"
 
-import { useState } from "react"
+import React from "react"; // Explicitly import React
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowLeft, Users, UserPlus, Edit } from "lucide-react"
+import {
+  ArrowLeft, Users, UserPlus, Edit,
+  Home,
+  Briefcase,
+  GraduationCap,
+  Building,
+  Building2,
+  Bed,
+  Castle,
+  TreePine,
+  Crown,
+  BookOpen,
+} from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
+import { useNavigate, useParams } from "react-router-dom"
 import AddMemberPopup from "./groupPopups/Add-member-popup"
 import EditGroupPopup from "./groupPopups/Edit-groups-popup"
-import HouseList from "./house/houseTab"
 import HouseTab from "./house/houseTab"
+import Swal from "sweetalert2"
 
 export default function EditGroups() {
   const [activeTab, setActiveTab] = useState("members")
   const [searchQuery, setSearchQuery] = useState("")
-  const [groupName, setGroupName] = useState("Family Group")
-  const [groupDescription, setGroupDescription] = useState("Nhóm gia đình để quản lý các thiết bị thông minh trong nhà")
+  const [formData, setFormData] = useState({
+    group_name: "",
+    group_description: "",
+    icon_name: "",
+    icon_color: "",
+  })
+  const [members, setMembers] = useState([])
+  const [houses, setHouses] = useState([])
+  const navigate = useNavigate()
+  const { id } = useParams() // Matches the route parameter :id
 
-  // State for popups
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTcxMzE0NiwiZXhwIjoxNzQ5NzE2NzQ2fQ.71IBlziaXBroo_onw4IXQCagBstCvLjLNCJ4w19KeZM"
+
+  // State for popups and navigation
   const [isAddMemberPopupOpen, setIsAddMemberPopupOpen] = useState(false)
   const [isEditGroupPopupOpen, setIsEditGroupPopupOpen] = useState(false)
   const [isAddHousePopupOpen, setIsAddHousePopupOpen] = useState(false)
-
-  // Navigation states
   const [selectedHouse, setSelectedHouse] = useState(null)
   const [selectedSpace, setSelectedSpace] = useState(null)
   const [showSpaceList, setShowSpaceList] = useState(false)
   const [showDeviceList, setShowDeviceList] = useState(false)
 
-  // Mock data for members
-  const [members, setMembers] = useState([
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      role: "Chủ nhóm",
-      email: "nguyenvana@email.com",
-      joinDate: "15/12/2024",
-      avatar: "",
-    },
-    { id: 2, name: "Trần Thị B", role: "Phó nhóm", email: "tranthib@email.com", joinDate: "16/12/2024", avatar: "" },
-    { id: 3, name: "Lê Văn C", role: "Thành viên", email: "levanc@email.com", joinDate: "17/12/2024", avatar: "" },
-    { id: 4, name: "Phạm Thị D", role: "Thành viên", email: "phamthid@email.com", joinDate: "18/12/2024", avatar: "" },
-  ])
+  const fetchGroupById = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:7777/api/groups/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+      if (res.ok) {
+        const groupData = await res.json()
+        if (groupData) {
+          setFormData({
+            group_name: groupData.group_name || "",
+            group_description: groupData.group_description || "",
+            icon_name: groupData.icon_name || "",
+            icon_color: groupData.icon_color || "",
+          })
+        }
+        return groupData
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message || "Đã xảy ra lỗi khi lấy thông tin nhóm. Vui lòng thử lại.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#d33",
+      })
+      return null
+    }
+  }
 
-  // Mock data for houses with space counts
-  const [houses, setHouses] = useState([
-    { id: 1, name: "Nhà chính", address: "123 Đường ABC, Quận 1, TP.HCM", devices: 4, status: "Hoạt động" },
-    { id: 2, name: "Nhà phụ", address: "456 Đường XYZ, Quận 2, TP.HCM", devices: 2, status: "Hoạt động" },
-    { id: 3, name: "Văn phòng", address: "789 Đường DEF, Quận 3, TP.HCM", devices: 2, status: "Bảo trì" },
-  ])
+  const fetchGroupsUser = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:7777/api/groups/${id}/members`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+      if (res.ok) {
+        const membersData = await res.json()
+        console.log("Members data:", membersData); // Debug the response structure
+        setMembers(membersData?.data || [])
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message || "Đã xảy ra lỗi khi lấy thông tin thành viên nhóm. Vui lòng thử lại.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#d33",
+      })
+    }
+  }
+
+  useEffect(() => {
+    if (id) {
+      fetchGroupById(id)
+      fetchGroupsUser(id)
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: "Không tìm thấy ID nhóm trong URL. Vui lòng kiểm tra lại.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#d33",
+      });
+      navigate("/groups");
+    }
+  }, [id, navigate]);
 
   const handleDeleteMember = (memberId) => {
-    setMembers(members.filter((m) => m.id !== memberId))
+    // Implement deletion logic if needed
   }
 
   const handleEditMember = (memberId) => {
@@ -94,7 +167,22 @@ export default function EditGroups() {
   }
 
   const handleLeaveGroup = () => {
-    alert("Đã rời khỏi nhóm")
+    Swal.fire({
+      title: "Xác nhận rời nhóm",
+      text: "Bạn có chắc muốn rời nhóm? Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Rời",
+      cancelButtonText: "Hủy",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Optional: Add API call to leave group
+        alert("Đã rời khỏi nhóm")
+        navigate("/groups")
+      }
+    })
   }
 
   const handleAddMember = () => {
@@ -119,16 +207,51 @@ export default function EditGroups() {
     setIsAddMemberPopupOpen(false)
   }
 
-  const handleSaveGroup = (updatedGroup) => {
-    setGroupName(updatedGroup.name)
-    setGroupDescription(updatedGroup.description)
-    setIsEditGroupPopupOpen(false)
+  const handleSaveGroup = async (updatedData) => {
+    setFormData((prev) => ({ ...prev, ...updatedData }))
+    try {
+      const res = await fetch(`http://localhost:7777/api/groups/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          group_name: updatedData.group_name,
+          group_description: updatedData.group_description,
+          icon_name: updatedData.icon_name,
+          icon_color: updatedData.icon_color,
+        }),
+      })
+      if (res.ok) {
+        Swal.fire({
+          icon: "success",
+          title: "Thành công",
+          text: "Cập nhật nhóm thành công!",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#28a745",
+        })
+        setIsEditGroupPopupOpen(false)
+      } else {
+        const errorData = await res.json()
+        throw new Error(errorData.message || "Cập nhật nhóm thất bại")
+      }
+    } catch (error) {
+      console.error("Error updating group:", error)
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message || "Đã xảy ra lỗi khi cập nhật nhóm. Vui lòng thử lại.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#d33",
+      })
+    }
   }
 
   const filteredMembers = members.filter(
     (member) =>
-      member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchQuery.toLowerCase()),
+      (member.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (member.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
   )
 
   const getRoleColor = (role) => {
@@ -142,6 +265,45 @@ export default function EditGroups() {
     }
   }
 
+  const iconMap = {
+    home: Home,
+    office: Briefcase,
+    school: GraduationCap,
+    bank: Building,
+    apartment: Building2,
+    hotel: Bed,
+    villa: Castle,
+    wooden: TreePine,
+    castle: Crown,
+    library: BookOpen,
+  }
+
+  const colorMap = {
+    "#FF5733": "bg-red-500",
+    blue: "bg-blue-500",
+    "#FFF00F": "bg-yellow-500",
+    "#0000FF": "bg-blue-700",
+    "#FF0000": "bg-red-600",
+  }
+
+  const getIconComponent = (iconName) => {
+    if (!iconName) return Users
+    const IconComponent = iconMap[iconName.toLowerCase()] || Users
+    return IconComponent
+  }
+
+  const getColorClass = (color) => {
+    return colorMap[color] || "bg-gray-500"
+  }
+
+  // Dynamic icon and color for header
+  const HeaderIconComponent = getIconComponent(formData.icon_name)
+  const headerColorClass = getColorClass(formData.icon_color)
+
+  // Dynamic icon and color for group info card
+  const CardIconComponent = getIconComponent(formData.icon_name)
+  const cardColorClass = getColorClass(formData.icon_color)
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -149,15 +311,15 @@ export default function EditGroups() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="p-2">
+              <Button variant="ghost" size="sm" className="p-2" onClick={() => navigate("/groups")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-                  <Users className="h-6 w-6 text-white" />
+                <div className={`w-12 h-12 ${headerColorClass} rounded-xl flex items-center justify-center shadow-lg`}>
+                  <HeaderIconComponent className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{groupName}</h1>
+                  <h1 className="text-2xl font-bold text-gray-900">{formData.group_name}</h1>
                   <p className="text-sm text-gray-600">Chi tiết nhóm và quản lý thành viên</p>
                 </div>
               </div>
@@ -183,14 +345,14 @@ export default function EditGroups() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Users className="h-8 w-8 text-white" />
+                <div className={`w-16 h-16 ${cardColorClass} rounded-2xl flex items-center justify-center shadow-lg`}>
+                  <CardIconComponent className="h-8 w-8 text-white" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
                     <Input
-                      value={groupName}
-                      onChange={(e) => setGroupName(e.target.value)}
+                      value={formData.group_name}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, group_name: e.target.value }))}
                       className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent"
                       placeholder="Tên nhóm"
                       readOnly
@@ -204,8 +366,8 @@ export default function EditGroups() {
                       <Edit className="h-4 w-4 text-blue-500" />
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">{groupDescription}</p>
-                  <p className="text-xs text-gray-500 mt-1">Được tạo ngày 15/12/2024</p>
+                  <p className="text-sm text-gray-600 mt-1 line-clamp-2">{formData.group_description}</p>
+                  <p className="text-xs text-gray-500 mt-1">Được tạo ngày {new Date().toLocaleDateString("vi-VN")}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-6">
@@ -276,12 +438,12 @@ export default function EditGroups() {
                           <div className="flex items-center space-x-3">
                             <Avatar className="h-12 w-12 bg-blue-500">
                               <AvatarFallback className="bg-blue-500 text-white font-semibold">
-                                {member.name.charAt(0)}
+                                {member.name?.charAt(0) || "U"}
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-semibold text-gray-900">{member.name}</p>
-                              <p className="text-sm text-gray-500">{member.email}</p>
+                              <p className="font-semibold text-gray-900">{member.full_name || "Unknown"}</p>
+                              <p className="text-sm text-gray-500">{member.email || "No email"}</p>
                             </div>
                           </div>
                           <DropdownMenu>
@@ -308,9 +470,9 @@ export default function EditGroups() {
 
                         <div className="space-y-2">
                           <Badge variant="outline" className={getRoleColor(member.role)}>
-                            {member.role}
+                            {member.role || "Unknown"}
                           </Badge>
-                          <p className="text-xs text-gray-500">Tham gia: {member.joinDate}</p>
+                          <p className="text-xs text-gray-500">Tham gia: {member.joined_at ? new Date(member.joined_at).toLocaleDateString("vi-VN") : "Không rõ"}</p>
                         </div>
                       </CardContent>
                     </Card>
@@ -361,8 +523,8 @@ export default function EditGroups() {
         open={isEditGroupPopupOpen}
         onOpenChange={setIsEditGroupPopupOpen}
         onSave={handleSaveGroup}
-        groupName={groupName}
-        groupDescription={groupDescription}
+        formData={formData}
+        setFormData={setFormData}
       />
     </div>
   )

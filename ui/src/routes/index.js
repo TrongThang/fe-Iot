@@ -85,7 +85,7 @@ export const router = createBrowserRouter([
                 path: '/groups', element: <Groups />,
             },
             {
-                path: '/EditGroup',
+                path: '/editGroup/:id',
                 element: <EditGroups />
             },
             {

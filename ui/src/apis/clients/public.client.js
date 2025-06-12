@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const axiosPublic = axios.create({
-    baseURL: process.env.SMART_NET_API_URL || "http://localhost:8081/api/", // Địa chỉ API public
+    baseURL: process.env.SMART_NET_API_URL || "http://localhost:7777/api/", // Địa chỉ API public
     headers: {
         // 'ngrok-skip-browser-warning': 'true',
         'Accept': 'application/json',
@@ -16,13 +16,13 @@ const axiosPublic = axios.create({
 
 axiosPublic.interceptors.request.use(
     (config) => {
-         // Log thông tin request
+        // Log thông tin request
         console.log('🚀 Sending Request:', {
             method: config.method.toUpperCase(),
             url: config.url,
             params: config.params,
         });
-    
+
         return config;
     },
     (error) => {

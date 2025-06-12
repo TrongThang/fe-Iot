@@ -97,7 +97,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
                 value={memberData.role}
                 onValueChange={(value) => setMemberData((prev) => ({ ...prev, role: value }))}
               >
-                <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl bg-white shadow-sm transition-all duration-200">
+                <SelectTrigger className="w-full h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl bg-white shadow-sm transition-all duration-200">
                   <SelectValue placeholder="Chọn vai trò cho thành viên" className="text-gray-700" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-gray-200 shadow-lg bg-white">
