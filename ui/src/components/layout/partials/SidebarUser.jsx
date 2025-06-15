@@ -17,6 +17,7 @@ import {
   Clock,
 } from "lucide-react"
 import { useSidebar } from "./contexts/Sidebar-context"
+import { Link } from "react-router-dom"
 
 const SidebarUser = () => {
   const { isOpen } = useSidebar()
@@ -99,8 +100,8 @@ const SidebarUser = () => {
 
           {(isOverviewOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-              <a
-                href="/"
+              <Link
+                to="/"
                 onClick={() => handleItemClick("dashboard")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "dashboard"
                   ? "bg-blue-600 text-white font-medium"
@@ -110,9 +111,9 @@ const SidebarUser = () => {
               >
                 <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Dashboard</span>}
-              </a>
-              <a
-                href="/stats"
+              </Link>
+              <Link
+                to="/stats"
                 onClick={() => handleItemClick("stats")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "stats" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
                   } ${!isOpen && "justify-center"}`}
@@ -120,7 +121,7 @@ const SidebarUser = () => {
               >
                 <Gauge className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Thống kê</span>}
-              </a>
+              </Link>
             </div>
           )}
         </div>
@@ -143,8 +144,8 @@ const SidebarUser = () => {
 
           {(isManagementOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-              <a
-                href="/devices"
+              <Link
+                to="/devices"
                 onClick={() => handleItemClick("devices")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "devices" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
                   } ${!isOpen && "justify-center"}`}
@@ -152,9 +153,9 @@ const SidebarUser = () => {
               >
                 <Lightbulb className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Thiết bị</span>}
-              </a>
-              <a
-                href="/groups"
+              </Link>
+              <Link
+                to="/groups"
                 onClick={() => handleItemClick("groups")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "groups" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
                   } ${!isOpen && "justify-center"}`}
@@ -162,9 +163,9 @@ const SidebarUser = () => {
               >
                 <Users className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Nhóm</span>}
-              </a>
-              <a
-                href="/spaces"
+              </Link>
+              <Link
+                to="/spaces"
                 onClick={() => handleItemClick("spaces")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "spaces" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
                   } ${!isOpen && "justify-center"}`}
@@ -172,9 +173,9 @@ const SidebarUser = () => {
               >
                 <Package className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Không gian</span>}
-              </a>
-              <a
-                href="/profile"
+              </Link>
+              <Link
+                to="/profile"
                 onClick={() => handleItemClick("profile")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "profile" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
                   } ${!isOpen && "justify-center"}`}
@@ -182,7 +183,7 @@ const SidebarUser = () => {
               >
                 <UserCog className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Tài khoản</span>}
-              </a>
+              </Link>
             </div>
           )}
         </div>

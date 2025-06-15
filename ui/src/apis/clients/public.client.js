@@ -1,12 +1,11 @@
 import axios from 'axios'
 
 const axiosPublic = axios.create({
-    baseURL: process.env.SMART_NET_API_URL || "http://localhost:8081/api/", // Địa chỉ API public
+    baseURL: process.env.SMART_NET_API_URL || "http://localhost:7777/api/", // Địa chỉ API public
     headers: {
         // 'ngrok-skip-browser-warning': 'true',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        charset: 'UTF-8',
     },
     // Cho phép xử lý các status code từ 200-499
     validateStatus: function (status) {
