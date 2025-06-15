@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Users, FileText, Palette, X } from "lucide-react"
-import IconPickerPopup from "./icon-picker/icon-picker-popup"
+import IconPickerPopup from "../icon-picker/icon-picker-popup"
 import Swal from "sweetalert2"
 
 export default function AddGroupPopup({ open, onOpenChange, onSave }) {
@@ -16,7 +16,7 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
     icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group", colorId: "blue" },
   })
   const [showIconPicker, setShowIconPicker] = useState(false)
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTcwOTAyNSwiZXhwIjoxNzQ5NzEyNjI1fQ.0qtm6AVq8sZ_mLzwjJ2Uqx9YuOkYRaiZzDxdCMMPzB8"
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk2MjU3NiwiZXhwIjoxNzQ5OTY2MTc2fQ.3Vdqi8yV0to-NXeeQ8oKW-OQ97aBchb7zOvdMmJVu_Y"
 
   const handleSave = async () => {
     try {

@@ -23,8 +23,8 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useNavigate, useParams } from "react-router-dom"
-import AddMemberPopup from "./groupPopups/Add-member-popup"
 import EditGroupPopup from "./groupPopups/Edit-groups-popup"
+import AddMemberPopup from "./groupPopups/Add-member-popup"
 import HouseTab from "./house/houseTab"
 import Swal from "sweetalert2"
 
@@ -42,7 +42,7 @@ export default function EditGroups() {
   const navigate = useNavigate()
   const { id } = useParams() // Matches the route parameter :id
 
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTcxMzE0NiwiZXhwIjoxNzQ5NzE2NzQ2fQ.71IBlziaXBroo_onw4IXQCagBstCvLjLNCJ4w19KeZM"
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
 
   // State for popups and navigation
   const [isAddMemberPopupOpen, setIsAddMemberPopupOpen] = useState(false)
@@ -53,6 +53,8 @@ export default function EditGroups() {
   const [showSpaceList, setShowSpaceList] = useState(false)
   const [showDeviceList, setShowDeviceList] = useState(false)
 
+
+  // Fetch lấy nhóm theo ID
   const fetchGroupById = async (id) => {
     try {
       const res = await fetch(`http://localhost:7777/api/groups/${id}`, {
@@ -85,7 +87,7 @@ export default function EditGroups() {
       return null
     }
   }
-
+  // Fetch lấy thành viên nhóm theo ID
   const fetchGroupsUser = async (id) => {
     try {
       const res = await fetch(`http://localhost:7777/api/groups/${id}/members`, {
@@ -293,7 +295,10 @@ export default function EditGroups() {
   }
 
   const getColorClass = (color) => {
-    return colorMap[color] || "bg-gray-500"
+    if (!color) return "bg-gray-500"
+    if (color.startsWith("bg-")) return color // Nếu là class Tailwind
+    if (color.startsWith("#")) return ""      // Nếu là mã hex, sẽ dùng style
+    return colorMap[color] || "bg-gray-500"   // Nếu là tên màu
   }
 
   // Dynamic icon and color for header
@@ -315,7 +320,10 @@ export default function EditGroups() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="flex items-center space-x-4">
-                <div className={`w-12 h-12 ${headerColorClass} rounded-xl flex items-center justify-center shadow-lg`}>
+                <div
+                  className={`w-12 h-12 ${headerColorClass} rounded-xl flex items-center justify-center shadow-lg`}
+                  style={formData.icon_color && formData.icon_color.startsWith("#") ? { backgroundColor: formData.icon_color } : {}}
+                >
                   <HeaderIconComponent className="h-6 w-6 text-white" />
                 </div>
                 <div>
@@ -345,7 +353,10 @@ export default function EditGroups() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className={`w-16 h-16 ${cardColorClass} rounded-2xl flex items-center justify-center shadow-lg`}>
+                <div
+                  className={`w-16 h-16 ${cardColorClass} rounded-2xl flex items-center justify-center shadow-lg`}
+                  style={formData.icon_color && formData.icon_color.startsWith("#") ? { backgroundColor: formData.icon_color } : {}}
+                >
                   <CardIconComponent className="h-8 w-8 text-white" />
                 </div>
                 <div className="flex-1">
@@ -370,7 +381,7 @@ export default function EditGroups() {
                   <p className="text-xs text-gray-500 mt-1">Được tạo ngày {new Date().toLocaleDateString("vi-VN")}</p>
                 </div>
               </div>
-              <div className="flex items-center space-x-6">
+              {/* <div className="flex items-center space-x-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">{members.length}</div>
                   <div className="text-sm text-gray-600">Thành viên</div>
@@ -385,7 +396,7 @@ export default function EditGroups() {
                   </div>
                   <div className="text-sm text-gray-600">Không gian</div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>
@@ -493,16 +504,6 @@ export default function EditGroups() {
             <HouseTab
               houses={houses}
               setHouses={setHouses}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedHouse={selectedHouse}
-              setSelectedHouse={setSelectedHouse}
-              selectedSpace={selectedSpace}
-              setSelectedSpace={setSelectedSpace}
-              showSpaceList={showSpaceList}
-              setShowSpaceList={setShowSpaceList}
-              showDeviceList={showDeviceList}
-              setShowDeviceList={setShowDeviceList}
               isAddHousePopupOpen={isAddHousePopupOpen}
               setIsAddHousePopupOpen={setIsAddHousePopupOpen}
               handleDeleteHouse={handleDeleteHouse}

@@ -29,12 +29,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import DeviceDetail from "./deviceDetails"
+import DeviceConnectionDialog from "./devicePopups/Add-device-popup"
 
 export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
   const [selectedDevice, setSelectedDevice] = useState(null)
+  const [devices, setDevices] = useState([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState("grid")
+  const [isAddDevicePopupOpen, setIsAddDevicePopupOpen] = useState(false)
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
   const [filterOptions, setFilterOptions] = useState({
     group_id: 0,
     link_status: "all",
@@ -42,231 +46,33 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
     lock_status: "all",
   })
 
+  const fetchDevice = async () => {
+    try {
+      const res = await fetch(`http://localhost:7777/api/device/space/${spaceId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (res.ok) {
+        const dataDevice = await res.json();
+        setDevices(Array.isArray(dataDevice) ? dataDevice : [])
+      } else {
+        console.error(`Failed to fetch spaces for house ${spaceId}: ${res.status} ${res.statusText}`);
+        return [];
+      }
+    } catch (error) {
+      console.error(`Error fetching spaces for house ${spaceId}:`, error);
+      return [];
+    }
+  }
   // Mock data based on database schema
-  const [devices, setDevices] = useState([
-    {
-      device_id: 1,
-      serial_number: "SMK001-2024-001",
-      template_id: 1,
-      template_name: "Smoke Detector Pro",
-      template_type: "smoke",
-      space_id: spaceId,
-      account_id: 1,
-      group_id: 1,
-      group_name: "Nhóm An toàn",
-      hub_id: "HUB001-2024-001",
-      firmware_id: 1,
-      firmware_version: "v2.1.3",
-      name: "Máy báo khói phòng khách",
-      power_status: true,
-      attribute: {
-        sensitivity: "high",
-        alarm_volume: 85,
-        test_interval: 30,
-      },
-      wifi_ssid: "SmartHome_5G",
-      current_value: {
-        ppm: 1024,
-        temperature: 34,
-        battery: 85,
-        signal_strength: 95,
-      },
-      link_status: "linked",
-      last_reset_at: "2024-01-15T10:30:00Z",
-      lock_status: "unlocked",
-      locked_at: null,
-      created_at: "2024-01-01T08:00:00Z",
-      updated_at: "2024-01-20T14:30:00Z",
-      is_deleted: false,
-      lastActivity: "2 phút trước",
-    },
-    {
-      device_id: 2,
-      serial_number: "LED001-2024-002",
-      template_id: 2,
-      template_name: "Smart LED Bulb",
-      template_type: "light",
-      space_id: spaceId,
-      account_id: 1,
-      group_id: 2,
-      group_name: "Nhóm Chiếu sáng",
-      hub_id: "HUB001-2024-001",
-      firmware_id: 2,
-      firmware_version: "v1.8.5",
-      name: "Đèn LED thông minh",
-      power_status: true,
-      attribute: {
-        max_brightness: 100,
-        color_temperature_range: [2700, 6500],
-        dimming_speed: "medium",
-      },
-      wifi_ssid: "SmartHome_5G",
-      current_value: {
-        brightness: 75,
-        color_temperature: 4000,
-        color: "#FFB800",
-        power_consumption: 12.5,
-        signal_strength: 92,
-      },
-      link_status: "linked",
-      last_reset_at: "2024-01-10T09:15:00Z",
-      lock_status: "unlocked",
-      locked_at: null,
-      created_at: "2024-01-02T10:00:00Z",
-      updated_at: "2024-01-20T16:45:00Z",
-      is_deleted: false,
-      lastActivity: "5 phút trước",
-    },
-    {
-      device_id: 3,
-      serial_number: "TEMP001-2024-003",
-      template_id: 3,
-      template_name: "Temperature & Humidity Sensor",
-      template_type: "temperature",
-      space_id: spaceId,
-      account_id: 1,
-      group_id: 3,
-      group_name: "Nhóm Môi trường",
-      hub_id: "HUB001-2024-001",
-      firmware_id: 3,
-      firmware_version: "v1.5.2",
-      name: "Cảm biến nhiệt độ & độ ẩm",
-      power_status: true,
-      attribute: {
-        measurement_interval: 60,
-        accuracy: "±0.5°C",
-        operating_range: [-10, 60],
-      },
-      wifi_ssid: "SmartHome_5G",
-      current_value: {
-        temperature: 28,
-        humidity: 65,
-        heat_index: 29.2,
-        signal_strength: 90,
-      },
-      link_status: "linked",
-      last_reset_at: "2024-01-12T11:20:00Z",
-      lock_status: "unlocked",
-      locked_at: null,
-      created_at: "2024-01-03T12:00:00Z",
-      updated_at: "2024-01-20T17:00:00Z",
-      is_deleted: false,
-      lastActivity: "3 phút trước",
-    },
-    {
-      device_id: 4,
-      serial_number: "LED002-2024-004",
-      template_id: 2,
-      template_name: "Smart LED Bulb",
-      template_type: "light",
-      space_id: spaceId,
-      account_id: 1,
-      group_id: 2,
-      group_name: "Nhóm Chiếu sáng",
-      hub_id: null,
-      firmware_id: 2,
-      firmware_version: "v1.8.5",
-      name: "Đèn bàn làm việc",
-      power_status: false,
-      attribute: {
-        max_brightness: 100,
-        color_temperature_range: [2700, 6500],
-        dimming_speed: "fast",
-      },
-      wifi_ssid: null,
-      current_value: {
-        brightness: 0,
-        color_temperature: 3000,
-        color: "#FFFFFF",
-        power_consumption: 0,
-        signal_strength: 0,
-      },
-      link_status: "unlinked",
-      last_reset_at: null,
-      lock_status: "locked",
-      locked_at: "2024-01-18T14:30:00Z",
-      created_at: "2024-01-04T14:00:00Z",
-      updated_at: "2024-01-18T14:30:00Z",
-      is_deleted: false,
-      lastActivity: "30 phút trước",
-    },
-    {
-      device_id: 5,
-      serial_number: "SMK002-2024-005",
-      template_id: 1,
-      template_name: "Smoke Detector Pro",
-      template_type: "smoke",
-      space_id: null,
-      account_id: 1,
-      group_id: null,
-      group_name: null,
-      hub_id: "HUB001-2024-001",
-      firmware_id: 1,
-      firmware_version: "v2.0.1",
-      name: "Cảm biến khói dự phòng",
-      power_status: false,
-      attribute: {
-        sensitivity: "medium",
-        alarm_volume: 75,
-        test_interval: 30,
-      },
-      wifi_ssid: "SmartHome_5G",
-      current_value: {
-        ppm: 980,
-        temperature: 32,
-        battery: 45,
-        signal_strength: 78,
-      },
-      link_status: "linked",
-      last_reset_at: "2024-01-05T08:45:00Z",
-      lock_status: "unlocked",
-      locked_at: null,
-      created_at: "2024-01-05T16:00:00Z",
-      updated_at: "2024-01-19T09:15:00Z",
-      is_deleted: false,
-      lastActivity: "15 phút trước",
-    },
-    {
-      device_id: 6,
-      serial_number: "ALARM001-2024-006",
-      template_id: 4,
-      template_name: "Smart Alarm System",
-      template_type: "alarm",
-      space_id: spaceId,
-      account_id: 1,
-      group_id: 1,
-      group_name: "Nhóm An toàn",
-      hub_id: "HUB001-2024-001",
-      firmware_id: 4,
-      firmware_version: "v1.0.0",
-      name: "Báo động phòng khách",
-      power_status: true,
-      attribute: {
-        sensitivity: 70,
-        alarm_volume: 80,
-        delay: 30,
-      },
-      wifi_ssid: "SmartHome_5G",
-      current_value: {
-        armed: false,
-        mode: "home",
-        notifyMethods: ["app", "sms"],
-        signal_strength: 90,
-      },
-      link_status: "linked",
-      last_reset_at: "2024-01-05T08:45:00Z",
-      lock_status: "unlocked",
-      locked_at: null,
-      created_at: "2024-01-06T16:00:00Z",
-      updated_at: "2024-01-19T09:15:00Z",
-      is_deleted: false,
-      lastActivity: "10 phút trước",
-      lastTriggered: "2024-01-15T14:30:00Z",
-    },
-  ])
+
 
   // Simulate loading data
   useEffect(() => {
+    fetchDevice()
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 1500)
@@ -325,7 +131,12 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
   }
 
   const handleAddDevice = () => {
-    alert("Thêm thiết bị mới")
+    setIsAddDevicePopupOpen(true);
+  }
+
+  const handleDeviceConnect = (connectedDevice) => {
+    setDevices(prev => [...prev, connectedDevice]);
+    setIsAddDevicePopupOpen(false);
   }
 
   const handleDeleteDevice = (deviceId) => {
@@ -707,6 +518,13 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
           </Dialog>
         </div>
       </div>
+
+      {/* Add Device Popup */}
+      <DeviceConnectionDialog
+        open={isAddDevicePopupOpen}
+        onOpenChange={setIsAddDevicePopupOpen}
+        onConnect={handleDeviceConnect}
+      />
     </div>
   )
 }

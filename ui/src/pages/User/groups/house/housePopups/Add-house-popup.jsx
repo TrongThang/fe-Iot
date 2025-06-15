@@ -1,106 +1,104 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Home, MapPin, Palette, X } from "lucide-react"
-import IconColorPickerPopup from "../../icon-picker/icon-color-picker-popup"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Home, MapPin, Palette, X, Briefcase, GraduationCap, Building, Building2, Bed, Castle, TreePine, Crown, BookOpen } from "lucide-react";
+import IconPickerPopup from "../../icon-picker/icon-picker-popup";
+import Swal from "sweetalert2";
 
-export default function AddHousePopup({ open, onOpenChange, onSave }) {
+export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
   const [houseData, setHouseData] = useState({
     name: "",
     address: "",
-    icon: null,
-  })
+    icon: { icon: Home, color: "bg-blue-500", name: "home", colorId: "blue" },
+  });
+  const [showIconPicker, setShowIconPicker] = useState(false);
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
 
-  const [showIconPicker, setShowIconPicker] = useState(false)
+  const handleSave = async () => {
+    try {
+      if (!groupId) {
+        throw new Error("Group ID is required");
+      }
+      const requestBody = {
+        groupId: Number(groupId),
+        house_name: houseData.name,
+        address: houseData.address || "",
+        icon_name: houseData.icon.id,
+        icon_color: houseData.icon.colorId,
+      }
 
-  const handleSave = () => {
-    if (!houseData.name.trim()) {
-      alert("Vui lòng nhập tên nhà!")
-      return
+      const response = await fetch("http://localhost:7777/api/houses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Thêm nhà thất bại");
+      }
+
+      const newHouse = await response.json();
+      onSave(newHouse);
+      onOpenChange(false);
+
+      Swal.fire({
+        icon: "success",
+        title: "Thành công",
+        text: "Thêm nhà thành công!",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#28a745",
+      });
+
+      setHouseData({
+        name: "",
+        address: "",
+        icon: { icon: Home, color: "bg-blue-500", name: "home", colorId: "blue" },
+      });
+    } catch (error) {
+      console.error("Lỗi khi thêm nhà:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message || "Đã xảy ra lỗi khi thêm nhà. Vui lòng thử lại.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#d33",
+      });
     }
-    if (!houseData.address.trim()) {
-      alert("Vui lòng nhập địa chỉ nhà!")
-      return
-    }
-    if (!houseData.icon) {
-      alert("Vui lòng chọn biểu tượng!")
-      return
-    }
+  };
 
-    const newHouse = {
-      id: Date.now(),
-      name: houseData.name,
-      address: houseData.address,
-      icon: houseData.icon,
-      devices: 0,
-      status: "Hoạt động",
-      createdDate: new Date().toLocaleDateString("vi-VN"),
-    }
+  const handleIconSelect = (selectedIcon) => {
+    setHouseData((prev) => ({ ...prev, icon: selectedIcon }));
+  };
 
-    onSave(newHouse)
-    onOpenChange(false)
-
-    // Reset form
+  const handleCancel = () => {
     setHouseData({
       name: "",
       address: "",
-      icon: null,
-    })
-  }
+      icon: { icon: Home, color: "bg-blue-500", name: "home", colorId: "blue" },
+    });
+    onOpenChange(false);
+  };
 
-  const handleIconSelect = (selectedIcon) => {
-    setHouseData((prev) => ({ ...prev, icon: selectedIcon }))
-  }
-
-  const renderIconPreview = () => {
-    if (!houseData.icon || !houseData.icon.component) {
-      return (
-        <div className="w-20 h-20 rounded-2xl bg-gray-200 flex items-center justify-center shadow-lg">
-          <Home className="h-10 w-10 text-gray-400" />
-        </div>
-      )
-    }
-
-    const IconComponent = houseData.icon.component
-    return (
-      <div className={`w-20 h-20 rounded-2xl ${houseData.icon.color} flex items-center justify-center shadow-lg`}>
-        <IconComponent className="h-10 w-10 text-white" />
-      </div>
-    )
-  }
-
-  const renderSelectedIcon = () => {
-    if (!houseData.icon || !houseData.icon.component) {
-      return (
-        <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center">
-          <Home className="h-4 w-4 text-gray-400" />
-        </div>
-      )
-    }
-
-    const IconComponent = houseData.icon.component
-    return (
-      <div className={`w-8 h-8 rounded-lg ${houseData.icon.color} flex items-center justify-center`}>
-        <IconComponent className="h-4 w-4 text-white" />
-      </div>
-    )
-  }
+  const IconComponent = houseData.icon.icon || Home;
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[600px] p-0 rounded-2xl shadow-2xl">
-          {/* Header */}
           <DialogHeader className="px-6 pt-6 pb-2 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-semibold text-gray-900">Thêm nhà mới</DialogTitle>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCancel}
                 className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
               >
                 <X className="h-4 w-4" />
@@ -108,12 +106,15 @@ export default function AddHousePopup({ open, onOpenChange, onSave }) {
             </div>
           </DialogHeader>
 
-          {/* Content */}
           <div className="px-6 py-6 space-y-6">
-            {/* Icon Preview */}
-            <div className="flex justify-center">{renderIconPreview()}</div>
+            <div className="flex justify-center">
+              <div
+                className={`w-20 h-20 rounded-2xl ${houseData.icon.color} flex items-center justify-center shadow-lg`}
+              >
+                <IconComponent className="h-10 w-10 text-white" />
+              </div>
+            </div>
 
-            {/* House Name */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Tên nhà</label>
               <div className="relative">
@@ -129,7 +130,6 @@ export default function AddHousePopup({ open, onOpenChange, onSave }) {
               </div>
             </div>
 
-            {/* House Address */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Địa chỉ nhà</label>
               <div className="relative">
@@ -145,7 +145,6 @@ export default function AddHousePopup({ open, onOpenChange, onSave }) {
               </div>
             </div>
 
-            {/* Icon Picker Button */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Biểu tượng nhà</label>
               <Button
@@ -157,15 +156,16 @@ export default function AddHousePopup({ open, onOpenChange, onSave }) {
                   <Palette className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
                   <span className="text-gray-600 group-hover:text-blue-600">Chọn biểu tượng</span>
                 </div>
-                {renderSelectedIcon()}
+                <div className={`w-8 h-8 rounded-lg ${houseData.icon.color} flex items-center justify-center`}>
+                  <IconComponent className="h-4 w-4 text-white" />
+                </div>
               </Button>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex space-x-3 pt-4">
               <Button
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCancel}
                 className="flex-1 h-12 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
               >
                 Hủy
@@ -173,7 +173,7 @@ export default function AddHousePopup({ open, onOpenChange, onSave }) {
               <Button
                 onClick={handleSave}
                 className="flex-1 h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all"
-                disabled={!houseData.name.trim() || !houseData.address.trim() || !houseData.icon}
+                disabled={!houseData.name.trim() || !houseData.address.trim() || !houseData.icon || !groupId}
               >
                 Thêm nhà
               </Button>
@@ -182,13 +182,12 @@ export default function AddHousePopup({ open, onOpenChange, onSave }) {
         </DialogContent>
       </Dialog>
 
-      {/* Icon Color Picker Popup */}
-      <IconColorPickerPopup
+      <IconPickerPopup
         open={showIconPicker}
         onOpenChange={setShowIconPicker}
         onSelectIcon={handleIconSelect}
         selectedIcon={houseData.icon}
       />
     </>
-  )
+  );
 }

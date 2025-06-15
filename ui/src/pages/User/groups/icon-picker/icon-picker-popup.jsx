@@ -124,7 +124,7 @@ export default function IconPickerPopup({ open, onOpenChange, onSelectIcon, sele
             >
               Hủy
             </Button>
-            <Button onClick={handleConfirm} className="flex-1 h-11 bg-red-500 hover:bg-red-600 text-white">
+            <Button onClick={handleConfirm} className="flex-1 h-11 bg-blue-500 hover:bg-blue-600 text-white">
               Tạo
             </Button>
           </div>

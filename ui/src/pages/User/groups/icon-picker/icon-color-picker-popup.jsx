@@ -103,9 +103,8 @@ export default function IconColorPickerPopup({ open, onOpenChange, onSelectIcon,
                 <button
                   key={iconData.id}
                   onClick={() => handleIconSelect(iconData)}
-                  className={`flex flex-col items-center p-3 rounded-lg transition-all hover:bg-gray-50 ${
-                    isSelected ? "bg-blue-50 border-2 border-blue-500" : "border-2 border-transparent"
-                  }`}
+                  className={`flex flex-col items-center p-3 rounded-lg transition-all hover:bg-gray-50 ${isSelected ? "bg-blue-50 border-2 border-blue-500" : "border-2 border-transparent"
+                    }`}
                 >
                   <div className="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center mb-2">
                     <IconComponent className="h-6 w-6 text-white" />
@@ -124,9 +123,8 @@ export default function IconColorPickerPopup({ open, onOpenChange, onSelectIcon,
                 <button
                   key={colorData.id}
                   onClick={() => handleColorSelect(colorData)}
-                  className={`w-10 h-10 rounded-full ${colorData.value} border-4 transition-all hover:scale-110 ${
-                    tempSelectedIcon.color === colorData.value ? "border-gray-800 shadow-lg" : "border-gray-200"
-                  }`}
+                  className={`w-10 h-10 rounded-full ${colorData.value} border-4 transition-all hover:scale-110 ${tempSelectedIcon.color === colorData.value ? "border-gray-800 shadow-lg" : "border-gray-200"
+                    }`}
                   title={colorData.name}
                 />
               ))}

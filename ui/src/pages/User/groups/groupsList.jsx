@@ -1,10 +1,7 @@
 "use client"
 
 import {
-    Users, Plus, Edit, Trash2, Search, Calendar, Grid, List, Home,
-    Briefcase,
-    GraduationCap,
-    Building,
+    Users, Plus, Edit, Trash2, Search, Calendar, Grid, List, Home, Briefcase, GraduationCap, Building,
     Building2,
     Bed,
     Castle,
@@ -21,8 +18,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import AddGroups from "./groupAdd"
 import Swal from "sweetalert2"
+import AddGroups from "./groupPopups/Add-group-popup"
 
 export default function GroupsManagement() {
     const [viewMode, setViewMode] = useState("grid")
@@ -30,7 +27,7 @@ export default function GroupsManagement() {
     const [groups, setGroups] = useState([])
     const [groupMembers, setGroupMembers] = useState({}) // Object to map group_id to member count
     const navigate = useNavigate()
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTcxMzE0NiwiZXhwIjoxNzQ5NzE2NzQ2fQ.71IBlziaXBroo_onw4IXQCagBstCvLjLNCJ4w19KeZM"
+    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
 
     const iconMap = {
         home: Home,
@@ -186,7 +183,10 @@ export default function GroupsManagement() {
     }
 
     const getColorClass = (color) => {
-        return colorMap[color] || "bg-gray-500"
+        if (!color) return "bg-gray-500"
+        if (color.startsWith("bg-")) return color // Trường hợp là class Tailwind
+        if (color.startsWith("#")) return ""      // Trường hợp là mã hex, sẽ dùng style
+        return colorMap[color] || "bg-gray-500"   // Trường hợp là tên màu
     }
 
     return (
@@ -255,7 +255,6 @@ export default function GroupsManagement() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {groups.map((group) => {
                             const IconComponent = getIconComponent(group.icon_name)
-                            const colorClass = getColorClass(group.icon_color)
                             return (
                                 <Card
                                     key={group.group_id}
@@ -283,7 +282,10 @@ export default function GroupsManagement() {
                                             </div>
 
                                             <div className="flex items-start space-x-4">
-                                                <div className={`w-14 h-14 ${colorClass} rounded-xl flex items-center justify-center shadow-lg`}>
+                                                <div
+                                                    className={`w-14 h-14 rounded-xl flex items-center justify-center shadow-lg ${getColorClass(group.icon_color)}`}
+                                                    style={group.icon_color && group.icon_color.startsWith("#") ? { backgroundColor: group.icon_color } : {}}
+                                                >
                                                     <IconComponent className="h-7 w-7 text-white" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -355,13 +357,15 @@ export default function GroupsManagement() {
                                 {Array.isArray(groups) && groups.length > 0 ? (
                                     groups.map((group) => {
                                         const IconComponent = getIconComponent(group.icon_name)
-                                        const colorClass = getColorClass(group.icon_color)
                                         return (
                                             <TableRow key={group.group_id} className="hover:bg-gray-50">
                                                 <TableCell className="font-medium text-center">{group.group_id}</TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center space-x-3">
-                                                        <div className={`w-10 h-10 ${colorClass} rounded-lg flex items-center justify-center`}>
+                                                        <div
+                                                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${getColorClass(group.icon_color)}`}
+                                                            style={group.icon_color && group.icon_color.startsWith("#") ? { backgroundColor: group.icon_color } : {}}
+                                                        >
                                                             <IconComponent className="h-5 w-5 text-white" />
                                                         </div>
                                                         <div>
@@ -421,7 +425,9 @@ export default function GroupsManagement() {
                     </div>
                 )}
             </div>
-            <AddGroups open={showAddDialog} onOpenChange={setShowAddDialog} onSave={handleSaveGroup} />
+            <AddGroups open={showAddDialog}
+                onOpenChange={setShowAddDialog}
+                onSave={handleSaveGroup} />
         </div>
     )
 }
