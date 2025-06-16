@@ -160,6 +160,16 @@ const SidebarUser = () => {
           {(isManagementOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
               <Link
+                to="/devices"
+                onClick={() => handleItemClick("devices")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "devices" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Thiết bị" : ""}
+              >
+                <Lightbulb className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Thiết bị</span>}
+              </Link>
+              <Link
                 to="/groups"
                 onClick={() => handleItemClick("groups")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${

@@ -9,7 +9,11 @@ import {
     DropdownMenuContent,
     DropdownMenuItem
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
 const Topbar = () => {
     const { isOpen, toggle } = useSidebar()
     const [notifications, setNotifications] = useState(3)
@@ -17,7 +21,8 @@ const Topbar = () => {
     const [currentTime, setCurrentTime] = useState(new Date())
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
-
+    const { user, logout } = useAuth()
+    const navigate = useNavigate();
     // Update time every second
     useEffect(() => {
         const timer = setInterval(() => {
@@ -62,11 +67,6 @@ const Topbar = () => {
         },
     ]
 
-    // User data
-    const username = "Nguyễn Văn A"
-    const email = "nguyenvana@smarthome.com"
-    const role = "Quản trị viên"
-
     const time = currentTime.toLocaleTimeString("vi-VN", {
         hour: "2-digit",
         minute: "2-digit",
@@ -97,6 +97,22 @@ const Topbar = () => {
                 return "text-red-600"
             default:
                 return "text-blue-600"
+        }
+    }
+
+    const handleLogout = async () => {
+        try {
+            const response = logout();
+
+            if (response.success) {
+                toast.success("Đã đăng xuất!")
+
+                navigate("/login")
+            }
+        } catch (error) {
+            console.log("error", error)
+            const errorMessage = error.response?.data?.message || "Đăng xuất thất bại. Vui lòng thử lại."
+            toast.error(errorMessage)
         }
     }
 
@@ -212,12 +228,25 @@ const Topbar = () => {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="flex items-center gap-2 hover:bg-white/10 p-2 rounded-lg transition-all duration-200">
-                                <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/30">
-                                    <User className="w-4 h-4 text-white" />
+                                <div className="h-8 w-8 rounded-full bg-white/20 flex justify-center items-center border-2 border-white/30">
+                                    <Avatar>
+                                        <AvatarImage
+                                            src={
+                                                user?.image && user?.image.trim() !== ""
+                                                    ? `${user?.image}`
+                                                    : undefined
+                                            }
+                                            alt="Customer Avatar"
+                                            className="h-7 w-7 rounded-full"
+                                        />
+                                        {(!user?.image || user?.image.trim() === "") && (
+                                            <User className="w-4 h-4 text-white" />
+                                        )}
+                                    </Avatar>
                                 </div>
                                 <div className="hidden md:flex flex-col items-start">
-                                    <span className="text-sm font-semibold text-white">{username}</span>
-                                    <span className="text-xs text-blue-200">{role}</span>
+                                    <span className="text-sm font-semibold text-white">{user?.username}</span>
+                                    <span className="text-xs text-blue-200">{user?.role || ""}</span>
                                 </div>
                                 <ChevronDown className="w-4 h-4 hidden md:block text-white" />
                             </button>
@@ -226,14 +255,27 @@ const Topbar = () => {
                         <DropdownMenuContent align="end" className="w-72 p-0">
                             {/* Header */}
                             <div className="flex flex-col items-center p-6 gap-3 border-b bg-gradient-to-br from-blue-50 to-blue-100 rounded-t-xl">
-                                <div className="h-20 w-20 rounded-full bg-blue-500 flex items-center justify-center border-4 border-white">
-                                    <User className="w-10 h-10 text-white" />
+                                <div className="h-20 w-20 rounded-full bg-blue-500 flex items-center justify-center border-4 border-gray-300">
+                                <Avatar>
+                                        <AvatarImage
+                                            src={
+                                                user?.image && user?.image.trim() !== ""
+                                                    ? `${user?.image}`
+                                                    : undefined
+                                            }
+                                            alt="Customer Avatar"
+                                            className="h-19 w-19 rounded-full"
+                                        />
+                                        {(!user?.image || user?.image.trim() === "") && (
+                                            <User className="w-10 h-10 text-white" />
+                                        )}
+                                    </Avatar>
                                 </div>
                                 <div className="text-center">
-                                    <div className="font-bold text-lg text-gray-800">{username}</div>
-                                    <div className="text-sm text-gray-600">{email}</div>
+                                    <div className="font-bold text-lg text-gray-800">{user?.username}</div>
+                                    <div className="text-sm text-gray-600">{user?.email}</div>
                                     <div className="mt-2 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-0.5 rounded-full inline-block">
-                                        {role}
+                                        {user?.role || ""}
                                     </div>
                                 </div>
                             </div>
@@ -241,40 +283,40 @@ const Topbar = () => {
                             {/* Menu Items */}
                             <div className="p-2 bg-white">
                                 <DropdownMenuItem asChild>
-                                    <a
-                                        href="/profile"
+                                    <Link
+                                        to="/profile"
                                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
                                     >
                                         <User className="w-5 h-5 text-blue-600" />
                                         <span className="font-medium text-gray-700 text-sm">Hồ sơ của tôi</span>
-                                    </a>
+                                    </Link>
                                 </DropdownMenuItem>
 
                                 <DropdownMenuItem asChild>
-                                    <a
+                                    <Link
                                         href="/calendar"
                                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
                                     >
                                         <Calendar className="w-5 h-5 text-blue-600" />
                                         <span className="font-medium text-gray-700 text-sm">Lịch điều khiển</span>
-                                    </a>
+                                    </Link>
                                 </DropdownMenuItem>
 
                                 <DropdownMenuItem asChild>
-                                    <a
+                                    <Link
                                         href="/settings"
                                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
                                     >
                                         <Settings className="w-5 h-5 text-blue-600" />
                                         <span className="font-medium text-gray-700 text-sm">Cài đặt hệ thống</span>
-                                    </a>
+                                    </Link>
                                 </DropdownMenuItem>
 
                                 <div className="h-px bg-gray-200 my-2"></div>
 
                                 <DropdownMenuItem asChild>
                                     <a
-                                        href="/logout"
+                                        onClick={handleLogout}
                                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors w-full"
                                     >
                                         <LogOut className="w-5 h-5" />
