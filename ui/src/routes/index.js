@@ -25,6 +25,7 @@ import SearchCustomerGroups from "@/pages/admin/search/searchCustomerGroups";
 import SearchCustomerHouses from "@/pages/admin/search/searchCustomerHouses";
 import SearchCustomerSpaces from "@/pages/admin/search/searchCustomerSpaces";
 import SearchCustomerDevices from "@/pages/admin/search/searchCustomerDevices";
+import SearchCustomerInfo from "@/pages/admin/search/searchCustomerInfo";
 
 export const router = createBrowserRouter([
     {
@@ -58,6 +59,10 @@ export const router = createBrowserRouter([
             {
                 path: 'search-group',
                 element: <SearchGroup />
+            },
+            {
+                path: 'search-customer-info',
+                element: <SearchCustomerInfo />
             },
             {
                 path: 'search-customer-groups',

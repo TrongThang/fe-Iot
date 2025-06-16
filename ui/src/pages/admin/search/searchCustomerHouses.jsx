@@ -25,129 +25,118 @@ import {
     Users,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-// Mock data theo schema Prisma
-const customersData = [
-    {
-        customer_id: "CUST_001_ABC_TECH_2024",
-        surname: "Công ty TNHH",
-        lastname: "ABC Technology",
-        image: "/placeholder.svg?height=64&width=64",
-        phone: "+84901234567",
-        email: "admin@abctech.com",
-        email_verified: true,
-        birthdate: "1990-01-15",
-        gender: true,
-        created_at: "2023-01-15T10:00:00Z",
-        updated_at: "2024-01-07T14:30:00Z",
-        deleted_at: null,
-        account: {
-            account_id: "ACC_001_ABC_2024",
-            username: "abctech_admin",
-            role_id: 2,
-            status: 1,
-            created_at: "2023-01-15T10:00:00Z"
-        }
-    }
-]
-
-const housesData = [
-    {
-        house_id: 101,
-        group_id: 201,
-        house_name: "Trụ sở chính",
-        address: "123 Đường ABC, Quận 1, TP.HCM",
-        icon_name: "building",
-        icon_color: "#4F46E5",
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-07T14:30:00Z",
-        is_deleted: false,
-        spaces: [
-            {
-                space_id: 1001,
-                space_name: "Tầng 1",
-                space_description: "Khu vực tiếp tân",
-                icon_name: "floor",
-                icon_color: "#10B981"
-            },
-            {
-                space_id: 1002,
-                space_name: "Tầng 2",
-                space_description: "Khu vực văn phòng",
-                icon_name: "floor",
-                icon_color: "#10B981"
-            }
-        ]
-    },
-    {
-        house_id: 102,
-        group_id: 201,
-        house_name: "Chi nhánh 1",
-        address: "456 Đường XYZ, Quận 2, TP.HCM",
-        icon_name: "home",
-        icon_color: "#F59E0B",
-        created_at: "2024-01-02T00:00:00Z",
-        updated_at: "2024-01-07T14:30:00Z",
-        is_deleted: false,
-        spaces: [
-            {
-                space_id: 1003,
-                space_name: "Tầng 1",
-                space_description: "Khu vực bán hàng",
-                icon_name: "floor",
-                icon_color: "#10B981"
-            }
-        ]
-    }
-]
 
 export default function SearchCustomerHouses() {
     const [searchFilters, setSearchFilters] = useState({
         email: "",
         phone: "",
-        name: "",
-        customerId: "",
         username: ""
     })
     const [selectedCustomer, setSelectedCustomer] = useState(null)
     const [customerHouses, setCustomerHouses] = useState([])
-    const [filterOptions, setFilterOptions] = useState({
-        houseType: "all",
-        location: "all"
-    })
 
-    const handleSearch = () => {
-        const customer = customersData.find((c) => {
-            const emailMatch = !searchFilters.email || c.email.toLowerCase().includes(searchFilters.email.toLowerCase())
-            const phoneMatch = !searchFilters.phone || c.phone.toLowerCase().includes(searchFilters.phone.toLowerCase())
-            const nameMatch = !searchFilters.name ||
-                (c.surname + " " + c.lastname).toLowerCase().includes(searchFilters.name.toLowerCase())
-            const idMatch = !searchFilters.customerId || c.customer_id.toLowerCase().includes(searchFilters.customerId.toLowerCase())
-            const usernameMatch = !searchFilters.username ||
-                c.account?.username.toLowerCase().includes(searchFilters.username.toLowerCase())
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState(null)
 
-            return emailMatch && phoneMatch && nameMatch && idMatch && usernameMatch
-        })
+    const handleSearch = async () => {
+        setIsLoading(true)
+        setError(null)
 
-        if (customer) {
-            setSelectedCustomer(customer)
-            // Lọc nhà của khách hàng
-            let houses = housesData
+        try {
+            // Kiểm tra xem có ít nhất một điều kiện tìm kiếm không
+            const hasSearchCriteria = Object.values(searchFilters).some(value => value.trim() !== '');
 
-            // Áp dụng các bộ lọc bổ sung
-            if (filterOptions.houseType !== "all") {
-                houses = houses.filter(h => h.icon_name === filterOptions.houseType)
+            if (!hasSearchCriteria) {
+                setError('Vui lòng nhập ít nhất một điều kiện tìm kiếm');
+                setSelectedCustomer(null);
+                setCustomerHouses([]);
+                setIsLoading(false);
+                return;
             }
 
-            if (filterOptions.location !== "all") {
-                houses = houses.filter(h => h.address.toLowerCase().includes(filterOptions.location.toLowerCase()))
+            // Tạo query params từ searchFilters
+            const params = new URLSearchParams()
+
+            // Thêm các tham số tìm kiếm khách hàng
+            if (searchFilters.email) params.append('email', searchFilters.email)
+            if (searchFilters.phone) params.append('phone', searchFilters.phone)
+            if (searchFilters.username) params.append('username', searchFilters.username)
+
+
+
+            const response = await fetch(`http://localhost:7777/api/customer-search?${params.toString()}`)
+
+            if (!response.ok) {
+                throw new Error('Không tìm thấy khách hàng hoặc có lỗi xảy ra')
             }
 
-            setCustomerHouses(houses)
+            const data = await response.json()
+
+            if (data.success && data.data?.customer) {
+                // Format lại dữ liệu khách hàng để phù hợp với giao diện hiện tại
+                const fullName = data.data.customer.full_name || '';
+                const fullNameParts = fullName.split(' ');
+                const surname = fullNameParts[0] || '';
+                const lastname = fullNameParts.slice(1).join(' ') || '';
+
+                const customerData = {
+                    customer_id: data.data.customer.customer_id || '',
+                    surname: surname,
+                    lastname: lastname,
+                    image: data.data.customer.avatar || "/placeholder.svg?height=64&width=64",
+                    phone: data.data.customer.phone || '',
+                    email: data.data.customer.email || '',
+                    email_verified: data.data.customer.email_verified || false,
+                    birthdate: data.data.customer.birthdate || new Date().toISOString(),
+                    gender: data.data.customer.gender === true,
+                    created_at: data.data.customer.created_at || new Date().toISOString(),
+                    updated_at: data.data.customer.updated_at || new Date().toISOString(),
+                    deleted_at: data.data.customer.is_deleted ? data.data.customer.updated_at : null,
+                    account: {
+                        account_id: data.data.account?.account_id || '',
+                        username: data.data.account?.username || '',
+                        role_id: 2,
+                        status: 1,
+                        created_at: data.data.account?.created_at || new Date().toISOString()
+                    }
+                }
+
+                setSelectedCustomer(customerData)
+
+                // Format lại dữ liệu nhà
+                const formattedHouses = (data.data.houses || []).map(house => {
+                    if (!house) return null;
+
+                    return {
+                        house_id: house.house_id || '',
+                        group_id: house.group_id || '',
+                        house_name: house.house_name || '',
+                        address: house.address || 'Chưa có địa chỉ',
+                        icon_name: house.icon_name || 'home',
+                        icon_color: house.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                        created_at: house.created_at || new Date().toISOString(),
+                        updated_at: house.updated_at || new Date().toISOString(),
+                        is_deleted: house.is_deleted || false,
+                        spaces: house.spaces || []
+
+                    }
+                }).filter(Boolean);
+
+                setCustomerHouses(formattedHouses)
         } else {
+                setSelectedCustomer(null)
+                setCustomerHouses([])
+                setError('Không tìm thấy dữ liệu khách hàng')
+            }
+        } catch (err) {
+            console.error('Error fetching data:', err)
+            setError(err.message || 'Có lỗi xảy ra khi tìm kiếm')
             setSelectedCustomer(null)
             setCustomerHouses([])
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -155,16 +144,11 @@ export default function SearchCustomerHouses() {
         setSearchFilters({
             email: "",
             phone: "",
-            name: "",
-            customerId: "",
             username: ""
-        })
-        setFilterOptions({
-            houseType: "all",
-            location: "all"
         })
         setSelectedCustomer(null)
         setCustomerHouses([])
+        setError(null)
     }
 
     return (
@@ -182,116 +166,64 @@ export default function SearchCustomerHouses() {
                         <CardContent>
                             <div className="space-y-4">
                                 {/* Search Filters */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700">Email</label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                                        <div className="relative group">
+                                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 group-hover:text-blue-500 transition-colors" />
                                             <Input
                                                 placeholder="Nhập email..."
                                                 value={searchFilters.email}
                                                 onChange={(e) => setSearchFilters({ ...searchFilters, email: e.target.value })}
-                                                className="pl-10"
+                                                className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                                        <div className="relative group">
+                                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 group-hover:text-blue-500 transition-colors" />
                                             <Input
                                                 placeholder="Nhập số điện thoại..."
                                                 value={searchFilters.phone}
                                                 onChange={(e) => setSearchFilters({ ...searchFilters, phone: e.target.value })}
-                                                className="pl-10"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700">Tên khách hàng</label>
-                                        <div className="relative">
-                                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-                                            <Input
-                                                placeholder="Nhập tên khách hàng..."
-                                                value={searchFilters.name}
-                                                onChange={(e) => setSearchFilters({ ...searchFilters, name: e.target.value })}
-                                                className="pl-10"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700">Mã khách hàng</label>
-                                        <div className="relative">
-                                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-                                            <Input
-                                                placeholder="Nhập mã khách hàng..."
-                                                value={searchFilters.customerId}
-                                                onChange={(e) => setSearchFilters({ ...searchFilters, customerId: e.target.value })}
-                                                className="pl-10"
+                                                className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-slate-700">Username</label>
-                                        <div className="relative">
-                                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                                        <div className="relative group">
+                                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 group-hover:text-blue-500 transition-colors" />
                                             <Input
                                                 placeholder="Nhập username..."
                                                 value={searchFilters.username}
                                                 onChange={(e) => setSearchFilters({ ...searchFilters, username: e.target.value })}
-                                                className="pl-10"
+                                                className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* House Filters */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 mb-2 block">Loại nhà</label>
-                                        <Select
-                                            value={filterOptions.houseType}
-                                            onValueChange={(value) => setFilterOptions({ ...filterOptions, houseType: value })}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Chọn loại nhà" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">Tất cả loại</SelectItem>
-                                                <SelectItem value="building">Tòa nhà</SelectItem>
-                                                <SelectItem value="home">Nhà riêng</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                {/* Error Message */}
+                                {error && (
+                                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center">
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        {error}
                                     </div>
-
-                                    <div>
-                                        <label className="text-sm font-medium text-slate-700 mb-2 block">Khu vực</label>
-                                        <Select
-                                            value={filterOptions.location}
-                                            onValueChange={(value) => setFilterOptions({ ...filterOptions, location: value })}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Chọn khu vực" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">Tất cả khu vực</SelectItem>
-                                                <SelectItem value="quận 1">Quận 1</SelectItem>
-                                                <SelectItem value="quận 2">Quận 2</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
+                                )}
 
                                 {/* Action Buttons */}
-                                <div className="flex justify-end gap-4">
+                                <div className="flex justify-end gap-4 mt-6">
                                     <Button
                                         onClick={handleReset}
                                         variant="outline"
-                                        className="px-6"
+                                        className="px-6 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200"
+                                        disabled={isLoading}
                                     >
                                         <RefreshCw className="h-4 w-4 mr-2" />
                                         Đặt lại
@@ -299,9 +231,19 @@ export default function SearchCustomerHouses() {
                                     <Button
                                         onClick={handleSearch}
                                         className="px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                        disabled={isLoading}
                                     >
+                                        {isLoading ? (
+                                            <>
+                                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                Đang tải...
+                                            </>
+                                        ) : (
+                                            <>
                                         <Search className="h-4 w-4 mr-2" />
                                         Tìm kiếm
+                                            </>
+                                        )}
                                     </Button>
                                 </div>
                             </div>
@@ -317,87 +259,111 @@ export default function SearchCustomerHouses() {
                             <CardTitle className="text-xl font-semibold text-slate-900">Thông tin khách hàng</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex flex-col md:flex-row gap-6">
+                            <div className="flex flex-col gap-6">
                                 {/* Avatar và thông tin cơ bản */}
-                                <div className="flex items-center gap-4">
-                                    <Avatar className="h-16 w-16 border-2 border-white shadow-lg">
+                                <div className="flex items-center gap-6 p-4 bg-slate-50/50 rounded-xl">
+                                    <Avatar className="h-20 w-20 border-2 border-white shadow-lg">
                                         <AvatarImage src={selectedCustomer.image} />
-                                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-lg">
+                                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-xl">
                                             {selectedCustomer.surname.charAt(0)}{selectedCustomer.lastname.charAt(0)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div>
-                                        <h3 className="text-base font-semibold text-slate-900">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-semibold text-slate-900 truncate">
                                             {selectedCustomer.surname} {selectedCustomer.lastname}
                                         </h3>
-                                        <p className="text-xs text-slate-500">ID: {selectedCustomer.customer_id}</p>
+                                        <p className="text-sm text-slate-500 mt-1">ID: {selectedCustomer.customer_id}</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <Badge variant={selectedCustomer.email_verified ? "success" : "secondary"} className="text-xs">
+                                                {selectedCustomer.email_verified ? "Đã xác thực" : "Chưa xác thực"}
+                                            </Badge>
+                                            <Badge variant="outline" className="text-xs">
+                                                {selectedCustomer.gender ? "Nam" : "Nữ"}
+                                            </Badge>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* Thông tin chi tiết */}
-                                <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4">
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50/50">
-                                        <div className="p-2 rounded-lg bg-blue-50">
-                                            <User className="h-4 w-4 text-blue-600" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-blue-50">
+                                            <User className="h-5 w-5 text-blue-600" />
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Username</p>
-                                            <p className="text-sm font-medium text-slate-900">{selectedCustomer.account?.username}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50/50">
-                                        <div className="p-2 rounded-lg bg-green-50">
-                                            <Mail className="h-4 w-4 text-green-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Email</p>
-                                            <p className="text-sm font-medium text-slate-900">{selectedCustomer.email}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50/50">
-                                        <div className="p-2 rounded-lg bg-purple-50">
-                                            <Phone className="h-4 w-4 text-purple-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Số điện thoại</p>
-                                            <p className="text-sm font-medium text-slate-900">{selectedCustomer.phone}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50/50">
-                                        <div className="p-2 rounded-lg bg-orange-50">
-                                            <Calendar className="h-4 w-4 text-orange-600" />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Ngày sinh</p>
-                                            <p className="text-sm font-medium text-slate-900">
-                                                {new Date(selectedCustomer.birthdate).toLocaleDateString('vi-VN')}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Username</p>
+                                            <p className="text-base font-semibold text-slate-900 truncate">
+                                                {selectedCustomer.account?.username || 'Chưa có username'}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50/50">
-                                        <div className="p-2 rounded-lg bg-cyan-50">
-                                            <Shield className="h-4 w-4 text-cyan-600" />
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-green-50">
+                                            <Mail className="h-5 w-5 text-green-600" />
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Trạng thái email</p>
-                                            <Badge variant={selectedCustomer.email_verified ? "success" : "secondary"} className="text-xs">
-                                                {selectedCustomer.email_verified ? "Đã xác thực" : "Chưa xác thực"}
-                                            </Badge>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Email</p>
+                                            <p className="text-base font-semibold text-slate-900 truncate">
+                                                {selectedCustomer.email || 'Chưa có email'}
+                                            </p>
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50/50">
-                                        <div className="p-2 rounded-lg bg-pink-50">
-                                            <Users className="h-4 w-4 text-pink-600" />
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-purple-50">
+                                            <Phone className="h-5 w-5 text-purple-600" />
                                         </div>
-                                        <div>
-                                            <p className="text-xs text-slate-500">Giới tính</p>
-                                            <p className="text-sm font-medium text-slate-900">
-                                                {selectedCustomer.gender ? "Nam" : "Nữ"}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Số điện thoại</p>
+                                            <p className="text-base font-semibold text-slate-900 truncate">
+                                                {selectedCustomer.phone || 'Chưa có số điện thoại'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-orange-50">
+                                            <Calendar className="h-5 w-5 text-orange-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Ngày sinh</p>
+                                            <p className="text-base font-semibold text-slate-900">
+                                                {selectedCustomer.birthdate ?
+                                                    new Date(selectedCustomer.birthdate).toLocaleDateString('vi-VN', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    }) :
+                                                    'Chưa có thông tin'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-cyan-50">
+                                            <Shield className="h-5 w-5 text-cyan-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Trạng thái tài khoản</p>
+                                            <p className="text-base font-semibold text-slate-900">
+                                                {selectedCustomer.account?.status === 1 ? 'Hoạt động' : 'Không hoạt động'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-pink-50">
+                                            <Users className="h-5 w-5 text-pink-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Ngày tạo</p>
+                                            <p className="text-base font-semibold text-slate-900">
+                                                {new Date(selectedCustomer.created_at).toLocaleDateString('vi-VN', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
                                             </p>
                                         </div>
                                     </div>
@@ -407,7 +373,25 @@ export default function SearchCustomerHouses() {
                     </Card>
                 )}
 
+
                 {/* Houses List */}
+                {selectedCustomer && customerHouses.length === 0 && (
+                    <Card className="mb-8 bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-emerald-50 rounded-full blur-xl opacity-50"></div>
+                                <div className="relative p-6 rounded-full bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100/50 mb-6">
+                                    <Home className="h-12 w-12 text-emerald-500" />
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-semibold text-slate-900 mb-3">Không tìm thấy nhà</h3>
+                            <p className="text-slate-500 text-center max-w-md leading-relaxed">
+                                Khách hàng này chưa có nhà nào được đăng ký. Bạn có thể thêm nhà mới hoặc kiểm tra lại thông tin tìm kiếm.
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {customerHouses.length > 0 && (
                     <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
                         <CardHeader>
@@ -425,16 +409,19 @@ export default function SearchCustomerHouses() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50/50">
+                                            <TableHead className="font-semibold">ID</TableHead>
                                             <TableHead className="font-semibold">Tên nhà</TableHead>
                                             <TableHead className="font-semibold">Địa chỉ</TableHead>
                                             <TableHead className="font-semibold">Không gian</TableHead>
                                             <TableHead className="font-semibold">Ngày tạo</TableHead>
+                                            <TableHead className="font-semibold">Cập nhật</TableHead>
                                             <TableHead className="font-semibold text-right">Thao tác</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {customerHouses.map((house) => (
                                             <TableRow key={house.house_id} className="hover:bg-slate-50/50">
+                                                <TableCell className="font-medium">{house.house_id}</TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center space-x-3">
                                                         <div
@@ -449,19 +436,20 @@ export default function SearchCustomerHouses() {
                                                         </div>
                                                         <div>
                                                             <p className="font-medium text-slate-900">{house.house_name}</p>
-                                                            <p className="text-sm text-slate-500">ID: {house.house_id}</p>
+                                                            <p className="text-xs text-slate-500">ID: {house.house_id}</p>
                                                         </div>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2 text-slate-600">
                                                         <MapPin className="h-4 w-4" />
-                                                        <span>{house.address}</span>
+                                                        <span>{house.address || 'Chưa có địa chỉ'}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="space-y-1">
-                                                        {house.spaces.map((space) => (
+                                                        {house.spaces && house.spaces.length > 0 ? (
+                                                            house.spaces.map((space) => (
                                                             <Badge
                                                                 key={space.space_id}
                                                                 variant="outline"
@@ -469,11 +457,29 @@ export default function SearchCustomerHouses() {
                                                             >
                                                                 {space.space_name}
                                                             </Badge>
-                                                        ))}
+                                                            ))
+                                                        ) : (
+                                                            <span className="text-sm text-slate-500">Chưa có không gian</span>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-slate-600">
-                                                    {new Date(house.created_at).toLocaleDateString('vi-VN')}
+                                                    {new Date(house.created_at).toLocaleDateString('vi-VN', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </TableCell>
+                                                <TableCell className="text-slate-600">
+                                                    {new Date(house.updated_at).toLocaleDateString('vi-VN', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
                                                 </TableCell>
                                                 <TableCell className="text-right">
                                                     <DropdownMenu>
@@ -482,16 +488,16 @@ export default function SearchCustomerHouses() {
                                                                 <MoreHorizontal className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="w-48">
-                                                            <DropdownMenuItem className="cursor-pointer">
+                                                        <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 shadow-lg rounded-lg">
+                                                            <DropdownMenuItem className="cursor-pointer hover:bg-slate-100">
                                                                 <Eye className="h-4 w-4 mr-2" />
                                                                 Xem chi tiết
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem className="cursor-pointer">
+                                                            <DropdownMenuItem className="cursor-pointer hover:bg-slate-100">
                                                                 <Settings className="h-4 w-4 mr-2" />
                                                                 Cài đặt
                                                             </DropdownMenuItem>
-                                                            <DropdownMenuItem className="text-red-600 cursor-pointer">
+                                                            <DropdownMenuItem className="text-red-600 cursor-pointer hover:bg-slate-100">
                                                                 <Trash2 className="h-4 w-4 mr-2" />
                                                                 Xóa nhà
                                                             </DropdownMenuItem>
