@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import axiosPublic from '@/apis/clients/public.client';
+import { toast } from 'sonner';
 // import axiosIOTPublic from '@/apis/clients/iot.private.client';
 const AuthContext = createContext();
 
@@ -183,10 +184,11 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             const token = localStorage.getItem('authToken');
-            const userDeviceId = localStorage.getItem('deviceUuid');
-            // const response = await axiosPublic.get('auth/logout', {
+            const deviceMap = JSON.parse(localStorage.getItem("deviceMap") || "{}");
+            const deviceUuid = user?.username ? deviceMap[user?.username] : null;
+    
             const response = await axios.post("http://localhost:7777/api/auth/logout", {
-                userDeviceId
+                userDeviceId: deviceUuid
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -194,13 +196,23 @@ export const AuthProvider = ({ children }) => {
                     'Content-Type': 'application/json',
                 }
             });
-            console.log("response2", response)
+    
             if (response.data.success) {
                 localStorage.removeItem('authToken');
-                localStorage.removeItem('deviceUuid');
+    
+                // Xóa deviceUuid của user hiện tại khỏi deviceMap
+                // if (user?.username && deviceMap[user.username]) {
+                //     delete deviceMap[user.username];
+                //     localStorage.setItem("deviceMap", JSON.stringify(deviceMap));
+                // }
+    
+                const refreshToken = localStorage.getItem('refreshToken');
+                if (refreshToken) localStorage.removeItem('refreshToken');
+    
                 setUser(null);
                 setIsAuthenticated(false);
-                return response.data
+    
+                return response.data;
             }
         } catch (error) {
             console.error('Logout error:', error);
@@ -210,6 +222,7 @@ export const AuthProvider = ({ children }) => {
             };
         }
     };
+    
 
     const sendOtp = async (email) => {
         try {
@@ -271,6 +284,39 @@ export const AuthProvider = ({ children }) => {
                 success: false,
                 message: error.response?.data?.message || 'Có lỗi xảy ra khi xác thực OTP'
             };
+        }
+    };
+
+    const isTokenExpiringSoon = (token) => {
+        const decoded = jwtDecode(token);
+        const now = Date.now() / 1000;
+        return decoded.exp - now < 60;
+    }
+
+    const refreshAccessToken = async () => {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) return;
+    
+        try {
+            const response = await axios.post('http://localhost:7777/api/auth/refresh', {
+                refreshToken,
+            });
+    
+            const { accessToken } = response.data;
+            localStorage.setItem('authToken', accessToken);
+    
+            const decoded = jwtDecode(accessToken);
+            setUser(decoded);
+            setIsAuthenticated(true);
+    
+            return accessToken;
+        } catch (err) {
+            console.error("Refresh token failed", err);
+            setIsAuthenticated(false);
+            setUser(null);
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("refreshToken");
+            toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
         }
     };
 
@@ -389,6 +435,8 @@ export const AuthProvider = ({ children }) => {
         setUser,
         setIsAuthenticated,
         fetchUserInfo,
+        isTokenExpiringSoon,
+        refreshAccessToken,
     };
 
     return (

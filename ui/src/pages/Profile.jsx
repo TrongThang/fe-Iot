@@ -93,7 +93,13 @@ export default function Profile() {
             const token = localStorage.getItem('authToken');
             delete customerData.username;
             delete customerData.fullname;
-            const response = await axios.patch('http://localhost:7777/api/auth/update-profile', { customerData },
+            const updatedData = {
+                ...customerData,
+                birthdate: (customerData?.birthdate).slice(0, 10)
+              };
+              console.log("dung lượng ảnh", updatedData.image.size)
+            console.log("updatedata", updatedData)
+            const response = await axios.patch('http://localhost:7777/api/auth/update-profile', updatedData ,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -289,7 +295,7 @@ export default function Profile() {
 
                                 <div className="text-center mb-8">
                                     <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                        {customerData?.fullname}
+                                        {customerData?.username}
                                     </h2>
                                 </div>
                             </CardContent>

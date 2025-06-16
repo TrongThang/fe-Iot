@@ -19,7 +19,7 @@ export default function Login() {
     const [rememberMe, setRememberMe] = useState(false)
     const [loading, setLoading] = useState(false)
     const navigate = useNavigate();
-    const { isAuthenticated, setIsAuthenticated, setUser } = useAuth()
+    const { isAuthenticated, setIsAuthenticated, setUser, fetchUserInfo } = useAuth()
 
     if (isAuthenticated) {
         return <Navigate to="/" replace />
@@ -46,8 +46,9 @@ export default function Login() {
         return deviceName;
     };
 
-    const getDeviceUuid = () => {
-        return localStorage.getItem("deviceUuid") || ""
+    const getDeviceUuid = (username) => {
+        const deviceMap = JSON.parse(localStorage.getItem("deviceMap") || "{}");
+        return deviceMap[username] || null;
     }
 
     const getDeviceNameFromBrowser = () => {
@@ -68,25 +69,25 @@ export default function Login() {
                 rememberMe,
                 deviceName: getOrAskDeviceName(),
                 deviceId: getOrCreateDeviceId(),
-                deviceUuid: getDeviceUuid(),
+                deviceUuid: getDeviceUuid(username),
             }
 
             // Gửi yêu cầu đến API
             const response = await axios.post("http://localhost:7777/api/auth/login", payload)
 
             // Xử lý phản hồi
-            console.log("response", response)
-            const { deviceUuid } = response.data
-            const token = response.data.accessToken;
-            localStorage.setItem('authToken', token);
+            const { accessToken, refreshToken, deviceUuid } = response.data;
+            localStorage.setItem('authToken', accessToken);
+            if(rememberMe && refreshToken) {
+                localStorage.setItem('refreshToken', refreshToken)
+            }
 
-            const decoded = jwtDecode(token);
-
-            setUser(decoded);
+            await fetchUserInfo(accessToken)
             setIsAuthenticated(true);
 
-            // Lưu deviceUuid vào localStorage
-            localStorage.setItem("deviceUuid", deviceUuid)
+            const deviceMap = JSON.parse(localStorage.getItem("deviceMap") || "{}");
+            deviceMap[username] = deviceUuid;
+            localStorage.setItem("deviceMap", JSON.stringify(deviceMap));
 
             // Điều hướng đến trang chính hoặc dashboard
             navigate("/")

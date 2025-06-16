@@ -3,11 +3,27 @@ import Topbar from "./partials/Topbar"
 import SidebarUser from "./partials/SidebarUser"
 import { SidebarProvider, useSidebar } from "./partials/contexts/Sidebar-context"
 import { useAuth } from "@/contexts/AuthContext"
+import { useEffect } from "react"
+import { jwtDecode } from "jwt-decode"
 
 function LayoutContent() {
     const { isOpen } = useSidebar()
-    const { isAuthenticated } = useAuth()
-    
+    const { isAuthenticated, isTokenExpiringSoon, refreshAccessToken, fetchUserInfo } = useAuth()
+
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        const interval = setInterval(async () => {
+            const token = localStorage.getItem("authToken");
+            if (token && isTokenExpiringSoon(token)) {
+                console.log("Token sắp hết hạn, đang gọi refresh...");
+                await refreshAccessToken();
+            }
+        }, 30 * 1000);
+
+        return () => clearInterval(interval);
+    }, [isAuthenticated]);
+
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />
     }

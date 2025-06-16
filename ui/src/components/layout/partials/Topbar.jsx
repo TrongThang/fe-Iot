@@ -104,7 +104,6 @@ const Topbar = () => {
         try {
             const response = logout();
 
-            console.log("response", response)
             if (response.success) {
                 toast.success("Đã đăng xuất!")
 

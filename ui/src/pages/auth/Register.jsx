@@ -61,7 +61,6 @@ export default function Register() {
 
             const response = await axios.post("http://localhost:7777/api/auth/register", payload)
 
-            console.log("response", response)
             if (response.status === 201) {
                 toast.success("Đăng ký thành công!")
 
