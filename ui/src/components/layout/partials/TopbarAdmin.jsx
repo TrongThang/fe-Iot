@@ -9,19 +9,15 @@ import {
     DropdownMenuContent,
     DropdownMenuItem
 } from "@/components/ui/dropdown-menu";
-import { toast } from "sonner";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
-const Topbar = () => {
+import { Link } from "react-router-dom";
+const TopbarAdmin = () => {
     const { isOpen, toggle } = useSidebar()
     const [notifications, setNotifications] = useState(3)
     const [isOnline, setIsOnline] = useState(true)
     const [currentTime, setCurrentTime] = useState(new Date())
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isSearchOpen, setIsSearchOpen] = useState(false)
-    const { user, logout } = useAuth()
-    const navigate = useNavigate();
+
     // Update time every second
     useEffect(() => {
         const timer = setInterval(() => {
@@ -66,6 +62,11 @@ const Topbar = () => {
         },
     ]
 
+    // User data
+    const username = "Nguyễn Văn A"
+    const email = "nguyenvana@smarthome.com"
+    const role = "Quản trị viên"
+
     const time = currentTime.toLocaleTimeString("vi-VN", {
         hour: "2-digit",
         minute: "2-digit",
@@ -99,22 +100,6 @@ const Topbar = () => {
         }
     }
 
-    const handleLogout = async () => {
-        try {
-            const response = logout();
-
-            if (response.success) {
-                toast.success("Đã đăng xuất!")
-
-                navigate("/login")
-            }
-        } catch (error) {
-            console.log("error", error)
-            const errorMessage = error.response?.data?.message || "Đăng xuất thất bại. Vui lòng thử lại."
-            toast.error(errorMessage)
-        }
-    }
-
     return (
         <header
             className={`fixed top-0 right-0 h-24 z-40 bg-gradient-to-b from-blue-900 to-blue-950 shadow-lg transition-all duration-300 ${isOpen ? "left-[232px]" : "left-16"
@@ -144,22 +129,6 @@ const Topbar = () => {
                     </button>
                 </div>
 
-                {/* Center - IoT Status */}
-                <div className="hidden lg:flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
-                        {isOnline ? <Wifi className="w-4 h-4 text-green-400" /> : <WifiOff className="w-4 h-4 text-red-400" />}
-                        <span className="text-sm text-white font-medium">
-                            {iotStatus.connectedDevices}/{iotStatus.activeDevices} thiết bị
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2 backdrop-blur-sm">
-                        <Thermometer className="w-4 h-4 text-blue-300" />
-                        <span className="text-sm text-white font-medium">{iotStatus.temperature}</span>
-                    </div>
-                    <div className="bg-green-500/20 text-green-300 border border-green-400/30 rounded-lg px-3 py-1 text-sm">
-                        {iotStatus.securityStatus}
-                    </div>
-                </div>
 
                 {/* Right Side - Time, Notifications, User */}
                 <div className="flex items-center gap-2 md:gap-6">
@@ -227,25 +196,12 @@ const Topbar = () => {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="flex items-center gap-2 hover:bg-white/10 p-2 rounded-lg transition-all duration-200">
-                                <div className="h-8 w-8 rounded-full bg-white/20 flex justify-center items-center border-2 border-white/30">
-                                    <Avatar>
-                                        <AvatarImage
-                                            src={
-                                                user?.image && user?.image.trim() !== ""
-                                                    ? `${user?.image}`
-                                                    : undefined
-                                            }
-                                            alt="Customer Avatar"
-                                            className="h-7 w-7 rounded-full"
-                                        />
-                                        {(!user?.image || user?.image.trim() === "") && (
-                                            <User className="w-4 h-4 text-white" />
-                                        )}
-                                    </Avatar>
+                                <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/30">
+                                    <User className="w-4 h-4 text-white" />
                                 </div>
                                 <div className="hidden md:flex flex-col items-start">
-                                    <span className="text-sm font-semibold text-white">{user?.username}</span>
-                                    <span className="text-xs text-blue-200">{user?.role || ""}</span>
+                                    <span className="text-sm font-semibold text-white">{username}</span>
+                                    <span className="text-xs text-blue-200">{role}</span>
                                 </div>
                                 <ChevronDown className="w-4 h-4 hidden md:block text-white" />
                             </button>
@@ -254,27 +210,14 @@ const Topbar = () => {
                         <DropdownMenuContent align="end" className="w-72 p-0">
                             {/* Header */}
                             <div className="flex flex-col items-center p-6 gap-3 border-b bg-gradient-to-br from-blue-50 to-blue-100 rounded-t-xl">
-                                <div className="h-20 w-20 rounded-full bg-blue-500 flex items-center justify-center border-4 border-gray-300">
-                                <Avatar>
-                                        <AvatarImage
-                                            src={
-                                                user?.image && user?.image.trim() !== ""
-                                                    ? `${user?.image}`
-                                                    : undefined
-                                            }
-                                            alt="Customer Avatar"
-                                            className="h-19 w-19 rounded-full"
-                                        />
-                                        {(!user?.image || user?.image.trim() === "") && (
-                                            <User className="w-10 h-10 text-white" />
-                                        )}
-                                    </Avatar>
+                                <div className="h-20 w-20 rounded-full bg-blue-500 flex items-center justify-center border-4 border-white">
+                                    <User className="w-10 h-10 text-white" />
                                 </div>
                                 <div className="text-center">
-                                    <div className="font-bold text-lg text-gray-800">{user?.username}</div>
-                                    <div className="text-sm text-gray-600">{user?.email}</div>
+                                    <div className="font-bold text-lg text-gray-800">{username}</div>
+                                    <div className="text-sm text-gray-600">{email}</div>
                                     <div className="mt-2 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-0.5 rounded-full inline-block">
-                                        {user?.role || ""}
+                                        {role}
                                     </div>
                                 </div>
                             </div>
@@ -282,40 +225,40 @@ const Topbar = () => {
                             {/* Menu Items */}
                             <div className="p-2 bg-white">
                                 <DropdownMenuItem asChild>
-                                    <Link
-                                        to="/profile"
+                                    <a
+                                        href="/profile"
                                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
                                     >
                                         <User className="w-5 h-5 text-blue-600" />
                                         <span className="font-medium text-gray-700 text-sm">Hồ sơ của tôi</span>
-                                    </Link>
+                                    </a>
                                 </DropdownMenuItem>
 
                                 <DropdownMenuItem asChild>
-                                    <Link
+                                    <a
                                         href="/calendar"
                                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
                                     >
                                         <Calendar className="w-5 h-5 text-blue-600" />
                                         <span className="font-medium text-gray-700 text-sm">Lịch điều khiển</span>
-                                    </Link>
+                                    </a>
                                 </DropdownMenuItem>
 
                                 <DropdownMenuItem asChild>
-                                    <Link
+                                    <a
                                         href="/settings"
                                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
                                     >
                                         <Settings className="w-5 h-5 text-blue-600" />
                                         <span className="font-medium text-gray-700 text-sm">Cài đặt hệ thống</span>
-                                    </Link>
+                                    </a>
                                 </DropdownMenuItem>
 
                                 <div className="h-px bg-gray-200 my-2"></div>
 
                                 <DropdownMenuItem asChild>
                                     <a
-                                        onClick={handleLogout}
+                                        href="/logout"
                                         className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors w-full"
                                     >
                                         <LogOut className="w-5 h-5" />
@@ -352,4 +295,4 @@ const Topbar = () => {
     )
 }
 
-export default Topbar
+export default TopbarAdmin

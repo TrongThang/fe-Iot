@@ -3,24 +3,23 @@
 import { useState, useEffect } from "react"
 import {
   Users,
-  Package,
   HelpCircle,
   ChevronDown,
   LayoutDashboard,
-  Gauge,
-  Lightbulb,
   Thermometer,
   Settings,
   Clock,
-  HomeIcon as House,
-  Space,
+  Monitor,
+  FileText,
+  User,
+  History,
+  Search,
 } from "lucide-react"
 import { useSidebar } from "./contexts/Sidebar-context"
 import logo from "@/assets/img/icon-smarthomesolutions.jpg"
-import '@/assets/css/globals.css'
 import { Link } from "react-router-dom"
 
-const SidebarUser = () => {
+const SidebarAdmin = () => {
   const { isOpen } = useSidebar()
   const [isOverviewOpen, setIsOverviewOpen] = useState(true)
   const [isManagementOpen, setIsManagementOpen] = useState(true)
@@ -29,17 +28,19 @@ const SidebarUser = () => {
   // Function to determine the initial active item based on the current URL
   const getInitialActiveItem = () => {
     const path = window.location.pathname
-    if (path === "/") return "dashboard"
-    if (path === "/notifications") return "notifications"
-    if (path === "/ticket") return "ticket"
-    if (path === "/groups") return "groups"
-    if (path === "/spaces") return "spaces"
-    if (path === "/house") return "house"
-    if (path === "/schedules") return "schedules"
-    if (path === "/scenes") return "scenes"
-    if (path === "/alerts") return "alerts"
-    if (path === "/settings") return "settings"
-    if (path === "/help") return "help"
+    if (path === "/admin") return "dashboard"
+    if (path === "/admin/tickets") return "tickets"
+    if (path === "/admin/customers") return "customers"
+    if (path === "/admin/search-device") return "search-device"
+    if (path === "/admin/search-group") return "search-group"
+    if (path === "/admin/device-transfer-history") return "device-transfer-history"
+    if (path === "/admin/share-permissions") return "share-permissions"
+    if (path === "/admin/search-customer-groups") return "search-customer-groups"
+    if (path === "/admin/search-customer-houses") return "search-customer-houses"
+    if (path === "/admin/search-customer-spaces") return "search-customer-spaces"
+    if (path === "/admin/search-customer-devices") return "search-customer-devices"
+    if (path === "/admin/search-customer-info") return "search-customer-info"
+
     return "dashboard" // Default to dashboard
   }
 
@@ -71,7 +72,7 @@ const SidebarUser = () => {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
             <Link
-              to="/"
+              to="/admin"
               onClick={() => handleItemClick("dashboard")}
               className={`flex items-center gap-3 transition-colors ${
                 activeItem === "dashboard" ? " text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
@@ -114,7 +115,7 @@ const SidebarUser = () => {
           {(isOverviewOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
               <Link
-                to="/"
+                to="/admin"
                 onClick={() => handleItemClick("dashboard")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
                   activeItem === "dashboard"
@@ -125,17 +126,6 @@ const SidebarUser = () => {
               >
                 <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Dashboard</span>}
-              </Link>
-              <Link
-                to="/stats"
-                onClick={() => handleItemClick("stats")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "stats" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Thống kê" : ""}
-              >
-                <Gauge className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Thống kê</span>}
               </Link>
             </div>
           )}
@@ -160,70 +150,114 @@ const SidebarUser = () => {
           {(isManagementOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
               <Link
-                to="/devices"
-                onClick={() => handleItemClick("devices")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "devices" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Thiết bị" : ""}
-              >
-                <Lightbulb className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Thiết bị</span>}
-              </Link>
-              <Link
-                to="/groups"
-                onClick={() => handleItemClick("groups")}
+                to="/admin/customers"
+                onClick={() => handleItemClick("customers")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "groups" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Nhóm" : ""}
-              >
-                <Users className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Nhóm</span>}
-              </Link>
-              <Link
-                to="/spaces"
-                onClick={() => handleItemClick("spaces")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "spaces" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Không gian" : ""}
-              >
-                <Space className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Không gian</span>}
-              </Link>
-              <Link
-                to="/notifications"
-                onClick={() => handleItemClick("notifications")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "notifications"
+                  activeItem === "customers"
                     ? "bg-blue-600 text-white font-medium"
                     : "text-blue-200 hover:bg-blue-800/40"
                 } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Thông báo" : ""}
+                title={!isOpen ? "Khách hàng" : ""}
               >
-                <Package className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Thông báo</span>}
+                <User className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Khách hàng</span>}
               </Link>
               <Link
-                to="/ticket"
-                onClick={() => handleItemClick("ticket")}
+                to="/admin/tickets"
+                onClick={() => handleItemClick("tickets")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "ticket" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  activeItem === "tickets" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
                 } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Yêu Cầu" : ""}
+                title={!isOpen ? "Yêu cầu" : ""}
               >
-                <Lightbulb className="w-4 h-4 flex-shrink-0" />
+                <FileText className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Yêu Cầu</span>}
               </Link>
               <Link
-                to="/profile"
-                onClick={() => handleItemClick("profile")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "profile" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tài khoản" : ""}
+                to="/admin/search-device"
+                onClick={() => handleItemClick("search-device")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "search-device"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Thiết Bị" : ""}
+              >
+                <Monitor className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Thiết Bị Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-group"
+                onClick={() => handleItemClick("search-group")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "search-group"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Nhóm" : ""}
               >
                 <Users className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Tài khoản</span>}
+                {isOpen && <span>Tra Cứu Nhóm Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-customer-groups"
+                onClick={() => handleItemClick("search-customer-groups")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-groups"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Nhóm Của Khách Hàng" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Nhóm Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-customer-houses"
+                onClick={() => handleItemClick("search-customer-houses")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-houses"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Nhà Của Khách Hàng" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Nhà Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-customer-spaces"
+                onClick={() => handleItemClick("search-customer-spaces")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-spaces"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Không Gian Của Khách Hàng" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Không Gian Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-customer-devices"
+                onClick={() => handleItemClick("search-customer-devices")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-devices"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Thiết Bị Của Khách Hàng" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Thiết Bị Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-customer-info"
+                onClick={() => handleItemClick("search-customer-info")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-info"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Thông Tin Của Khách Hàng" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Thông Tin Của Khách Hàng</span>}
               </Link>
             </div>
           )}
@@ -248,7 +282,7 @@ const SidebarUser = () => {
           {(isAutomationOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
               <Link
-                to="/schedules"
+                to="/admin/schedules"
                 onClick={() => handleItemClick("schedules")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
                   activeItem === "schedules"
@@ -261,7 +295,7 @@ const SidebarUser = () => {
                 {isOpen && <span>Lịch trình</span>}
               </Link>
               <Link
-                to="/scenes"
+                to="/admin/scenes"
                 onClick={() => handleItemClick("scenes")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
                   activeItem === "scenes" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
@@ -280,7 +314,7 @@ const SidebarUser = () => {
       <div className={`absolute bottom-0 left-0 right-0 border-t border-blue-800/50 p-4 ${!isOpen && "px-2"}`}>
         <div className="space-y-3">
           <Link
-            to="/settings"
+            to="/admin/settings"
             onClick={() => handleItemClick("settings")}
             className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg text-blue-200 hover:bg-blue-800/40 transition-colors ${!isOpen && "justify-center"}`}
             title={!isOpen ? "Cài đặt" : ""}
@@ -289,7 +323,7 @@ const SidebarUser = () => {
             {isOpen && <span>Cài đặt</span>}
           </Link>
           <Link
-            to="/help"
+            to="/admin/help"
             onClick={() => handleItemClick("help")}
             className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg text-blue-200 hover:bg-blue-800/40 transition-colors ${!isOpen && "justify-center"}`}
             title={!isOpen ? "Trợ giúp" : ""}
@@ -300,9 +334,8 @@ const SidebarUser = () => {
         </div>
       </div>
 
-      
     </aside>
   )
 }
 
-export default SidebarUser
+export default SidebarAdmin

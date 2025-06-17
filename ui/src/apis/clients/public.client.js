@@ -15,13 +15,13 @@ const axiosPublic = axios.create({
 
 axiosPublic.interceptors.request.use(
     (config) => {
-         // Log thông tin request
+        // Log thông tin request
         console.log('🚀 Sending Request:', {
             method: config.method.toUpperCase(),
             url: config.url,
             params: config.params,
         });
-    
+
         return config;
     },
     (error) => {

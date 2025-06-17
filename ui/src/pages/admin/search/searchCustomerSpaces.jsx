@@ -1,0 +1,524 @@
+"use client"
+
+import { useState } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+    Search,
+    User,
+    Mail,
+    Phone,
+    Building,
+    Home,
+    Settings,
+    Trash2,
+    Eye,
+    RefreshCw,
+    Calendar,
+    Shield,
+    Users,
+    DoorOpen,
+    Layers,
+} from "lucide-react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+
+
+export default function SearchCustomerSpaces() {
+    const [searchFilters, setSearchFilters] = useState({
+        email: "",
+        phone: "",
+        username: ""
+    })
+    const [selectedCustomer, setSelectedCustomer] = useState(null)
+    const [customerSpaces, setCustomerSpaces] = useState([])
+    const [filterOptions, setFilterOptions] = useState({})
+    const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState(null)
+
+    const handleSearch = async () => {
+        setIsLoading(true)
+        setError(null)
+
+        try {
+            // Kiểm tra xem có ít nhất một điều kiện tìm kiếm không
+            const hasSearchCriteria = Object.values(searchFilters).some(value => value.trim() !== '');
+
+            if (!hasSearchCriteria) {
+                setError('Vui lòng nhập ít nhất một điều kiện tìm kiếm');
+                setSelectedCustomer(null);
+                setCustomerSpaces([]);
+                setIsLoading(false);
+                return;
+            }
+
+            // Tạo query params từ searchFilters
+            const params = new URLSearchParams()
+
+            // Thêm các tham số tìm kiếm khách hàng
+            if (searchFilters.email) params.append('email', searchFilters.email)
+            if (searchFilters.phone) params.append('phone', searchFilters.phone)
+            if (searchFilters.username) params.append('username', searchFilters.username)
+
+            const response = await fetch(`http://localhost:7777/api/customer-search?${params.toString()}`)
+
+            if (!response.ok) {
+                throw new Error('Không tìm thấy khách hàng hoặc có lỗi xảy ra')
+            }
+
+            const data = await response.json()
+
+            if (data.success && data.data?.customer) {
+                // Format lại dữ liệu khách hàng để phù hợp với giao diện hiện tại
+                const fullName = data.data.customer.full_name || '';
+                const fullNameParts = fullName.split(' ');
+                const surname = fullNameParts[0] || '';
+                const lastname = fullNameParts.slice(1).join(' ') || '';
+
+                const customerData = {
+                    customer_id: data.data.customer.customer_id || '',
+                    surname: surname,
+                    lastname: lastname,
+                    image: data.data.customer.avatar || "/placeholder.svg?height=64&width=64",
+                    phone: data.data.customer.phone || '',
+                    email: data.data.customer.email || '',
+                    email_verified: data.data.customer.email_verified || false,
+                    birthdate: data.data.customer.birthdate || new Date().toISOString(),
+                    gender: data.data.customer.gender === true,
+                    created_at: data.data.customer.created_at || new Date().toISOString(),
+                    updated_at: data.data.customer.updated_at || new Date().toISOString(),
+                    deleted_at: data.data.customer.is_deleted ? data.data.customer.updated_at : null,
+                    account: {
+                        account_id: data.data.account?.account_id || '',
+                        username: data.data.account?.username || '',
+                        role_id: 2,
+                        status: 1,
+                        created_at: data.data.account?.created_at || new Date().toISOString()
+                    }
+                }
+
+                setSelectedCustomer(customerData)
+
+                // Format lại dữ liệu không gian
+                const formattedSpaces = (data.data.spaces || []).map(space => {
+                    if (!space) return null;
+
+                    // Tìm house tương ứng
+                    const house = data.data.houses?.find(h => h.house_id === space.house_id);
+
+                    return {
+                        space_id: space.space_id || '',
+                        house_id: space.house_id || '',
+                        space_name: space.space_name || '',
+                        space_description: space.space_description || 'Không có mô tả',
+                        icon_name: space.icon_name || 'home',
+                        icon_color: space.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                        created_at: space.created_at || new Date().toISOString(),
+                        updated_at: space.updated_at || new Date().toISOString(),
+                        is_deleted: space.is_deleted || false,
+                        house: house ? {
+                            house_id: house.house_id,
+                            house_name: house.house_name || '',
+                            address: house.address || 'Chưa có địa chỉ',
+                            icon_name: house.icon_name || 'home',
+                            icon_color: house.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`
+                        } : null
+                    }
+                }).filter(Boolean);
+
+                setCustomerSpaces(formattedSpaces)
+        } else {
+                setSelectedCustomer(null)
+                setCustomerSpaces([])
+                setError('Không tìm thấy dữ liệu khách hàng')
+            }
+        } catch (err) {
+            console.error('Error fetching data:', err)
+            setError(err.message || 'Có lỗi xảy ra khi tìm kiếm')
+            setSelectedCustomer(null)
+            setCustomerSpaces([])
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleReset = () => {
+        setSearchFilters({
+            email: "",
+            phone: "",
+            username: ""
+        })
+        setFilterOptions({})
+        setSelectedCustomer(null)
+        setCustomerSpaces([])
+        setError(null)
+    }
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
+            <div className="max-w-7xl mx-auto p-6">
+                {/* Search Section */}
+                <div className="mb-8">
+                    <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
+                        <CardHeader>
+                            <CardTitle className="text-2xl font-bold text-slate-900">Tra cứu không gian của khách hàng</CardTitle>
+                            <CardDescription className="text-slate-600">
+                                Tìm kiếm và quản lý các không gian của khách hàng
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {/* Search Filters */}
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Email</label>
+                                        <div className="relative group">
+                                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 group-hover:text-blue-500 transition-colors" />
+                                            <Input
+                                                placeholder="Nhập email..."
+                                                value={searchFilters.email}
+                                                onChange={(e) => setSearchFilters({ ...searchFilters, email: e.target.value })}
+                                                className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Số điện thoại</label>
+                                        <div className="relative group">
+                                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 group-hover:text-blue-500 transition-colors" />
+                                            <Input
+                                                placeholder="Nhập số điện thoại..."
+                                                value={searchFilters.phone}
+                                                onChange={(e) => setSearchFilters({ ...searchFilters, phone: e.target.value })}
+                                                className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-slate-700">Username</label>
+                                        <div className="relative group">
+                                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4 group-hover:text-blue-500 transition-colors" />
+                                            <Input
+                                                placeholder="Nhập username..."
+                                                value={searchFilters.username}
+                                                onChange={(e) => setSearchFilters({ ...searchFilters, username: e.target.value })}
+                                                className="pl-10 border-slate-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-200"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Error Message */}
+                                {error && (
+                                    <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center">
+                                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        {error}
+                                    </div>
+                                )}
+
+                                {/* Action Buttons */}
+                                <div className="flex justify-end gap-4 mt-6">
+                                    <Button
+                                        onClick={handleReset}
+                                        variant="outline"
+                                        className="px-6 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200"
+                                        disabled={isLoading}
+                                    >
+                                        <RefreshCw className="h-4 w-4 mr-2" />
+                                        Đặt lại
+                                    </Button>
+                                    <Button
+                                        onClick={handleSearch}
+                                        className="px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading ? (
+                                            <>
+                                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                                Đang tải...
+                                            </>
+                                        ) : (
+                                            <>
+                                        <Search className="h-4 w-4 mr-2" />
+                                        Tìm kiếm
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+                
+                {/* Customer Information */}
+                {selectedCustomer && (
+                    <Card className="mb-8 bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
+                        <CardHeader className="pb-4">
+                            <CardTitle className="text-xl font-semibold text-slate-900">Thông tin khách hàng</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col gap-6">
+                                {/* Avatar và thông tin cơ bản */}
+                                <div className="flex items-center gap-6 p-4 bg-slate-50/50 rounded-xl">
+                                    <Avatar className="h-20 w-20 border-2 border-white shadow-lg">
+                                        <AvatarImage src={selectedCustomer.image} />
+                                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-xl">
+                                            {selectedCustomer.surname.charAt(0)}{selectedCustomer.lastname.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-semibold text-slate-900 truncate">
+                                            {selectedCustomer.surname} {selectedCustomer.lastname}
+                                        </h3>
+                                        <p className="text-sm text-slate-500 mt-1">ID: {selectedCustomer.customer_id}</p>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <Badge variant={selectedCustomer.email_verified ? "success" : "secondary"} className="text-xs">
+                                                {selectedCustomer.email_verified ? "Đã xác thực" : "Chưa xác thực"}
+                                            </Badge>
+                                            <Badge variant="outline" className="text-xs">
+                                                {selectedCustomer.gender ? "Nam" : "Nữ"}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Thông tin chi tiết */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-blue-50">
+                                            <User className="h-5 w-5 text-blue-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Username</p>
+                                            <p className="text-base font-semibold text-slate-900 truncate">
+                                                {selectedCustomer.account?.username || 'Chưa có username'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-green-50">
+                                            <Mail className="h-5 w-5 text-green-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Email</p>
+                                            <p className="text-base font-semibold text-slate-900 truncate">
+                                                {selectedCustomer.email || 'Chưa có email'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-purple-50">
+                                            <Phone className="h-5 w-5 text-purple-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Số điện thoại</p>
+                                            <p className="text-base font-semibold text-slate-900 truncate">
+                                                {selectedCustomer.phone || 'Chưa có số điện thoại'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-orange-50">
+                                            <Calendar className="h-5 w-5 text-orange-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Ngày sinh</p>
+                                            <p className="text-base font-semibold text-slate-900">
+                                                {selectedCustomer.birthdate ?
+                                                    new Date(selectedCustomer.birthdate).toLocaleDateString('vi-VN', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric'
+                                                    }) :
+                                                    'Chưa có thông tin'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-cyan-50">
+                                            <Shield className="h-5 w-5 text-cyan-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Trạng thái tài khoản</p>
+                                            <p className="text-base font-semibold text-slate-900">
+                                                {selectedCustomer.account?.status === 1 ? 'Hoạt động' : 'Không hoạt động'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3 p-4 rounded-xl bg-slate-50/50 hover:bg-slate-100/50 transition-colors">
+                                        <div className="p-2.5 rounded-lg bg-pink-50">
+                                            <Users className="h-5 w-5 text-pink-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-500">Ngày tạo</p>
+                                            <p className="text-base font-semibold text-slate-900">
+                                                {new Date(selectedCustomer.created_at).toLocaleDateString('vi-VN', {
+                                                    year: 'numeric',
+                                                    month: 'long',
+                                                    day: 'numeric'
+                                                })}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Spaces List */}
+                {selectedCustomer && customerSpaces.length === 0 && (
+                    <Card className="mb-8 bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
+                        <CardContent className="flex flex-col items-center justify-center py-16">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-cyan-50 rounded-full blur-xl opacity-50"></div>
+                                <div className="relative p-6 rounded-full bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100/50 mb-6">
+                                    <Layers className="h-12 w-12 text-cyan-500" />
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-semibold text-slate-900 mb-3">Không tìm thấy không gian</h3>
+                            <p className="text-slate-500 text-center max-w-md leading-relaxed">
+                                Khách hàng này chưa có không gian nào được đăng ký. Bạn có thể thêm không gian mới hoặc kiểm tra lại thông tin tìm kiếm.
+                            </p>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {customerSpaces.length > 0 && (
+                    <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
+                        <CardHeader>
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <CardTitle className="text-xl font-semibold text-slate-900">Danh sách không gian</CardTitle>
+                                    <CardDescription className="text-slate-600">
+                                        Tổng số: {customerSpaces.length} không gian
+                                    </CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="bg-slate-50/50">
+                                            <TableHead className="font-semibold">ID</TableHead>
+                                            <TableHead className="font-semibold">Tên không gian</TableHead>
+                                            <TableHead className="font-semibold">Thuộc nhà</TableHead>
+                                            <TableHead className="font-semibold">Ngày tạo</TableHead>
+                                            <TableHead className="font-semibold">Cập nhật</TableHead>
+                                            <TableHead className="font-semibold text-right">Thao tác</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {customerSpaces.map((space) => (
+                                            <TableRow key={space.space_id} className="hover:bg-slate-50/50">
+                                                <TableCell className="font-medium">{space.space_id}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center space-x-3">
+                                                        <div
+                                                            className="p-2 rounded-lg"
+                                                            style={{ backgroundColor: space.icon_color + '20' }}
+                                                        >
+                                                            {space.icon_name === 'floor' ? (
+                                                                <Layers className="h-5 w-5" style={{ color: space.icon_color }} />
+                                                            ) : space.icon_name === 'room' ? (
+                                                            <DoorOpen className="h-5 w-5" style={{ color: space.icon_color }} />
+                                                            ) : (
+                                                                <Home className="h-5 w-5" style={{ color: space.icon_color }} />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-slate-900">{space.space_name}</p>
+                                                            <p className="text-xs text-slate-500">{space.space_description}</p>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {space.house ? (
+                                                    <div className="flex items-center space-x-3">
+                                                        <div
+                                                            className="p-2 rounded-lg"
+                                                            style={{ backgroundColor: space.house.icon_color + '20' }}
+                                                        >
+                                                            {space.house.icon_name === 'building' ? (
+                                                                <Building className="h-5 w-5" style={{ color: space.house.icon_color }} />
+                                                            ) : (
+                                                                <Home className="h-5 w-5" style={{ color: space.house.icon_color }} />
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-slate-900">{space.house.house_name}</p>
+                                                                <p className="text-xs text-slate-500">{space.house.address}</p>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-sm text-slate-500">Không có thông tin nhà</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-slate-600">
+                                                    {new Date(space.created_at).toLocaleDateString('vi-VN', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </TableCell>
+                                                <TableCell className="text-slate-600">
+                                                    {new Date(space.updated_at).toLocaleDateString('vi-VN', {
+                                                        year: 'numeric',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        hour: '2-digit',
+                                                        minute: '2-digit'
+                                                    })}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="hover:bg-slate-100">
+                                                                <Eye className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 shadow-lg rounded-lg">
+                                                            <DropdownMenuItem className="cursor-pointer hover:bg-slate-100">
+                                                                <Eye className="h-4 w-4 mr-2" />
+                                                                Xem chi tiết
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem className="cursor-pointer hover:bg-slate-100">
+                                                                <Settings className="h-4 w-4 mr-2" />
+                                                                Cài đặt
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem className="text-red-600 cursor-pointer hover:bg-red-50">
+                                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                                Xóa không gian
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+        </div>
+    )
+}
