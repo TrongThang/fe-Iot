@@ -118,10 +118,10 @@ export default function Login() {
                             <img
                                 src={"/placeholder.svg"}
                                 alt="Logo"
-                                className="w-18 h-18 transition-transform group-hover:scale-110 duration-300"
+                                className="w-18 h-18 transition-transform group-hover:scale-110 duration-300 rounded-full"
                                 onError={(e) => {
                                     e.target.src =
-                                        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-agkMcwTe8ZxwcS7v1mZXv08X8E6uC1.png"
+                                        "/img/ecom_logo_icon.png"
                                     e.target.onerror = null
                                 }}
                             />
@@ -160,7 +160,7 @@ export default function Login() {
                     <div className="md:hidden text-center mb-10">
                         <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl shadow-xl flex items-center justify-center mb-6 border border-blue-200">
                             <img
-                                src={"/placeholder.svg"}
+                                src="public/img/"
                                 alt="Logo"
                                 className="w-12 h-12"
                                 onError={(e) => {

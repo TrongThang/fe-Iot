@@ -205,10 +205,10 @@ export default function PasswordRecovery() {
                             <img
                                 src={"/placeholder.svg"}
                                 alt="Logo"
-                                className="w-18 h-18 transition-transform group-hover:scale-110 duration-300"
+                                className="w-18 h-18 transition-transform group-hover:scale-110 duration-300 rounded-full"
                                 onError={(e) => {
                                     e.target.src =
-                                        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-agkMcwTe8ZxwcS7v1mZXv08X8E6uC1.png"
+                                        "/img/ecom_logo_icon.png"
                                     e.target.onerror = null
                                 }}
                             />
@@ -256,7 +256,7 @@ export default function PasswordRecovery() {
                                 className="w-12 h-12"
                                 onError={(e) => {
                                     e.target.src =
-                                        "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-agkMcwTe8ZxwcS7v1mZXv08X8E6uC1.png"
+                                        "/img/ecom_logo_icon.png"
                                     e.target.onerror = null
                                 }}
                             />
