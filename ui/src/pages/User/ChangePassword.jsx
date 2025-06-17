@@ -1,19 +1,24 @@
 "use client"
 
 import { useState } from "react"
-import { Eye, EyeOff, Lock, ArrowLeft, CheckCircle } from "lucide-react"
+import { Eye, EyeOff, Lock, ArrowLeft, CheckCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
+import { toast } from "sonner"
+import { useAuth } from "@/contexts/AuthContext"
 
 
 export default function ChangePassword() {
+    const navigate = useNavigate();
     const [showCurrentPassword, setShowCurrentPassword] = useState(false)
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
+    const { changePassword } = useAuth();
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         currentPassword: "",
         newPassword: "",
@@ -57,8 +62,8 @@ export default function ChangePassword() {
         if (!formData.newPassword) {
             newErrors.newPassword = "Vui lòng nhập mật khẩu mới"
             isValid = false
-        } else if (formData.newPassword.length < 8) {
-            newErrors.newPassword = "Mật khẩu phải có ít nhất 8 ký tự"
+        } else if (formData.newPassword.length < 6) {
+            newErrors.newPassword = "Mật khẩu phải có ít nhất 6 ký tự"
             isValid = false
         }
 
@@ -74,17 +79,26 @@ export default function ChangePassword() {
         return isValid
     }
 
-    const handleSubmit = (e) => {
+    const handleChangePassword = async (e) => {
         e.preventDefault()
-
         if (validateForm()) {
-            // Here you would typically call an API to change the password
-            console.log("Changing password:", formData)
 
-            // Simulate success
-            setTimeout(() => {
-                setIsSuccess(true)
-            }, 1000)
+            setLoading(true);
+            try {
+                const result = await changePassword(formData.currentPassword, formData.newPassword);
+                if (result.success) {
+                    toast.success("Đổi mật khẩu thành công");
+                    setTimeout(() => {
+                        setIsSuccess(true)
+                    }, 1000)
+                } else {
+                    toast.error("Đổi mật khẩu thất bại", { description: result.message });
+                }
+            } catch (error) {
+                toast.error("Lỗi", { description: "Có lỗi xảy ra khi đổi mật khẩu" });
+            } finally {
+                setLoading(false);
+            }
         }
     }
 
@@ -103,11 +117,10 @@ export default function ChangePassword() {
                             <p className="text-center text-gray-700 text-lg">
                                 Mật khẩu của bạn đã được thay đổi thành công. Vui lòng sử dụng mật khẩu mới cho lần đăng nhập tiếp theo.
                             </p>
-                            <Link href="/profile">
-                                <Button className="bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 text-lg font-medium">
-                                    Quay lại trang hồ sơ
-                                </Button>
-                            </Link>
+                            <Button className="bg-blue-500 hover:bg-blue-600 text-white py-3 px-6 text-lg font-medium"
+                            onClick={() => navigate("/profile")}>
+                                Quay lại trang hồ sơ
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>
@@ -143,7 +156,7 @@ export default function ChangePassword() {
                             <CardTitle className="text-xl font-bold">Thay đổi mật khẩu</CardTitle>
                         </CardHeader>
                         <CardContent className="p-8 bg-white">
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                            <form onSubmit={handleChangePassword} className="space-y-6">
                                 {/* Current Password */}
                                 <div className="space-y-2">
                                     <Label
@@ -220,7 +233,6 @@ export default function ChangePassword() {
                                         </Button>
                                     </div>
                                     {errors.newPassword && <p className="text-red-500 text-sm mt-1">{errors.newPassword}</p>}
-                                    <p className="text-sm text-gray-500 mt-1">Mật khẩu phải có ít nhất 8 ký tự</p>
                                 </div>
 
                                 {/* Confirm Password */}
@@ -262,12 +274,19 @@ export default function ChangePassword() {
                                     {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
                                 </div>
 
-                                {/* Submit Button */}
                                 <Button
                                     type="submit"
                                     className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 text-lg font-medium mt-8"
+                                    disabled={loading}
                                 >
-                                    Cập nhật mật khẩu
+                                    {loading ? (
+                                                <span className="flex items-center justify-center">
+                                                    <Loader2 size={18} className="mr-2 animate-spin" />
+                                                    Đang gửi mã...
+                                                </span>
+                                            ) : (
+                                                "XÁC NHẬN"
+                                            )}
                                 </Button>
                             </form>
                         </CardContent>
