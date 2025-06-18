@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Swal from 'sweetalert2'
 import UpdateCustomerForm from '@/components/common/CustomerSearch/UpdateCustomerInfo'
+import axiosPublic from "@/apis/clients/public.client"
 
 export default function SearchCustomerInfo() {
     const [searchFilters, setSearchFilters] = useState({
@@ -54,39 +55,33 @@ export default function SearchCustomerInfo() {
             if (searchFilters.username) params.append('username', searchFilters.username)
             if (searchFilters.customerId) params.append('customerId', searchFilters.customerId)
 
-            const response = await fetch(`http://localhost:7777/api/customer-search?${params.toString()}`)
+            const response = await axiosPublic.get(`customer-search?${params.toString()}`)
 
-            if (!response.ok) {
-                throw new Error('Không tìm thấy khách hàng hoặc có lỗi xảy ra')
-            }
-
-            const data = await response.json()
-
-            if (data.success && data.data?.customer) {
-                const fullName = data.data.customer.full_name || '';
+            if (response.success && response.data?.customer) {
+                const fullName = response.data.customer.full_name || '';
                 const fullNameParts = fullName.split(' ');
                 const surname = fullNameParts[0] || '';
                 const lastname = fullNameParts.slice(1).join(' ') || '';
 
                 const customerData = {
-                    customer_id: data.data.customer.customer_id || '',
+                    customer_id: response.data.customer.customer_id || '',
                     surname: surname,
                     lastname: lastname,
-                    image: data.data.customer.avatar || "/placeholder.svg?height=64&width=64",
-                    phone: data.data.customer.phone || '',
-                    email: data.data.customer.email || '',
-                    email_verified: data.data.customer.email_verified || false,
-                    birthdate: data.data.customer.birthdate || new Date().toISOString(),
-                    gender: data.data.customer.gender === true,
-                    created_at: data.data.customer.created_at || new Date().toISOString(),
-                    updated_at: data.data.customer.updated_at || new Date().toISOString(),
-                    deleted_at: data.data.customer.is_deleted ? data.data.customer.updated_at : null,
+                    image: response.data.customer.avatar || "/placeholder.svg?height=64&width=64",
+                    phone: response.data.customer.phone || '',
+                    email: response.data.customer.email || '',
+                    email_verified: response.data.customer.email_verified || false,
+                    birthdate: response.data.customer.birthdate || new Date().toISOString(),
+                    gender: response.data.customer.gender === true,
+                    created_at: response.data.customer.created_at || new Date().toISOString(),
+                    updated_at: response.data.customer.updated_at || new Date().toISOString(),
+                    deleted_at: response.data.customer.is_deleted ? response.data.customer.updated_at : null,
                     account: {
-                        account_id: data.data.account?.account_id || '',
-                        username: data.data.account?.username || '',
+                        account_id: response.data.account?.account_id || '',
+                        username: response.data.account?.username || '',
                         role_id: 2,
-                        status: data.data.account?.status || 1,
-                        created_at: data.data.account?.created_at || new Date().toISOString()
+                        status: response.data.account?.status || 1,
+                        created_at: response.data.account?.created_at || new Date().toISOString()
                     }
                 }
 
@@ -129,15 +124,9 @@ export default function SearchCustomerInfo() {
 
         if (result.isConfirmed) {
             try {
-                const response = await fetch(`http://localhost:7777/api/customer-search/lock/${selectedCustomer.customer_id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await axiosPublic.put(`customer-search/lock/${selectedCustomer.customer_id}`);
 
-                const data = await response.json();
-                if (data.success) {
+                if (response.success) {
                     setSelectedCustomer(prev => ({
                         ...prev,
                         account: {
@@ -176,15 +165,9 @@ export default function SearchCustomerInfo() {
 
         if (result.isConfirmed) {
             try {
-                const response = await fetch(`http://localhost:7777/api/customer-search/unlock/${selectedCustomer.customer_id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await axiosPublic.put(`customer-search/unlock/${selectedCustomer.customer_id}`);
 
-                const data = await response.json();
-                if (data.success) {
+                if (response.success) {
                     setSelectedCustomer(prev => ({
                         ...prev,
                         account: {
@@ -223,19 +206,15 @@ export default function SearchCustomerInfo() {
                 birthdate: updateForm.birthdate ? new Date(updateForm.birthdate).toISOString() : null
             };
 
-            const response = await fetch(`http://localhost:7777/api/customer-search/update/${selectedCustomer.customer_id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updateData)
-            });
+            const response = await axiosPublic.put(
+                `customer-search/update/${selectedCustomer.customer_id}`,
+                updateData
+            );
 
-            const data = await response.json();
-            if (data.success) {
+            if (response.success) {
                 setSelectedCustomer(prev => ({
                     ...prev,
-                    ...data.data
+                    ...response.data
                 }));
                 setIsUpdateDialogOpen(false);
                 Swal.fire(
@@ -268,15 +247,9 @@ export default function SearchCustomerInfo() {
 
         if (result.isConfirmed) {
             try {
-                const response = await fetch(`http://localhost:7777/api/customer-search/delete/${selectedCustomer.customer_id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await axiosPublic.delete(`customer-search/delete/${selectedCustomer.customer_id}`);
 
-                const data = await response.json();
-                if (data.success) {
+                if (response.success) {
                     setSelectedCustomer(null);
                     handleReset();
                     Swal.fire(

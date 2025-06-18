@@ -6,7 +6,6 @@ const axiosPublic = axios.create({
         // 'ngrok-skip-browser-warning': 'true',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        charset: 'UTF-8',
     },
     // Cho phép xử lý các status code từ 200-499
     validateStatus: function (status) {
@@ -16,13 +15,13 @@ const axiosPublic = axios.create({
 
 axiosPublic.interceptors.request.use(
     (config) => {
-         // Log thông tin request
+        // Log thông tin request
         console.log('🚀 Sending Request:', {
             method: config.method.toUpperCase(),
             url: config.url,
             params: config.params,
         });
-    
+
         return config;
     },
     (error) => {

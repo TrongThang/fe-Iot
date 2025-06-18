@@ -25,6 +25,7 @@ import {
     Users,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import axiosPublic from '../../../apis/clients/public.client'
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
@@ -64,49 +65,41 @@ export default function SearchCustomerHouses() {
             if (searchFilters.phone) params.append('phone', searchFilters.phone)
             if (searchFilters.username) params.append('username', searchFilters.username)
 
+            const response = await axiosPublic.get(`customer-search?${params.toString()}`)
 
-
-            const response = await fetch(`http://localhost:7777/api/customer-search?${params.toString()}`)
-
-            if (!response.ok) {
-                throw new Error('Không tìm thấy khách hàng hoặc có lỗi xảy ra')
-            }
-
-            const data = await response.json()
-
-            if (data.success && data.data?.customer) {
+            if (response.success && response.data?.customer) {
                 // Format lại dữ liệu khách hàng để phù hợp với giao diện hiện tại
-                const fullName = data.data.customer.full_name || '';
+                const fullName = response.data.customer.full_name || '';
                 const fullNameParts = fullName.split(' ');
                 const surname = fullNameParts[0] || '';
                 const lastname = fullNameParts.slice(1).join(' ') || '';
 
                 const customerData = {
-                    customer_id: data.data.customer.customer_id || '',
+                    customer_id: response.data.customer.customer_id || '',
                     surname: surname,
                     lastname: lastname,
-                    image: data.data.customer.avatar || "/placeholder.svg?height=64&width=64",
-                    phone: data.data.customer.phone || '',
-                    email: data.data.customer.email || '',
-                    email_verified: data.data.customer.email_verified || false,
-                    birthdate: data.data.customer.birthdate || new Date().toISOString(),
-                    gender: data.data.customer.gender === true,
-                    created_at: data.data.customer.created_at || new Date().toISOString(),
-                    updated_at: data.data.customer.updated_at || new Date().toISOString(),
-                    deleted_at: data.data.customer.is_deleted ? data.data.customer.updated_at : null,
+                    image: response.data.customer.avatar || "/placeholder.svg?height=64&width=64",
+                    phone: response.data.customer.phone || '',
+                    email: response.data.customer.email || '',
+                    email_verified: response.data.customer.email_verified || false,
+                    birthdate: response.data.customer.birthdate || new Date().toISOString(),
+                    gender: response.data.customer.gender === true,
+                    created_at: response.data.customer.created_at || new Date().toISOString(),
+                    updated_at: response.data.customer.updated_at || new Date().toISOString(),
+                    deleted_at: response.data.customer.is_deleted ? response.data.customer.updated_at : null,
                     account: {
-                        account_id: data.data.account?.account_id || '',
-                        username: data.data.account?.username || '',
+                        account_id: response.data.account?.account_id || '',
+                        username: response.data.account?.username || '',
                         role_id: 2,
                         status: 1,
-                        created_at: data.data.account?.created_at || new Date().toISOString()
+                        created_at: response.data.account?.created_at || new Date().toISOString()
                     }
                 }
 
                 setSelectedCustomer(customerData)
 
                 // Format lại dữ liệu nhà
-                const formattedHouses = (data.data.houses || []).map(house => {
+                const formattedHouses = (response.data.houses || []).map(house => {
                     if (!house) return null;
 
                     return {
@@ -120,12 +113,11 @@ export default function SearchCustomerHouses() {
                         updated_at: house.updated_at || new Date().toISOString(),
                         is_deleted: house.is_deleted || false,
                         spaces: house.spaces || []
-
                     }
                 }).filter(Boolean);
 
                 setCustomerHouses(formattedHouses)
-        } else {
+            } else {
                 setSelectedCustomer(null)
                 setCustomerHouses([])
                 setError('Không tìm thấy dữ liệu khách hàng')
@@ -240,8 +232,8 @@ export default function SearchCustomerHouses() {
                                             </>
                                         ) : (
                                             <>
-                                        <Search className="h-4 w-4 mr-2" />
-                                        Tìm kiếm
+                                                <Search className="h-4 w-4 mr-2" />
+                                                Tìm kiếm
                                             </>
                                         )}
                                     </Button>
@@ -251,7 +243,7 @@ export default function SearchCustomerHouses() {
                     </Card>
                 </div>
 
-                
+
                 {/* Customer Information */}
                 {selectedCustomer && (
                     <Card className="mb-8 bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
@@ -450,13 +442,13 @@ export default function SearchCustomerHouses() {
                                                     <div className="space-y-1">
                                                         {house.spaces && house.spaces.length > 0 ? (
                                                             house.spaces.map((space) => (
-                                                            <Badge
-                                                                key={space.space_id}
-                                                                variant="outline"
-                                                                className="mr-2"
-                                                            >
-                                                                {space.space_name}
-                                                            </Badge>
+                                                                <Badge
+                                                                    key={space.space_id}
+                                                                    variant="outline"
+                                                                    className="mr-2"
+                                                                >
+                                                                    {space.space_name}
+                                                                </Badge>
                                                             ))
                                                         ) : (
                                                             <span className="text-sm text-slate-500">Chưa có không gian</span>
