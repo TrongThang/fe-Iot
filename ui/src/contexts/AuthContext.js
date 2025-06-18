@@ -105,8 +105,6 @@ export const AuthProvider = ({ children }) => {
                 password
             });
 
-
-
             if (response.status === 200) {
                 console.log('THành công')
                 const token = response.accessToken;

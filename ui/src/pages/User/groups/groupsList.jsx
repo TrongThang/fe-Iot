@@ -20,6 +20,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Swal from "sweetalert2"
 import AddGroups from "./groupPopups/Add-group-popup"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function GroupsManagement() {
     const [viewMode, setViewMode] = useState("grid")
@@ -27,7 +28,7 @@ export default function GroupsManagement() {
     const [groups, setGroups] = useState([])
     const [groupMembers, setGroupMembers] = useState({}) // Object to map group_id to member count
     const navigate = useNavigate()
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
+    const accessToken = localStorage.getItem('authToken');
 
     const iconMap = {
         home: Home,

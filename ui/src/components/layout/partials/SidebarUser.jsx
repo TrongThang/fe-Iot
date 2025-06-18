@@ -13,7 +13,7 @@ import {
   Settings,
   Clock,
   HomeIcon as House,
-  Space,
+  LayoutGrid,
 } from "lucide-react"
 import { useSidebar } from "./contexts/Sidebar-context"
 import logo from "@/assets/img/icon-smarthomesolutions.jpg"
@@ -188,7 +188,7 @@ const SidebarUser = () => {
                 } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Không gian" : ""}
               >
-                <Space className="w-4 h-4 flex-shrink-0" />
+                <LayoutGrid className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Không gian</span>}
               </Link>
               <Link
