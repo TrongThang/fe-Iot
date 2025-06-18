@@ -16,7 +16,7 @@ export default function EditSpacePopup({ open, onOpenChange, onSave, space }) {
         icon: { icon: Home, color: "bg-blue-500", name: "home", id: "home", colorId: "blue" },
     });
     const [showIconPicker, setShowIconPicker] = useState(false);
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTkxMTQ2MywiZXhwIjoxNzQ5OTE1MDYzfQ.7fzhlZtn8m1YaO-43fKuyXAOUQqK5Qeue5Z4mqqfsvA";
+    const accessToken = localStorage.getItem('authToken');
 
     useEffect(() => {
         if (space && open) {

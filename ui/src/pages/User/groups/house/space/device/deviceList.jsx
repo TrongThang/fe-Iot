@@ -30,15 +30,21 @@ import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import DeviceDetail from "./deviceDetails"
 import DeviceConnectionDialog from "./devicePopups/Add-device-popup"
+import EditDeviceDialog from "./devicePopups/Edit-device-popup"
+import { useParams } from "react-router-dom"
+import Swal from "sweetalert2"
 
-export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
+export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onBack }) {
+  const { id } = useParams()
   const [selectedDevice, setSelectedDevice] = useState(null)
   const [devices, setDevices] = useState([])
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState("grid")
   const [isAddDevicePopupOpen, setIsAddDevicePopupOpen] = useState(false)
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
+  const [isEditDevicePopupOpen, setIsEditDevicePopupOpen] = useState(false)
+  const [deviceToEdit, setDeviceToEdit] = useState(null)
+  const accessToken = localStorage.getItem('authToken');
   const [filterOptions, setFilterOptions] = useState({
     group_id: 0,
     link_status: "all",
@@ -46,33 +52,33 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
     lock_status: "all",
   })
 
-  const fetchDevice = async () => {
+  const fetchDevice = async (spaceId, groupId) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/device/space/${spaceId}`, {
+      const res = await fetch(`http://localhost:7777/api/devices/space/${spaceId}?groupId=${groupId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
-        },
+        }
       });
       if (res.ok) {
         const dataDevice = await res.json();
-        setDevices(Array.isArray(dataDevice) ? dataDevice : [])
+        setDevices(dataDevice ? dataDevice : [])
       } else {
-        console.error(`Failed to fetch spaces for house ${spaceId}: ${res.status} ${res.statusText}`);
+        console.error(`Failed to fetch devices for space ${spaceId}: ${res.status} ${res.statusText}`);
         return [];
       }
     } catch (error) {
-      console.error(`Error fetching spaces for house ${spaceId}:`, error);
+      console.error(`Error fetching devices for space ${spaceId}:`, error);
       return [];
     }
   }
-  // Mock data based on database schema
 
-
-  // Simulate loading data
+  // Simulate loading data  
   useEffect(() => {
-    fetchDevice()
+    if (spaceId && id) {
+      fetchDevice(spaceId, id)
+    }
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 1500)
@@ -139,19 +145,78 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
     setIsAddDevicePopupOpen(false);
   }
 
-  const handleDeleteDevice = (deviceId) => {
-    setDevices(devices.filter((device) => device.device_id !== deviceId))
-    if (selectedDevice?.device_id === deviceId) {
-      setSelectedDevice(null)
+  const handleDeleteDevice = async (deviceId) => {
+    const result = await Swal.fire({
+      title: "Bạn có chắc chắn muốn xóa?",
+      text: "Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Có, xóa nó!",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`http://localhost:7777/api/devices/${deviceId}?groupId=${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (res.ok) {
+          Swal.fire({
+            icon: "success",
+            title: "Xóa thành công",
+            text: "Thiết bị đã được xóa thành công!",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#10b981",
+          });
+          setDevices(devices.filter((device) => device.device_id !== deviceId));
+          if (selectedDevice?.device_id === deviceId) {
+            setSelectedDevice(null);
+          }
+        } else {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Failed to delete device');
+        }
+      } catch (error) {
+        console.error("Lỗi khi xóa thiết bị:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Xóa thất bại",
+          text: error.message || "Không thể xóa thiết bị. Vui lòng thử lại.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#ef4444",
+        });
+      }
     }
   }
 
   const handleEditDevice = (deviceId) => {
-    alert(`Chỉnh sửa thiết bị ID: ${deviceId}`)
+    const device = devices.find(d => d.device_id === deviceId);
+    if (device) {
+      setDeviceToEdit(device);
+      setIsEditDevicePopupOpen(true);
+    }
   }
 
-  const getDeviceIcon = (templateType, powerStatus = true) => {
-    const iconProps = { className: `h-5 w-5 ${powerStatus ? "text-white" : "text-white/70"}` }
+  const handleDeviceEdit = (updatedDevice) => {
+    setDevices(prev => prev.map(device =>
+      device.device_id === updatedDevice.device_id ? updatedDevice : device
+    ));
+    if (selectedDevice?.device_id === updatedDevice.device_id) {
+      setSelectedDevice(updatedDevice);
+    }
+    setIsEditDevicePopupOpen(false);
+  }
+
+  const getDeviceIcon = (device) => {
+    const iconProps = { className: `h-5 w-5 ${device.power_status ? "text-white" : "text-white/70"}` }
+    const templateType = device.device_templates?.type || 'default'
     switch (templateType) {
       case "light":
         return <Lightbulb {...iconProps} />
@@ -166,19 +231,19 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
     }
   }
 
-  const getDeviceColor = (templateType, powerStatus = true) => {
-    const opacity = powerStatus ? "" : "/50"
+  const getDeviceColor = (device) => {
+    const templateType = device.device_templates?.type || 'default'
     switch (templateType) {
       case "light":
-        return `from-amber-500${opacity} to-orange-500${opacity}`
+        return "from-blue-500 to-blue-600"
       case "smoke":
-        return `from-red-500${opacity} to-pink-500${opacity}`
+        return "from-red-500 to-red-600"
       case "temperature":
-        return `from-blue-500${opacity} to-cyan-500${opacity}`
+        return "from-orange-500 to-orange-600"
       case "alarm":
-        return `from-purple-500${opacity} to-indigo-500${opacity}`
+        return "from-yellow-500 to-yellow-600"
       default:
-        return `from-slate-500${opacity} to-gray-500${opacity}`
+        return "from-gray-500 to-gray-600"
     }
   }
 
@@ -208,9 +273,16 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
 
   // Filter and search devices
   const filteredDevices = devices.filter((device) => {
+    // Thêm kiểm tra 'device' và 'device.name' để đảm bảo chúng không phải là undefined
+    const deviceName = device?.name || ""; // Sử dụng optional chaining và giá trị mặc định là chuỗi rỗng
+    const deviceSerialNumber = device?.serial_number || ""; // Tương tự cho serial_number
+
     const matchesSearch =
-      device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      device.serial_number.toLowerCase().includes(searchQuery.toLowerCase())
+      deviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      deviceSerialNumber.toLowerCase().includes(searchQuery.toLowerCase())
+
+    // Đảm bảo 'device' không phải là undefined trước khi truy cập các thuộc tính khác
+    if (!device) return false;
 
     const matchesGroup = filterOptions.group_id === 0 || device.group_id === filterOptions.group_id
 
@@ -228,10 +300,11 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
 
   // Group devices by template type
   const devicesByType = filteredDevices.reduce((acc, device) => {
-    if (!acc[device.template_type]) {
-      acc[device.template_type] = []
+    const type = device.device_templates?.type || 'default'
+    if (!acc[type]) {
+      acc[type] = []
     }
-    acc[device.template_type].push(device)
+    acc[type].push(device)
     return acc
   }, {})
 
@@ -348,23 +421,6 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
                 <div className="relative min-w-[160px]">
                   <select
                     className="w-full h-11 pl-4 pr-10 text-sm border border-slate-200 rounded-xl appearance-none bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    value={filterOptions.group_id}
-                    onChange={(e) => setFilterOptions({ ...filterOptions, group_id: Number(e.target.value) })}
-                  >
-                    <option value={0}>Tất cả nhóm</option>
-                    <option value={1}>Nhóm An toàn</option>
-                    <option value={2}>Nhóm Chiếu sáng</option>
-                    <option value={3}>Nhóm Môi trường</option>
-                  </select>
-                  <ChevronDown
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                    size={16}
-                  />
-                </div>
-
-                <div className="relative min-w-[160px]">
-                  <select
-                    className="w-full h-11 pl-4 pr-10 text-sm border border-slate-200 rounded-xl appearance-none bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     value={filterOptions.link_status}
                     onChange={(e) => setFilterOptions({ ...filterOptions, link_status: e.target.value })}
                   >
@@ -429,16 +485,6 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
                     <TabsTrigger value="all" className="rounded-lg px-4 py-4 transition-all">
                       Tất cả ({filteredDevices.length})
                     </TabsTrigger>
-                    {Object.keys(devicesByType).map((type) => (
-                      <TabsTrigger key={type} value={type} className="rounded-lg px-4 py-4 mx-2 transition-all">
-                        {type === "light" && "Đèn"}
-                        {type === "smoke" && "Báo khói"}
-                        {type === "temperature" && "Nhiệt độ"}
-                        {type === "alarm" && "Báo động"}
-                        {type !== "light" && type !== "smoke" && type !== "temperature" && type !== "alarm" && type}(
-                        {devicesByType[type].length})
-                      </TabsTrigger>
-                    ))}
                   </TabsList>
 
                   <TabsContent value="all" className="mt-6">
@@ -522,8 +568,18 @@ export default function DeviceList({ spaceId, spaceName, spaceType, onBack }) {
       {/* Add Device Popup */}
       <DeviceConnectionDialog
         open={isAddDevicePopupOpen}
+        houseId={houseId}
         onOpenChange={setIsAddDevicePopupOpen}
         onConnect={handleDeviceConnect}
+      />
+
+      {/* Edit Device Popup */}
+      <EditDeviceDialog
+        open={isEditDevicePopupOpen}
+        device={deviceToEdit}
+        houseId={houseId}
+        onOpenChange={setIsEditDevicePopupOpen}
+        onEdit={handleDeviceEdit}
       />
     </div>
   )
@@ -559,9 +615,9 @@ function DeviceGrid({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div
-                  className={`w-12 h-12 bg-gradient-to-br ${getDeviceColor(device.template_type, device.power_status)} rounded-xl flex items-center justify-center shadow-lg`}
+                  className={`w-12 h-12 bg-gradient-to-br ${getDeviceColor(device)} rounded-xl flex items-center justify-center shadow-lg`}
                 >
-                  {getDeviceIcon(device.template_type, device.power_status)}
+                  {getDeviceIcon(device)}
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-900">{device.name}</h3>
@@ -637,9 +693,9 @@ function DeviceGrid({
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center space-x-3">
                 <div
-                  className={`w-12 h-12 bg-gradient-to-br ${getDeviceColor(device.template_type, device.power_status)} rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
+                  className={`w-12 h-12 bg-gradient-to-br ${getDeviceColor(device)} rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300`}
                 >
-                  {getDeviceIcon(device.template_type, device.power_status)}
+                  {getDeviceIcon(device)}
                 </div>
                 <div>
                   <h3 className="font-semibold text-slate-900 group-hover:text-blue-700 transition-colors">

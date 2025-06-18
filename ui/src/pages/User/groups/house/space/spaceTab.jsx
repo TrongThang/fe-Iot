@@ -21,7 +21,6 @@ import {
   Clock,
   TrendingUp,
   Database,
-  ArrowRight
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import AddSpacePopup from "./spacePopups/Add-space-popup"
@@ -37,11 +36,11 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   const [spaceToEdit, setSpaceToEdit] = useState(null);
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [showDeviceList, setShowDeviceList] = useState(false);
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
+  const accessToken = localStorage.getItem('authToken');
 
-  const fetchSpaces = async (houseId) => {
+  const fetchSpaces = async (id) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/spaces/house/${houseId}`, {
+      const res = await fetch(`http://localhost:7777/api/spaces/house/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

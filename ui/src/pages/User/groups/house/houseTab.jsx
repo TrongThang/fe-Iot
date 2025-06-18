@@ -28,7 +28,7 @@ export default function HouseTab() {
     const [isLoading, setIsLoading] = useState(false);
     const [isAddingHouse, setIsAddingHouse] = useState(false);
     const navigate = useNavigate();
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
+    const accessToken = localStorage.getItem('authToken');
     const [houses, setHouses] = useState([]);
 
     const iconMap = {
