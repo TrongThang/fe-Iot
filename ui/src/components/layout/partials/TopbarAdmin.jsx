@@ -185,7 +185,7 @@ const TopbarAdmin = () => {
                                 })}
                             </div>
                             <div className="p-3 text-center border-t">
-                                <Link to="/notifications" className="text-blue-600 font-medium hover:text-blue-800 text-sm">
+                                <Link to="/admin/notifications" className="text-blue-600 font-medium hover:text-blue-800 text-sm">
                                     Xem tất cả thông báo
                                 </Link>
                             </div>

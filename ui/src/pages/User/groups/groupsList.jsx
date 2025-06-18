@@ -51,30 +51,6 @@ export default function GroupsManagement() {
         "#FF0000": "bg-red-600",
     }
 
-    const fetchGroups = async () => {
-        try {
-            const res = await fetch(`http://localhost:7777/api/groups/my-groups`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            })
-            if (res.ok) {
-                const dataGroups = await res.json()
-                if (Array.isArray(dataGroups?.data)) {
-                    setGroups(dataGroups?.data)
-                } else if (dataGroups?.data && typeof dataGroups?.data === "object") {
-                    setGroups([dataGroups?.data])
-                } else {
-                    setGroups([])
-                }
-            }
-        } catch (error) {
-            console.error("Error fetching groups:", error)
-        }
-    }
-
     const fetchGroupsUser = async (groupId) => {
         try {
             const res = await fetch(`http://localhost:7777/api/groups/${groupId}/members`, {
@@ -103,16 +79,41 @@ export default function GroupsManagement() {
         }
     }
 
-    useEffect(() => {
-        const fetchAllGroupsData = async () => {
-            await fetchGroups()
-            if (groups.length > 0) {
-                const fetchPromises = groups.map((group) => fetchGroupsUser(group.group_id))
-                await Promise.all(fetchPromises)
+   
+
+    const fetchAllGroupsData = async () => {
+        try {
+            // Fetch groups first
+            const res = await fetch(`http://localhost:7777/api/groups/my-groups`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            })
+
+            if (res.ok) {
+                const dataGroups = await res.json()
+                let groupsData = []
+
+                if (Array.isArray(dataGroups?.data)) {
+                    groupsData = dataGroups?.data
+                } else if (dataGroups?.data && typeof dataGroups?.data === "object") {
+                    groupsData = [dataGroups?.data]
+                }
+
+                setGroups(groupsData)
+
+                // Fetch members for each group
+                if (groupsData.length > 0) {
+                    const fetchPromises = groupsData.map((group) => fetchGroupsUser(group.group_id))
+                    await Promise.all(fetchPromises)
+                }
             }
+        } catch (error) {
+            console.error("Error refreshing data:", error)
         }
-        fetchAllGroupsData()
-    }, [groups]) // Re-run when groups changes
+    }
 
     const handleSaveGroup = (newGroup) => {
         setGroups((prev) => [...prev, newGroup])
@@ -189,7 +190,9 @@ export default function GroupsManagement() {
         if (color.startsWith("#")) return ""      // Trường hợp là mã hex, sẽ dùng style
         return colorMap[color] || "bg-gray-500"   // Trường hợp là tên màu
     }
-
+ useEffect(() => {
+        fetchAllGroupsData()
+    }, []) // Empty dependency array - only run once on mount
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             {/* Header */}
