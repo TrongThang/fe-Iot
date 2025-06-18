@@ -35,6 +35,12 @@ const SidebarAdmin = () => {
     if (path === "/admin/search-group") return "search-group"
     if (path === "/admin/device-transfer-history") return "device-transfer-history"
     if (path === "/admin/share-permissions") return "share-permissions"
+    if (path === "/admin/search-customer-groups") return "search-customer-groups"
+    if (path === "/admin/search-customer-houses") return "search-customer-houses"
+    if (path === "/admin/search-customer-spaces") return "search-customer-spaces"
+    if (path === "/admin/search-customer-devices") return "search-customer-devices"
+    if (path === "/admin/search-customer-info") return "search-customer-info"
+
     return "dashboard" // Default to dashboard
   }
 
@@ -194,30 +200,64 @@ const SidebarAdmin = () => {
                 {isOpen && <span>Tra Cứu Nhóm Của Khách Hàng</span>}
               </Link>
               <Link
-                to="/admin/device-transfer-history"
-                onClick={() => handleItemClick("device-transfer-history")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "device-transfer-history"
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tra Cứu Lịch Sử" : ""}
+                to="/admin/search-customer-groups"
+                onClick={() => handleItemClick("search-customer-groups")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-groups"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Nhóm Của Khách Hàng" : ""}
               >
-                <History className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Tra Cứu Lịch Sử Chuyển Nhượng</span>}
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Nhóm Của Khách Hàng</span>}
               </Link>
               <Link
-                to="/admin/share-permissions"
-                onClick={() => handleItemClick("share-permissions")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "share-permissions"
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tra Cứu Chia Sẽ Quyền" : ""}
+                to="/admin/search-customer-houses"
+                onClick={() => handleItemClick("search-customer-houses")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-houses"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Nhà Của Khách Hàng" : ""}
               >
-                <Search className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Tra Cứu Chia Sẽ Quyền Của Khách Hàng</span>}
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Nhà Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-customer-spaces"
+                onClick={() => handleItemClick("search-customer-spaces")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-spaces"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Không Gian Của Khách Hàng" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Không Gian Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-customer-devices"
+                onClick={() => handleItemClick("search-customer-devices")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-devices"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Thiết Bị Của Khách Hàng" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Thiết Bị Của Khách Hàng</span>}
+              </Link>
+              <Link
+                to="/admin/search-customer-info"
+                onClick={() => handleItemClick("search-customer-info")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-info"
+                  ? "bg-blue-600 text-white font-medium"
+                  : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Thông Tin Của Khách Hàng" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tra Cứu Thông Tin Của Khách Hàng</span>}
               </Link>
             </div>
           )}

@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarImage } from "@radix-ui/react-avatar";
 const Topbar = () => {
