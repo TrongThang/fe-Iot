@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Users, FileText, Palette, X } from "lucide-react"
 import Swal from "sweetalert2"
-import { useParams } from "react-router-dom"
 import IconPickerPopup from "../icon-picker/icon-picker-popup"
 
 export default function EditGroupPopup({ open, onOpenChange, onSave, formData, setFormData }) {

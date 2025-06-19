@@ -20,7 +20,6 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Swal from "sweetalert2"
 import AddGroups from "./groupPopups/Add-group-popup"
-import { useAuth } from "@/contexts/AuthContext"
 
 export default function GroupsManagement() {
     const [viewMode, setViewMode] = useState("grid")
@@ -51,6 +50,12 @@ export default function GroupsManagement() {
         "#FF0000": "bg-red-600",
     }
 
+    const getColorClass = (color) => {
+        if (!color) return "bg-gray-500"
+        if (color.startsWith("bg-")) return color // Trường hợp là class Tailwind
+        if (color.startsWith("#")) return ""      // Trường hợp là mã hex, sẽ dùng style
+        return colorMap[color] || "bg-gray-500"   // Trường hợp là tên màu
+    }
     const fetchGroupsUser = async (groupId) => {
         try {
             const res = await fetch(`http://localhost:7777/api/groups/${groupId}/members`, {
@@ -78,8 +83,6 @@ export default function GroupsManagement() {
             })
         }
     }
-
-   
 
     const fetchAllGroupsData = async () => {
         try {
@@ -118,7 +121,6 @@ export default function GroupsManagement() {
     const handleSaveGroup = (newGroup) => {
         setGroups((prev) => [...prev, newGroup])
         fetchGroupsUser(newGroup.group_id) // Fetch members for the new group
-        console.log("New group created:", newGroup)
     }
 
     const handleEdit = (group) => {
@@ -184,13 +186,8 @@ export default function GroupsManagement() {
         return iconMap[iconName.toLowerCase()] || Users
     }
 
-    const getColorClass = (color) => {
-        if (!color) return "bg-gray-500"
-        if (color.startsWith("bg-")) return color // Trường hợp là class Tailwind
-        if (color.startsWith("#")) return ""      // Trường hợp là mã hex, sẽ dùng style
-        return colorMap[color] || "bg-gray-500"   // Trường hợp là tên màu
-    }
- useEffect(() => {
+
+    useEffect(() => {
         fetchAllGroupsData()
     }, []) // Empty dependency array - only run once on mount
     return (

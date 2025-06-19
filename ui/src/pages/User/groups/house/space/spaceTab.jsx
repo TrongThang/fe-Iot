@@ -34,8 +34,10 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   const [isAddSpacePopupOpen, setIsAddSpacePopupOpen] = useState(false);
   const [isEditSpacePopupOpen, setIsEditSpacePopupOpen] = useState(false);
   const [spaceToEdit, setSpaceToEdit] = useState(null);
+  const [devices, setDevices] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [showDeviceList, setShowDeviceList] = useState(false);
+  const [spaces, setSpaces] = useState([])
   const accessToken = localStorage.getItem('authToken');
 
   const fetchSpaces = async (id) => {
@@ -60,56 +62,52 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
     }
   };
 
-  // Mock data based on database schema
-  const [spaces, setSpaces] = useState([
-    {
-      space_id: 1,
-      house_id: houseId,
-      name: "Phòng khách",
-      created_at: "2024-01-01T08:00:00Z",
-      updated_at: "2024-01-20T14:30:00Z",
-      is_deleted: false,
-      // Related data from other tables
-      devices_count: 8,
-      active_devices_count: 6,
-      alerts_count: 2,
-      recent_alerts: [
-        {
-          alert_id: 1,
-          device_serial: "SMK001-2024-001",
-          message: "Phát hiện khói bất thường",
-          timestamp: "2024-01-20T14:25:00Z",
-          status: "active",
-          alert_type_id: 1,
-        },
-        {
-          alert_id: 2,
-          device_serial: "TEMP001-2024-003",
-          message: "Nhiệt độ cao bất thường",
-          timestamp: "2024-01-20T13:15:00Z",
-          status: "resolved",
-          alert_type_id: 2,
-        },
-      ],
-      hourly_values: {
-        latest_hour: "2024-01-20T14:00:00Z",
-        avg_temperature: 24.5,
-        avg_humidity: 65,
-        sample_count: 12,
-      },
-      icon_name: "sofa", // From houses table for space type
-      icon_color: "#3B82F6",
+  const fetchDevice = async (id) => {
+    try {
+      const res = await fetch(`http://localhost:7777/api/devices/space/${id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      if (res.ok) {
+        const dataDevice = await res.json();
+        console.log("dataDevice", dataDevice)
+        setDevices(Array.isArray(dataDevice) ? dataDevice : [])
+      } else {
+        console.error(`Failed to fetch spaces for house ${houseId}: ${res.status} ${res.statusText}`);
+        return [];
+      }
+    } catch (error) {
+      console.error(`Error fetching spaces for house ${houseId}:`, error);
+      return [];
     }
-  ])
-
+  }
   // Simulate loading
   useEffect(() => {
-    fetchSpaces(houseId)
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
-    return () => clearTimeout(timer)
-  }, [])
+    const loadSpaces = async () => {
+      setIsLoading(true);
+      await fetchSpaces(houseId);
+      setIsLoading(false);
+    };
+    loadSpaces();
+  }, [houseId]);
+
+  // Fetch devices when spaces change
+  useEffect(() => {
+    if (spaces.length > 0) {
+      const loadDevices = async () => {
+        for (const space of spaces) {
+          if (space.space_id) {
+            await fetchDevice(space.space_id);
+          }
+        }
+      };
+      loadDevices();
+    }
+  }, [spaces]);
+
 
   const getSpaceIcon = (iconName) => {
     const iconProps = { className: "h-6 w-6 text-white" }
@@ -139,6 +137,16 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
     return "text-red-500"
   }
 
+  // Calculate device statistics for each space
+  const getSpaceDeviceStats = (spaceId) => {
+    const spaceDevices = devices.filter(device => device.space_id === spaceId);
+    return {
+      totalDevices: spaceDevices.length,
+      activeDevices: spaceDevices.filter(device => device.power_status && device.link_status === "linked").length,
+      alertsCount: spaceDevices.filter(device => device.alert_status === "active").length
+    };
+  };
+
   const handleDeleteSpace = async (spaceId) => {
     const result = await Swal.fire({
       title: "Xác nhận xóa",
@@ -160,8 +168,8 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
             Authorization: `Bearer ${accessToken}`,
           },
         });
+
         if (res.ok) {
-          setSpaces((prev) => prev.filter((s) => s.space_id !== spaceId));
           Swal.fire({
             icon: "success",
             title: "Thành công",
@@ -169,20 +177,23 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
             confirmButtonText: "OK",
             confirmButtonColor: "#28a745",
           });
+          refreshData(); // Refresh data after deletion
         } else {
+          const errorData = await res.json();
           Swal.fire({
             icon: "error",
             title: "Lỗi",
-            text: `Xóa không gian thất bại: ${res.status} ${res.statusText}`,
+            text: errorData.message || "Có lỗi xảy ra khi xóa không gian",
             confirmButtonText: "OK",
             confirmButtonColor: "#dc3545",
           });
         }
       } catch (error) {
+        console.error("Error deleting space:", error);
         Swal.fire({
           icon: "error",
           title: "Lỗi",
-          text: "Xóa không gian thất bại: " + error.message,
+          text: "Có lỗi xảy ra khi xóa không gian",
           confirmButtonText: "OK",
           confirmButtonColor: "#dc3545",
         });
@@ -213,7 +224,6 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   };
 
   const handleManageDevices = (space) => {
-    console.log("Manage devices for space:", space)
     if (onSpaceClick) {
       onSpaceClick(space)
     }
@@ -225,10 +235,22 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
       (space.name || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   )
 
-  // Statistics
-  const totalDevices = spaces.reduce((sum, space) => sum + space.devices_count, 0)
-  const totalActiveDevices = spaces.reduce((sum, space) => sum + space.active_devices_count, 0)
-  const totalAlerts = spaces.reduce((sum, space) => sum + space.alerts_count, 0)
+  // Statistics - Calculate from real device data
+  const totalDevices = devices.length;
+  const totalActiveDevices = devices.filter(device => device.power_status && device.link_status === "linked").length;
+  const totalAlerts = devices.filter(device => device.alert_status === "active").length;
+
+  const refreshData = async () => {
+    try {
+      setIsLoading(true);
+      await fetchSpaces(houseId);
+      await fetchDevice();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -437,37 +459,44 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
 
                   {/* Device Stats */}
                   <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-blue-50 transition-colors">
-                      <div className="flex items-center justify-center mb-1">
-                        <Lightbulb className="h-4 w-4 text-blue-500 mr-1" />
-                        <span className="text-lg font-bold text-slate-700 group-hover:text-blue-600">
-                          {space.devices_count}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-500">Thiết bị</span>
-                    </div>
+                    {(() => {
+                      const stats = getSpaceDeviceStats(space.space_id);
+                      return (
+                        <>
+                          <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-blue-50 transition-colors">
+                            <div className="flex items-center justify-center mb-1">
+                              <Lightbulb className="h-4 w-4 text-blue-500 mr-1" />
+                              <span className="text-lg font-bold text-slate-700 group-hover:text-blue-600">
+                                {stats.totalDevices}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500">Thiết bị</span>
+                          </div>
 
-                    <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-emerald-50 transition-colors">
-                      <div className="flex items-center justify-center mb-1">
-                        <Wifi className="h-4 w-4 text-emerald-500 mr-1" />
-                        <span className="text-lg font-bold text-slate-700 group-hover:text-emerald-600">
-                          {space.active_devices_count}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-500">Hoạt động</span>
-                    </div>
+                          <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-emerald-50 transition-colors">
+                            <div className="flex items-center justify-center mb-1">
+                              <Wifi className="h-4 w-4 text-emerald-500 mr-1" />
+                              <span className="text-lg font-bold text-slate-700 group-hover:text-emerald-600">
+                                {stats.activeDevices}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500">Hoạt động</span>
+                          </div>
 
-                    <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-amber-50 transition-colors">
-                      <div className="flex items-center justify-center mb-1">
-                        <AlertTriangle className={`h-4 w-4 mr-1 ${getAlertSeverityColor(space.alerts_count)}`} />
-                        <span
-                          className={`text-lg font-bold group-hover:text-amber-600 ${getAlertSeverityColor(space.alerts_count)}`}
-                        >
-                          {space.alerts_count}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-500">Cảnh báo</span>
-                    </div>
+                          <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-amber-50 transition-colors">
+                            <div className="flex items-center justify-center mb-1">
+                              <AlertTriangle className={`h-4 w-4 mr-1 ${getAlertSeverityColor(stats.alertsCount)}`} />
+                              <span
+                                className={`text-lg font-bold group-hover:text-amber-600 ${getAlertSeverityColor(stats.alertsCount)}`}
+                              >
+                                {stats.alertsCount}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500">Cảnh báo</span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Environmental Data */}
@@ -534,20 +563,27 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
 
                   {/* Progress Bar */}
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-slate-600">
-                      <span>Thiết bị hoạt động</span>
-                      <span>
-                        {space.active_devices_count}/{space.devices_count}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${space.devices_count > 0 ? (space.active_devices_count / space.devices_count) * 100 : 0}%`,
-                        }}
-                      />
-                    </div>
+                    {(() => {
+                      const stats = getSpaceDeviceStats(space.space_id);
+                      return (
+                        <>
+                          <div className="flex justify-between text-xs text-slate-600">
+                            <span>Thiết bị hoạt động</span>
+                            <span>
+                              {stats.activeDevices}/{stats.totalDevices}
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+                              style={{
+                                width: `${stats.totalDevices > 0 ? (stats.activeDevices / stats.totalDevices) * 100 : 0}%`,
+                              }}
+                            />
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Footer */}
@@ -602,6 +638,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         onSave={(newSpace) => {
           setSpaces((prev) => [...prev, newSpace]);
           setIsAddSpacePopupOpen(false);
+          refreshData(); // Refresh data after adding
         }}
         houseId={houseId}
       />
@@ -611,6 +648,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         onSave={(updatedSpace) => {
           setSpaces((prev) => prev.map(s => s.space_id === updatedSpace.space_id ? { ...s, ...updatedSpace } : s));
           setIsEditSpacePopupOpen(false);
+          refreshData(); // Refresh data after editing
         }}
         space={spaceToEdit}
       />
