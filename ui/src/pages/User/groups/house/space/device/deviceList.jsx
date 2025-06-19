@@ -205,12 +205,15 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
   }
 
   const handleDeviceEdit = (updatedDevice) => {
+    // Cập nhật UI ngay lập tức với dữ liệu mới
     setDevices(prev => prev.map(device =>
       device.device_id === updatedDevice.device_id ? updatedDevice : device
     ));
+    
     if (selectedDevice?.device_id === updatedDevice.device_id) {
       setSelectedDevice(updatedDevice);
     }
+    
     setIsEditDevicePopupOpen(false);
   }
 
@@ -554,7 +557,7 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
                     setDevices(devices.map((d) => (d.device_id === updatedDevice.device_id ? updatedDevice : d)))
                     setSelectedDevice(updatedDevice)
                   }}
-                  onEdit={handleEditDevice}
+                  onEdit={handleDeviceEdit}
                   onDelete={handleDeleteDevice}
                   onLockToggle={handleLockToggle}
                   onClose={() => setSelectedDevice(null)}

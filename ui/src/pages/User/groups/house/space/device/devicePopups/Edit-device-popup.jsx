@@ -61,9 +61,7 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
             })
             return
         }
-
         setIsEditing(true)
-
         try {
             const res = await fetch(`http://localhost:7777/api/devices/${device.device_id}/space`, {
                 method: "PUT",
@@ -85,6 +83,18 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
             }
 
             const data = await res.json();
+            console.log("API Response:", data);
+
+            // Sử dụng dữ liệu từ API nếu có đầy đủ, nếu không thì tạo object mới
+            const updatedDevice = data && data.data ? data.data : {
+                ...device, // Giữ lại tất cả dữ liệu cũ
+                name: deviceData.deviceName,
+                serial_number: deviceData.serial,
+                space_id: parseInt(deviceData.room),
+                updated_at: new Date().toISOString()
+            };
+
+            console.log("Updated device data:", updatedDevice);
 
             Swal.fire({
                 icon: "success",
@@ -94,10 +104,10 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
                 confirmButtonColor: "#10b981",
             })
 
-            // Close dialog and notify parent
+            // Close dialog and notify parent with updated device data
             onOpenChange(false);
             if (onEdit) {
-                onEdit(data);
+                onEdit(updatedDevice);
             }
         } catch (error) {
             console.error("Lỗi khi cập nhật thiết bị:", error)
@@ -134,7 +144,7 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
             setDeviceData({
                 serial: device.serial_number,
                 deviceName: device.name || "",
-                room: device.space_id?.toString() || "",
+                room: device.space_id || "",
             })
         }
     }, [device]);
