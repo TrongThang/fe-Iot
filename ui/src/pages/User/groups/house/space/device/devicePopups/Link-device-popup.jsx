@@ -10,27 +10,21 @@ import Swal from "sweetalert2"
 import QRScannerDialog from "./QR-scanner"
 import { useParams } from "react-router-dom"
 
-
-export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, houseId }) {
+export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, houseId, spaceId }) {
     const { id } = useParams();
     const [deviceData, setDeviceData] = useState({
         deviceId: "",
         deviceName: "",
-        room: "",
+        room: spaceId || "", // Initialize with spaceId if provided
     })
-
     const [isConnecting, setIsConnecting] = useState(false)
     const [isQRScannerOpen, setIsQRScannerOpen] = useState(false)
     const [spaces, setSpaces] = useState([])
+    const [spaceName, setSpaceName] = useState("") // State for space name
     const accessToken = localStorage.getItem('authToken');
 
+    // Fetch all spaces for a house (used when spaceId is undefined)
     const fetchSpaces = async (currentHouseId) => {
-        if (!currentHouseId || !accessToken) {
-            console.warn("Không thể fetch spaces: House ID hoặc Access Token không có sẵn.");
-            setSpaces([]);
-            return [];
-        }
-
         try {
             const res = await fetch(`http://localhost:7777/api/spaces/house/${currentHouseId}`, {
                 method: "GET",
@@ -51,6 +45,29 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
             console.error(`Error fetching spaces for house ${currentHouseId}:`, error);
             setSpaces([]);
             return [];
+        }
+    }
+
+    // Fetch specific space details for spaceId (used when spaceId is defined)
+    const fetchSpace = async (spaceId) => {
+        try {
+            const res = await fetch(`http://localhost:7777/api/spaces/${spaceId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+            if (res.ok) {
+                const dataSpace = await res.json();
+                setSpaceName(dataSpace?.space_name || "Unknown Space");
+            } else {
+                console.error(`Failed to fetch space ${spaceId}: ${res.status} ${res.statusText}`);
+                setSpaceName("Unknown Space");
+            }
+        } catch (error) {
+            console.error(`Error fetching space ${spaceId}:`, error);
+            setSpaceName("Unknown Space");
         }
     }
 
@@ -89,7 +106,7 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
             }
 
             const data = await res.json();
-            
+
             Swal.fire({
                 icon: "success",
                 title: "Kết nối thành công",
@@ -102,9 +119,9 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
             setDeviceData({
                 deviceId: "",
                 deviceName: "",
-                room: "",
+                room: spaceId || "",
             })
-            
+
             // Close dialog and notify parent
             onOpenChange(false);
             if (onConnect) {
@@ -140,19 +157,22 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
         setDeviceData({
             deviceId: "",
             deviceName: "",
-            room: "",
+            room: spaceId || "",
         })
         onOpenChange(false)
     }
 
     useEffect(() => {
-        console.log("fetchSpace", fetchSpaces(houseId))
-        if (houseId && accessToken) {
-            fetchSpaces(houseId);
+        if (spaceId && accessToken) {
+            fetchSpace(spaceId); // Fetch space name for spaceId
+            setDeviceData(prev => ({ ...prev, room: spaceId })); // Set room to spaceId
+        } else if (houseId && accessToken) {
+            fetchSpaces(houseId); // Fetch all spaces if no spaceId
         } else {
             setSpaces([]);
+            setSpaceName("");
         }
-    }, [houseId, accessToken]);
+    }, [houseId, spaceId, accessToken]);
 
     return (
         <>
@@ -161,7 +181,7 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
                     {/* Header */}
                     <DialogHeader className="px-6 pt-6 pb-2 border-b border-gray-100">
                         <div className="flex items-center justify-between">
-                            <DialogTitle className="text-xl font-semibold text-gray-900">Liên kế thiết bị</DialogTitle>
+                            <DialogTitle className="text-xl font-semibold text-gray-900">Liên kết thiết bị</DialogTitle>
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -176,7 +196,7 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
                     {/* Content */}
                     <div className="px-6 py-6 space-y-6 bg-gray-50">
                         {/* Device ID */}
-                        <div className="p-y-2">
+                        <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700">ID Thiết bị</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
@@ -209,26 +229,37 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
 
                         {/* Room Selection */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Chọn phòng</label>
+                            <label className="text-sm font-medium text-gray-700">Phòng</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
                                     <Home className="h-5 w-5 text-gray-400" />
                                 </div>
-                                <Select
-                                    value={deviceData.room}
-                                    onValueChange={(value) => setDeviceData((prev) => ({ ...prev, room: value }))}
-                                >
-                                    <SelectTrigger className="pl-11 h-12 w-full border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-white">
-                                        <SelectValue placeholder="Chọn phòng..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white">
-                                        {spaces.map((space) => (
-                                            <SelectItem key={space.space_id} value={space.space_id}>
-                                                {space.space_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                {spaceId ? (
+                                    <Select
+                                        value={deviceData.room}
+                                        disabled
+                                    >
+                                        <SelectTrigger className="pl-11 h-12 w-full border-gray-200 bg-gray-100 text-gray-700 rounded-xl cursor-not-allowed">
+                                            <SelectValue>{spaceName || "Loading..."}</SelectValue>
+                                        </SelectTrigger>
+                                    </Select>
+                                ) : (
+                                    <Select
+                                        value={deviceData.room}
+                                        onValueChange={(value) => setDeviceData((prev) => ({ ...prev, room: value }))}
+                                    >
+                                        <SelectTrigger className="pl-11 h-12 w-full border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-white">
+                                            <SelectValue placeholder="Chọn phòng..." />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white">
+                                            {spaces.map((space) => (
+                                                <SelectItem key={space.space_id} value={space.space_id}>
+                                                    {space.space_name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
                         </div>
 
