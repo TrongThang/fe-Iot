@@ -12,21 +12,22 @@ import { useParams } from "react-router-dom"
 export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, houseId }) {
     const { id } = useParams();
     const [deviceData, setDeviceData] = useState({
+        serial: "",
         deviceName: "",
         room: "",
     })
-
     const [isEditing, setIsEditing] = useState(false)
     const [spaces, setSpaces] = useState([])
+    const [spaceName, setSpaceName] = useState("") // State for space name
     const accessToken = localStorage.getItem('authToken');
 
+    // Fetch all spaces for a house (used when device.space_id is undefined)
     const fetchSpaces = async (currentHouseId) => {
         if (!currentHouseId || !accessToken) {
             console.warn("Không thể fetch spaces: House ID hoặc Access Token không có sẵn.");
             setSpaces([]);
             return [];
         }
-
         try {
             const res = await fetch(`http://localhost:7777/api/spaces/house/${currentHouseId}`, {
                 method: "GET",
@@ -47,6 +48,34 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
             console.error(`Error fetching spaces for house ${currentHouseId}:`, error);
             setSpaces([]);
             return [];
+        }
+    }
+
+    // Fetch specific space details for spaceId (used when device.space_id is defined)
+    const fetchSpace = async (spaceId) => {
+        if (!spaceId || !accessToken) {
+            console.warn("Không thể fetch space: Space ID hoặc Access Token không có sẵn.");
+            setSpaceName("");
+            return;
+        }
+        try {
+            const res = await fetch(`http://localhost:7777/api/spaces/${spaceId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+            if (res.ok) {
+                const dataSpace = await res.json();
+                setSpaceName(dataSpace?.space_name || "Unknown Space");
+            } else {
+                console.error(`Failed to fetch space ${spaceId}: ${res.status} ${res.statusText}`);
+                setSpaceName("Unknown Space");
+            }
+        } catch (error) {
+            console.error(`Error fetching space ${spaceId}:`, error);
+            setSpaceName("Unknown Space");
         }
     }
 
@@ -85,9 +114,9 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
             const data = await res.json();
             console.log("API Response:", data);
 
-            // Sử dụng dữ liệu từ API nếu có đầy đủ, nếu không thì tạo object mới
+            // Use API response if available, otherwise construct updated device object
             const updatedDevice = data && data.data ? data.data : {
-                ...device, // Giữ lại tất cả dữ liệu cũ
+                ...device,
                 name: deviceData.deviceName,
                 serial_number: deviceData.serial,
                 space_id: parseInt(deviceData.room),
@@ -125,8 +154,9 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
 
     const handleCancel = () => {
         setDeviceData({
-            deviceName: "",
-            room: "",
+            serial: device?.serial_number || "",
+            deviceName: device?.name || "",
+            room: device?.space_id || "",
         })
         onOpenChange(false)
     }
@@ -137,12 +167,17 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
         } else {
             setSpaces([]);
         }
-    }, [houseId, accessToken]);
+        if (device?.space_id && accessToken) {
+            fetchSpace(device.space_id); // Fetch space name for device.space_id
+        } else {
+            setSpaceName("");
+        }
+    }, [houseId, accessToken, device]);
 
     useEffect(() => {
         if (device) {
             setDeviceData({
-                serial: device.serial_number,
+                serial: device.serial_number || "",
                 deviceName: device.name || "",
                 room: device.space_id || "",
             })
@@ -180,8 +215,7 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
                                 placeholder="Nhập ID thiết bị..."
                                 value={deviceData.serial}
                                 disabled
-                                onChange={(e) => setDeviceData((prev) => ({ ...prev, deviceId: e.target.value }))}
-                                className="pl-11 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-white"
+                                className="pl-11 h-12 border-gray-200 bg-gray-100 text-gray-700 rounded-xl cursor-not-allowed"
                             />
                         </div>
                     </div>
@@ -204,26 +238,37 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
 
                     {/* Room Selection */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-700">Chọn phòng</label>
+                        <label className="text-sm font-medium text-gray-700">Phòng</label>
                         <div className="relative">
                             <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
                                 <Home className="h-5 w-5 text-gray-400" />
                             </div>
-                            <Select
-                                value={deviceData.room}
-                                onValueChange={(value) => setDeviceData((prev) => ({ ...prev, room: value }))}
-                            >
-                                <SelectTrigger className="pl-11 h-12 w-full border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-white">
-                                    <SelectValue placeholder="Chọn phòng..." />
-                                </SelectTrigger>
-                                <SelectContent className="bg-white">
-                                    {spaces.map((space) => (
-                                        <SelectItem key={space.space_id} value={space.space_id}>
-                                            {space.space_name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            {device?.space_id ? (
+                                <Select
+                                    value={deviceData.room}
+                                    disabled
+                                >
+                                    <SelectTrigger className="pl-11 h-12 w-full border-gray-200 bg-gray-100 text-gray-700 rounded-xl cursor-not-allowed">
+                                        <SelectValue>{spaceName || "Loading..."}</SelectValue>
+                                    </SelectTrigger>
+                                </Select>
+                            ) : (
+                                <Select
+                                    value={deviceData.room}
+                                    onValueChange={(value) => setDeviceData((prev) => ({ ...prev, room: value }))}
+                                >
+                                    <SelectTrigger className="pl-11 h-12 w-full border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-white">
+                                        <SelectValue placeholder="Chọn phòng..." />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-white">
+                                        {spaces.map((space) => (
+                                            <SelectItem key={space.space_id} value={space.space_id}>
+                                                {space.space_name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
                         </div>
                     </div>
 

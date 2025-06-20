@@ -34,8 +34,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import LedControlDialog from "@/pages/User/device-dialogs/led-control-dialog"
 import AlarmControlDialog from "@/pages/User/device-dialogs/alarm-control-dialog"
-import DeviceSharingDialog from "@/pages/User/share/shareDeviceDialog"
 import { useNavigate } from "react-router-dom"
+import DeviceSharingDialog from "@/pages/User/share/shareDeviceDialog"
 
 export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete, onLockToggle }) {
   const [isControlDialogOpen, setIsControlDialogOpen] = useState(false)

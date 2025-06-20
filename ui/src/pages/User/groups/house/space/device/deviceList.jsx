@@ -29,10 +29,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import DeviceDetail from "./deviceDetails"
-import DeviceConnectionDialog from "./devicePopups/Add-device-popup"
+
 import EditDeviceDialog from "./devicePopups/Edit-device-popup"
 import { useParams } from "react-router-dom"
 import Swal from "sweetalert2"
+import DeviceConnectionDialog from "./devicePopups/Link-device-popup"
 
 export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onBack }) {
   const { id } = useParams()
@@ -209,11 +210,11 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
     setDevices(prev => prev.map(device =>
       device.device_id === updatedDevice.device_id ? updatedDevice : device
     ));
-    
+
     if (selectedDevice?.device_id === updatedDevice.device_id) {
       setSelectedDevice(updatedDevice);
     }
-    
+
     setIsEditDevicePopupOpen(false);
   }
 
@@ -377,7 +378,7 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
                   className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  <span>Thêm thiết bị</span>
+                  <span>Liên kết thiết bị</span>
                 </Button>
               </div>
             </div>
@@ -571,6 +572,7 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
       {/* Add Device Popup */}
       <DeviceConnectionDialog
         open={isAddDevicePopupOpen}
+        spaceId={spaceId}
         houseId={houseId}
         onOpenChange={setIsAddDevicePopupOpen}
         onConnect={handleDeviceConnect}
