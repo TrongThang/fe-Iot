@@ -203,14 +203,9 @@ export default function PasswordRecovery() {
                     <div className="mb-10">
                         <div className="w-36 h-36 mx-auto bg-white rounded-full shadow-2xl flex items-center justify-center border-4 border-blue-100 relative group">
                             <img
-                                src={"/placeholder.svg"}
+                                src="img/iot_logo_icon.png"
                                 alt="Logo"
                                 className="w-18 h-18 transition-transform group-hover:scale-110 duration-300 rounded-full"
-                                onError={(e) => {
-                                    e.target.src =
-                                        "/img/ecom_logo_icon.png"
-                                    e.target.onerror = null
-                                }}
                             />
                             <div className="absolute -inset-6 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 rounded-full blur-xl opacity-20 group-hover:opacity-30 transition-opacity duration-300"></div>
                         </div>
@@ -251,12 +246,12 @@ export default function PasswordRecovery() {
                     <div className="md:hidden text-center mb-10">
                         <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-indigo-100 rounded-3xl shadow-xl flex items-center justify-center mb-6 border border-blue-200">
                             <img
-                                src={"/placeholder.svg"}
+                                src="img/iot_logo_icon.png"
                                 alt="Logo"
                                 className="w-12 h-12"
                                 onError={(e) => {
                                     e.target.src =
-                                        "/img/ecom_logo_icon.png"
+                                        "img/iot_logo_icon.png"
                                     e.target.onerror = null
                                 }}
                             />

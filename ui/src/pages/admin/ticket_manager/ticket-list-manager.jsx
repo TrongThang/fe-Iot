@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,130 +9,38 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
     AlertCircle,
     CheckCircle,
     Clock,
-    Eye,
     MoreHorizontal,
     Search,
+    List,
     Filter,
-    Plus,
-    Download,
     RefreshCw,
 } from "lucide-react"
 import TicketDetailDialogAdmin from "./ticket-details-manager"
-
-// Mock data based on the database schema
-const mockTickets = [
-    {
-        ticket_id: 1,
-        user_id: 101,
-        device_serial: "DEV001234",
-        ticket_type_id: 1,
-        type_name: "Hardware Issue",
-        description: "Máy tính không khởi động được",
-        status: "open",
-        priority: 1,
-        created_at: "2024-01-15T09:30:00",
-        updated_at: "2024-01-15T09:30:00",
-        assigned_to: 201,
-        assigned_name: "Nguyễn Văn A",
-        resolved_at: null,
-        user_name: "Trần Thị B",
-    },
-    {
-        ticket_id: 2,
-        user_id: 102,
-        device_serial: "DEV005678",
-        ticket_type_id: 2,
-        type_name: "Software Issue",
-        description: "Phần mềm Office không hoạt động",
-        status: "in_progress",
-        priority: 2,
-        created_at: "2024-01-14T14:20:00",
-        updated_at: "2024-01-15T10:15:00",
-        assigned_to: 202,
-        assigned_name: "Lê Văn C",
-        resolved_at: null,
-        user_name: "Phạm Văn D",
-    },
-    {
-        ticket_id: 3,
-        user_id: 103,
-        device_serial: "DEV009012",
-        ticket_type_id: 1,
-        type_name: "Hardware Issue",
-        description: "Màn hình bị nhấp nháy",
-        status: "resolved",
-        priority: 3,
-        created_at: "2024-01-13T11:45:00",
-        updated_at: "2024-01-14T16:30:00",
-        assigned_to: 201,
-        assigned_name: "Nguyễn Văn A",
-        resolved_at: "2024-01-14T16:30:00",
-        user_name: "Hoàng Thị E",
-    },
-    {
-        ticket_id: 4,
-        user_id: 104,
-        device_serial: "DEV003456",
-        ticket_type_id: 3,
-        type_name: "Network Issue",
-        description: "Không thể kết nối internet",
-        status: "open",
-        priority: 1,
-        created_at: "2024-01-15T08:15:00",
-        updated_at: "2024-01-15T08:15:00",
-        assigned_to: null,
-        assigned_name: null,
-        resolved_at: null,
-        user_name: "Vũ Văn F",
-    },
-    {
-        ticket_id: 5,
-        user_id: 105,
-        device_serial: "DEV007890",
-        ticket_type_id: 2,
-        type_name: "Software Issue",
-        description: "Lỗi cập nhật hệ điều hành",
-        status: "closed",
-        priority: 2,
-        created_at: "2024-01-12T13:20:00",
-        updated_at: "2024-01-13T09:45:00",
-        assigned_to: 202,
-        assigned_name: "Lê Văn C",
-        resolved_at: "2024-01-13T09:45:00",
-        user_name: "Đỗ Thị G",
-    },
-]
+import axiosPublic from "@/apis/clients/public.client"
+import { toast } from "sonner"
 
 const statusConfig = {
-    open: {
-        label: "Mở",
+    rejected: {
+        label: "Từ chối",
         className: "bg-red-100 text-red-800 border-red-200",
         icon: AlertCircle,
     },
-    in_progress: {
-        label: "Đang xử lý",
+    pending: {
+        label: "Chờ xử lý",
         className: "bg-yellow-100 text-yellow-800 border-yellow-200",
         icon: Clock,
     },
-    resolved: {
-        label: "Đã giải quyết",
-        className: "bg-green-100 text-green-800 border-green-200",
-        icon: CheckCircle,
+    in_progress: {
+        label: "Đang xử lý",
+        className: "bg-yellow-400 text-yellow-1000 border-yellow-400",
+        icon: Clock,
     },
-    closed: {
-        label: "Đã đóng",
-        className: "bg-gray-100 text-gray-800 border-gray-200",
+    resolved: {
+        label: "Chấp nhận",
+        className: "bg-green-100 text-green-800 border-green-200",
         icon: CheckCircle,
     },
 };
@@ -159,17 +67,44 @@ export default function AdminTicketsDashboard() {
     const [typeFilter, setTypeFilter] = useState("all")
     const [selectedTicket, setSelectedTicket] = useState(null)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [tickets, setTickets] = useState([])
 
-    const filteredTickets = mockTickets.filter((ticket) => {
+    const fetchTicket = async () => {
+        setLoading(true)
+        try {
+            const response = await axiosPublic.get("/tickets")
+            if (response?.status_code === 200) {
+                setTickets(response?.data?.data)
+            } else {
+                toast.error("Lỗi", { description: "Không thể tải danh sách ticket" })
+            }
+        } catch (error) {
+            console.error("Error fetching tickets:", error)
+            toast.error("Lỗi khi tải danh sách ticket", { description: error.message })
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    useEffect(() => {
+        fetchTicket();
+    }, [])
+
+    const handleRefresh = async () => {
+        await fetchTicket()
+    }
+
+    const filteredTickets = tickets?.filter((ticket) => {
         const matchesSearch =
-            ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.device_serial.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.ticket_id.toString().includes(searchTerm)
+            ticket?.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket?.device_serial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket?.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            ticket?.ticket_id?.toString().includes(searchTerm)
 
-        const matchesStatus = statusFilter === "all" || ticket.status === statusFilter
-        const matchesPriority = priorityFilter === "all" || ticket.priority.toString() === priorityFilter
-        const matchesType = typeFilter === "all" || ticket.ticket_type_id.toString() === typeFilter
+        const matchesStatus = statusFilter === "all" || ticket?.status === statusFilter
+        const matchesPriority = priorityFilter === "all" || ticket?.priority.toString() === priorityFilter
+        const matchesType = typeFilter === "all" || ticket?.ticket_type_id.toString() === typeFilter
 
         return matchesSearch && matchesStatus && matchesPriority && matchesType
     })
@@ -180,22 +115,27 @@ export default function AdminTicketsDashboard() {
 
     const getStatusBadge = (status) => {
         const config = statusConfig[status];
-        const Icon = config.icon;
+        const Icon = config?.icon;
+    
+        if (!config) return "N/A";
+    
         return (
             <Badge className={`flex items-center gap-1 ${config.className}`}>
                 <Icon className="w-3 h-3" />
                 {config.label}
             </Badge>
         );
-    };
+    }
 
     const getPriorityBadge = (priority) => {
         const config = priorityConfig[priority];
-        return <Badge className={config.className}>{config.label}</Badge>;
+
+        if (!config) return "N/A";
+
+        return <Badge className={config?.className}>{config?.label}</Badge>;
     };
 
-    const handleViewTicket = (ticketId) => {
-        const ticket = mockTickets.find((t) => t.ticket_id === ticketId)
+    const handleViewTicket = (ticket) => {
         if (ticket) {
             setSelectedTicket(ticket)
             setIsDialogOpen(true)
@@ -211,54 +151,70 @@ export default function AdminTicketsDashboard() {
                     <p className="text-muted-foreground text-lg">Danh sách tất cả các yêu cầu hỗ trợ từ người dùng</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Làm mới
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRefresh}
+                        disabled={loading}
+                    >
+                        <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                        {loading ? "Làm mới..." : "Làm mới"}
                     </Button>
                 </div>
             </div>
 
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Tổng yêu cầu</CardTitle>
-                        <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                        <List className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{mockTickets.length}</div>
+                        <div className="text-2xl font-bold">{tickets?.length}</div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Đang mở</CardTitle>
+                        <CardTitle className="text-sm font-medium">Từ chối</CardTitle>
                         <AlertCircle className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-red-500">
-                            {mockTickets.filter((t) => t.status === "open").length}
+                            {tickets?.filter((t) => t.status === "rejected").length}
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Chờ xử lý</CardTitle>
+                        <Clock className="h-4 w-4 text-yellow-700" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-yellow-700">
+                            {tickets?.filter((t) => t.status === "pending").length}
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Đang xử lý</CardTitle>
-                        <Clock className="h-4 w-4 text-yellow-500" />
+                        <Clock className="h-4 w-4 text-yellow-400" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-yellow-500">
-                            {mockTickets.filter((t) => t.status === "in_progress").length}
+                        <div className="text-2xl font-bold text-yellow-400">
+                            {tickets?.filter((t) => t.status === "in_progress").length}
                         </div>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Đã giải quyết</CardTitle>
+                        <CardTitle className="text-sm font-medium">Chấp nhận</CardTitle>
                         <CheckCircle className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-green-500">
-                            {mockTickets.filter((t) => t.status === "resolved" || t.status === "closed").length}
+                            {tickets?.filter((t) => t.status === "resolved").length}
                         </div>
                     </CardContent>
                 </Card>
@@ -295,10 +251,14 @@ export default function AdminTicketsDashboard() {
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
                                     <SelectItem value="all">Tất cả</SelectItem>
-                                    <SelectItem value="open">Mở</SelectItem>
-                                    <SelectItem value="in_progress">Đang xử lý</SelectItem>
-                                    <SelectItem value="resolved">Đã giải quyết</SelectItem>
-                                    <SelectItem value="closed">Đã đóng</SelectItem>
+                                    {
+                                        Object.entries(statusConfig).map(([key, value]) => (
+                                            <SelectItem key={key} value={key}>
+                                                {value.label}
+                                            </SelectItem>
+                                        ))
+                                    }
+
                                 </SelectContent>
                             </Select>
                         </div>
@@ -310,9 +270,13 @@ export default function AdminTicketsDashboard() {
                                 </SelectTrigger>
                                 <SelectContent className="bg-white">
                                     <SelectItem value="all">Tất cả</SelectItem>
-                                    <SelectItem value="1">Cao</SelectItem>
-                                    <SelectItem value="2">Trung bình</SelectItem>
-                                    <SelectItem value="3">Thấp</SelectItem>
+                                    {
+                                        Object.entries(priorityConfig).map(([key, value]) => (
+                                            <SelectItem key={key} value={key}>
+                                                {value.label}
+                                            </SelectItem>
+                                        ))
+                                    }
                                 </SelectContent>
                             </Select>
                         </div>
@@ -334,7 +298,6 @@ export default function AdminTicketsDashboard() {
                                     <TableHead className="w-[80px]">ID</TableHead>
                                     <TableHead>Người dùng</TableHead>
                                     <TableHead>Thiết bị</TableHead>
-                                    <TableHead>Mô tả</TableHead>
                                     <TableHead>Trạng thái</TableHead>
                                     <TableHead>Độ ưu tiên</TableHead>
                                     <TableHead>Người xử lý</TableHead>
@@ -344,42 +307,26 @@ export default function AdminTicketsDashboard() {
                             </TableHeader>
                             <TableBody>
                                 {filteredTickets.map((ticket) => (
-                                    <TableRow key={ticket.ticket_id}>
-                                        <TableCell className="font-medium">#{ticket.ticket_id}</TableCell>
-                                        <TableCell>{ticket.user_name}</TableCell>
+                                    <TableRow key={ticket?.ticket_id}>
+                                        <TableCell className="font-medium">#{ticket?.ticket_id}</TableCell>
+                                        <TableCell>{ticket?.user_name}</TableCell>
                                         <TableCell>
-                                            <code className="text-xs bg-muted px-1 py-0.5 rounded">{ticket.device_serial}</code>
+                                            <code className="text-xs bg-muted px-1 py-0.5 rounded">{ticket?.device_serial}</code>
                                         </TableCell>
-                                        <TableCell className="max-w-[200px] truncate" title={ticket.description}>
-                                            {ticket.description}
-                                        </TableCell>
-                                        <TableCell>{getStatusBadge(ticket.status)}</TableCell>
-                                        <TableCell>{getPriorityBadge(ticket.priority)}</TableCell>
+                                        <TableCell>{getStatusBadge(ticket?.status)}</TableCell>
+                                        <TableCell>{getPriorityBadge(ticket?.priority)}</TableCell>
                                         <TableCell>
-                                            {ticket.assigned_name ? (
-                                                <span className="text-sm">{ticket.assigned_name}</span>
+                                            {ticket?.assigned_name ? (
+                                                <span className="text-sm">{ticket?.assigned_name}</span>
                                             ) : (
                                                 <span className="text-sm text-muted-foreground">Chưa phân công</span>
                                             )}
                                         </TableCell>
-                                        <TableCell className="text-sm">{formatDate(ticket.created_at)}</TableCell>
+                                        <TableCell className="text-sm">{formatDate(ticket?.created_at)}</TableCell>
                                         <TableCell>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="bg-white">
-                                                    <DropdownMenuItem onClick={() => handleViewTicket(ticket.ticket_id)}>
-                                                        Xem chi tiết
-                                                    </DropdownMenuItem>
-                                                    {/* <DropdownMenuSeparator />` */}
-                                                    {/* <DropdownMenuItem>Phân công</DropdownMenuItem>
-                                                    <DropdownMenuItem>Cập nhật trạng thái</DropdownMenuItem>
-                                                    <DropdownMenuItem>Thêm ghi chú</DropdownMenuItem> */}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => handleViewTicket(ticket)}>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -396,7 +343,8 @@ export default function AdminTicketsDashboard() {
                         setIsDialogOpen(open)
                         if (!open) setSelectedTicket(null)
                     }}
-                    ticket={selectedTicket} // Đổi tên prop từ ticketId thành ticket
+                    selectedTicket={selectedTicket}
+                    fetchTicket={fetchTicket}
                 />
             )}
         </div>
