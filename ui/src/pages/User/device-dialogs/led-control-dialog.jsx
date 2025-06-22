@@ -1,26 +1,25 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+} from "@/components/ui/select";
 import {
   Clock,
   Power,
@@ -31,14 +30,10 @@ import {
   Lightbulb,
   Sparkles,
   Gauge,
-} from "lucide-react"
+} from "lucide-react";
+import Swal from "sweetalert2";
 
-export default function LedControlDialog({
-  device,
-  onClose,
-  onDeviceUpdate,
-}) {
-  // Default device if not provided (fallback only if device is undefined)
+export default function LedControlDialog({ device, onClose, onDeviceUpdate }) {
   const defaultDevice = {
     id: "led-001",
     name: "Đèn LED Phòng khách",
@@ -48,112 +43,160 @@ export default function LedControlDialog({
     brightness: 80,
     color: "#FF9900",
     mode: "solid",
-    temperature: 3200, // Kelvin
+    temperature: 3200,
     supportedFeatures: {
       color: true,
       temperature: true,
       effects: true,
     },
-  }
+  };
 
-  const deviceData = device || defaultDevice
+  const deviceData = device || defaultDevice;
+  const accessToken = localStorage.getItem("authToken");
 
-  // State for device controls
-  const [power, setPower] = useState(deviceData.power)
-  const [brightness, setBrightness] = useState(deviceData.brightness)
-  const [color, setColor] = useState(deviceData.color)
-  const [mode, setMode] = useState(deviceData.mode)
-  const [temperature, setTemperature] = useState(deviceData.temperature)
-  const [activeTab, setActiveTab] = useState("controls")
-  const [timerMinutes, setTimerMinutes] = useState(0)
-  const [timerActive, setTimerActive] = useState(false)
+  const [power, setPower] = useState(deviceData.power);
+  const [brightness, setBrightness] = useState(deviceData.brightness);
+  const [color, setColor] = useState(deviceData.color);
+  const [mode, setMode] = useState(deviceData.mode);
+  const [temperature, setTemperature] = useState(deviceData.temperature);
+  const [activeTab, setActiveTab] = useState("controls");
+  const [timerMinutes, setTimerMinutes] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
   const [presets, setPresets] = useState([
     { id: 1, name: "Đọc sách", brightness: 100, color: "#FFFFFF", temperature: 4000 },
     { id: 2, name: "Xem phim", brightness: 40, color: "#FF9900", temperature: 2700 },
     { id: 3, name: "Ngủ", brightness: 10, color: "#FF5500", temperature: 2000 },
-  ])
+  ]);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Effects
   const effects = [
     { id: "solid", name: "Sáng đều" },
     { id: "breathing", name: "Nhịp thở" },
     { id: "rainbow", name: "Cầu vồng" },
     { id: "flash", name: "Nhấp nháy" },
     { id: "candle", name: "Ánh nến" },
-  ]
+  ];
 
-  // Update local state when device changes
   useEffect(() => {
     if (device) {
-      setPower(device.power)
-      setBrightness(device.brightness)
-      setColor(device.color)
-      setMode(device.mode)
-      setTemperature(device.temperature)
+      setPower(device.power);
+      setBrightness(device.brightness);
+      setColor(device.color);
+      setMode(device.mode);
+      setTemperature(device.temperature);
     }
-  }, [device])
+  }, [device]);
 
-  // Handle power toggle
-  const handlePowerToggle = (checked) => {
-    setPower(checked)
-    onDeviceUpdate({ power: checked })
-    console.log(`Turning ${checked ? "on" : "off"} the LED`)
-  }
+  const updateDevice = async (updates) => {
+    if (!accessToken) {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: "Vui lòng đăng nhập để điều khiển thiết bị.",
+        confirmButtonColor: "#2563eb",
+      });
+      return false;
+    }
 
-  // Handle brightness change
-  const handleBrightnessChange = (value) => {
-    setBrightness(value[0])
-    onDeviceUpdate({ brightness: value[0] })
-    console.log(`Setting brightness to ${value[0]}%`)
-  }
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`http://localhost:7777/api/devices/${deviceData.id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          power_status: updates.power,
+          current_value: {
+            brightness: updates.brightness,
+            color: updates.color,
+            color_temperature: updates.temperature,
+            mode: updates.mode,
+          },
+        }),
+      });
 
-  // Handle color change
-  const handleColorChange = (e) => {
-    setColor(e.target.value)
-    onDeviceUpdate({ color: e.target.value })
-    console.log(`Setting color to ${e.target.value}`)
-  }
+      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.message || `Không thể cập nhật thiết bị: ${response.status}`);
+      }
 
-  // Handle mode change
-  const handleModeChange = (value) => {
-    setMode(value)
-    onDeviceUpdate({ mode: value })
-    console.log(`Setting mode to ${value}`)
-  }
+      onDeviceUpdate({
+        ...deviceData,
+        power: updates.power,
+        brightness: updates.brightness,
+        color: updates.color,
+        temperature: updates.temperature,
+        mode: updates.mode,
+      });
 
-  // Handle temperature change
-  const handleTemperatureChange = (value) => {
-    setTemperature(value[0])
-    onDeviceUpdate({ temperature: value[0] })
-    console.log(`Setting temperature to ${value[0]}K`)
-  }
+      return true;
+    } catch (error) {
+      console.error("Failed to update device:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message.includes("400")
+          ? "Dữ liệu không hợp lệ."
+          : error.message.includes("401")
+          ? "Phiên đăng nhập hết hạn."
+          : "Không thể điều khiển thiết bị. Vui lòng thử lại hoặc tạo yêu cầu hỗ trợ.",
+        confirmButtonColor: "#2563eb",
+      });
+      return false;
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
-  // Handle timer set
+  const handlePowerToggle = async (checked) => {
+    setPower(checked);
+    await updateDevice({ power: checked });
+  };
+
+  const handleBrightnessChange = async (value) => {
+    setBrightness(value[0]);
+    await updateDevice({ brightness: value[0] });
+  };
+
+  const handleColorChange = async (e) => {
+    setColor(e.target.value);
+    await updateDevice({ color: e.target.value });
+  };
+
+  const handleModeChange = async (value) => {
+    setMode(value);
+    await updateDevice({ mode: value });
+  };
+
+  const handleTemperatureChange = async (value) => {
+    setTemperature(value[0]);
+    await updateDevice({ temperature: value[0] });
+  };
+
   const handleSetTimer = () => {
-    setTimerActive(true)
-    console.log(`Setting timer for ${timerMinutes} minutes`)
-  }
+    setTimerActive(true);
+    console.log(`Setting timer for ${timerMinutes} minutes`);
+    // Note: Timer functionality requires backend integration or client-side timeout
+  };
 
-  // Handle timer cancel
   const handleCancelTimer = () => {
-    setTimerActive(false)
-    console.log("Cancelling timer")
-  }
+    setTimerActive(false);
+    console.log("Cancelling timer");
+  };
 
-  // Handle preset selection
-  const handleSelectPreset = (preset) => {
-    setBrightness(preset.brightness)
-    setColor(preset.color)
-    setTemperature(preset.temperature)
-    onDeviceUpdate({
+  const handleSelectPreset = async (preset) => {
+    setBrightness(preset.brightness);
+    setColor(preset.color);
+    setTemperature(preset.temperature);
+    await updateDevice({
       brightness: preset.brightness,
       color: preset.color,
       temperature: preset.temperature,
-    })
-    console.log(`Applying preset: ${preset.name}`)
-  }
+    });
+  };
 
-  // Handle save preset
   const handleSavePreset = () => {
     const newPreset = {
       id: Date.now(),
@@ -161,19 +204,18 @@ export default function LedControlDialog({
       brightness,
       color,
       temperature,
-    }
-    setPresets([...presets, newPreset])
-    console.log("Saving new preset", newPreset)
-  }
+    };
+    setPresets([...presets, newPreset]);
+    console.log("Saving new preset", newPreset);
+  };
 
-  // Convert temperature to color name
   const getTemperatureName = (temp) => {
-    if (temp <= 2700) return "Ấm áp"
-    if (temp <= 3500) return "Trung tính"
-    if (temp <= 4500) return "Tự nhiên"
-    if (temp <= 5500) return "Mát mẻ"
-    return "Trắng lạnh"
-  }
+    if (temp <= 2700) return "Ấm áp";
+    if (temp <= 3500) return "Trung tính";
+    if (temp <= 4500) return "Tự nhiên";
+    if (temp <= 5500) return "Mát mẻ";
+    return "Trắng lạnh";
+  };
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -189,10 +231,11 @@ export default function LedControlDialog({
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="controls">Điều khiển</TabsTrigger>
+              <TabsTrigger value="effects">Hiệu ứng</TabsTrigger>
+              <TabsTrigger value="presets">Cài đặt sẵn</TabsTrigger>
             </TabsList>
 
             <TabsContent value="controls" className="space-y-6 py-4">
-              {/* Power Control */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Power className={`h-5 w-5 ${power ? "text-green-500" : "text-gray-400"}`} />
@@ -200,10 +243,9 @@ export default function LedControlDialog({
                     Nguồn
                   </Label>
                 </div>
-                <Switch id="power" checked={power} onCheckedChange={handlePowerToggle} />
+                <Switch id="power" checked={power} onCheckedChange={handlePowerToggle} disabled={isUpdating} />
               </div>
 
-              {/* Brightness Control */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -216,7 +258,7 @@ export default function LedControlDialog({
                 </div>
                 <Slider
                   id="brightness"
-                  disabled={!power}
+                  disabled={!power || isUpdating}
                   value={[brightness]}
                   min={1}
                   max={100}
@@ -226,7 +268,6 @@ export default function LedControlDialog({
                 />
               </div>
 
-              {/* Color Control */}
               {deviceData.supportedFeatures.color && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -241,20 +282,17 @@ export default function LedControlDialog({
                       style={{ backgroundColor: color }}
                     ></div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      id="color"
-                      value={color}
-                      onChange={handleColorChange}
-                      disabled={!power}
-                      className="w-full h-10 rounded-md cursor-pointer"
-                    />
-                  </div>
+                  <input
+                    type="color"
+                    id="color"
+                    value={color}
+                    onChange={handleColorChange}
+                    disabled={!power || isUpdating}
+                    className="w-full h-10 rounded-md cursor-pointer"
+                  />
                 </div>
               )}
 
-              {/* Temperature Control */}
               {deviceData.supportedFeatures.temperature && (
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -268,7 +306,7 @@ export default function LedControlDialog({
                   </div>
                   <Slider
                     id="temperature"
-                    disabled={!power}
+                    disabled={!power || isUpdating}
                     value={[temperature]}
                     min={2000}
                     max={6500}
@@ -284,18 +322,17 @@ export default function LedControlDialog({
                 </div>
               )}
 
-              {/* Timer Control */}
               <div className="space-y-2 pt-2 border-t border-gray-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Timer className="h-5 w-5 text-gray-500" />
                     <Label className="text-base">Hẹn giờ tắt</Label>
                   </div>
-                  {timerActive ? (
-                    <Button variant="outline" size="sm" onClick={handleCancelTimer}>
+                  {timerActive && (
+                    <Button variant="outline" size="sm" onClick={handleCancelTimer} disabled={isUpdating}>
                       Hủy
                     </Button>
-                  ) : null}
+                  )}
                 </div>
 
                 {timerActive ? (
@@ -310,6 +347,7 @@ export default function LedControlDialog({
                     <Select
                       value={timerMinutes.toString()}
                       onValueChange={(value) => setTimerMinutes(parseInt(value))}
+                      disabled={isUpdating}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Chọn thời gian" />
@@ -322,7 +360,7 @@ export default function LedControlDialog({
                         <SelectItem value="120">2 giờ</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button onClick={handleSetTimer} disabled={timerMinutes === 0 || !power}>
+                    <Button onClick={handleSetTimer} disabled={timerMinutes === 0 || !power || isUpdating}>
                       Đặt
                     </Button>
                   </div>
@@ -330,16 +368,55 @@ export default function LedControlDialog({
               </div>
             </TabsContent>
 
+            <TabsContent value="effects" className="space-y-4 py-4">
+              <Label className="text-base">Hiệu ứng ánh sáng</Label>
+              <Select value={mode} onValueChange={handleModeChange} disabled={isUpdating}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn hiệu ứng" />
+                </SelectTrigger>
+                <SelectContent className="bg-white">
+                  {effects.map((effect) => (
+                    <SelectItem key={effect.id} value={effect.id}>
+                      {effect.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </TabsContent>
 
+            <TabsContent value="presets" className="space-y-4 py-4">
+              <Label className="text-base">Cài đặt sẵn</Label>
+              <div className="space-y-2">
+                {presets.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    variant="outline"
+                    className="w-full justify-between"
+                    onClick={() => handleSelectPreset(preset)}
+                    disabled={isUpdating}
+                  >
+                    <span>{preset.name}</span>
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: preset.color }}
+                    ></div>
+                  </Button>
+                ))}
+              </div>
+              <Button onClick={handleSavePreset} className="w-full" disabled={isUpdating}>
+                <Save className="h-4 w-4 mr-2" />
+                Lưu cài đặt hiện tại
+              </Button>
+            </TabsContent>
           </Tabs>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isUpdating}>
             Đóng
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

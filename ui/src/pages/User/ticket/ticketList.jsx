@@ -1,361 +1,327 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
-  Ticket,
-  Search,
-  Plus,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Settings,
-  MessageSquare,
-  Paperclip,
-  Calendar,
-  ChevronDown,
-  RefreshCw,
-  Lightbulb,
-  Flame,
-  Thermometer,
-  Smartphone,
-  Wifi,
-  Eye,
-  ArrowUpDown,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Skeleton } from "@/components/ui/skeleton"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import CreateTicketDialog from "./Add-ticket-popup"
-import TicketDetailDialog from "./ticketDetails"
+  Ticket, Search, Plus, Clock, CheckCircle, XCircle, AlertTriangle, Settings,
+  MessageSquare, Paperclip, Calendar, ChevronDown, RefreshCw, Smartphone, ArrowUpDown,
+  Eye, Trash2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import CreateTicketDialog from "./Add-ticket-popup";
+import TicketDetailDialog from "./ticketDetails";
+import Swal from "sweetalert2";
 
 export default function TicketList() {
-  const [tickets, setTickets] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedTicket, setSelectedTicket] = useState(null)
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [tickets, setTickets] = useState([]);
+  const [ticketTypes, setTicketTypes] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [error, setError] = useState(null);
   const [filterOptions, setFilterOptions] = useState({
     status: "all",
-    device_type: "all",
     date_range: "all",
-  })
-  const [sortBy, setSortBy] = useState("created_at")
-  const [sortOrder, setSortOrder] = useState("desc")
+  });
+  const [sortBy, setSortBy] = useState("created_at");
+  const [sortOrder, setSortOrder] = useState("desc");
 
-  // Giả lập fetch dữ liệu từ API
+  const accessToken = localStorage.getItem("authToken");
+
+  // Fetch tickets
+  const fetchTickets = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/tickets/user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (res.status === 200) {
+        const data = await res.json();
+        setTickets(data.data?.data || []);
+      } else {
+        throw new Error(`Failed to fetch tickets: ${res.status}`);
+      }
+    } catch (error) {
+      setError(error.message);
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message || "Không thể tải danh sách yêu cầu. Vui lòng thử lại.",
+        confirmButtonColor: "#2563eb",
+      });
+    }
+  };
+
+  // Fetch ticket types
+  const fetchTicketTypes = async () => {
+    try {
+      const res = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/ticket-types", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (res.status === 200) {
+        const data = await res.json();
+        setTicketTypes(data.data?.data || []);
+      } else {
+        throw new Error(`Failed to fetch ticket types: ${res.status}`);
+      }
+    } catch (error) {
+      setError(error.message);
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message || "Không thể tải loại yêu cầu. Vui lòng thử lại.",
+        confirmButtonColor: "#2563eb",
+      });
+    }
+  };
+
+  // Fetch data on mount
   useEffect(() => {
-    const fetchTickets = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
-        // Giả lập API call
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        // Mock data
-        const mockTickets = [
-          {
-            id: 1,
-            title: "Cảm biến khói báo động liên tục",
-            description: "Cảm biến khói trong phòng khách báo động liên tục dù không có khói.",
-            status: "open",
-            priority: "high",
-            created_at: "2024-05-30T08:30:00Z",
-            updated_at: "2024-05-30T08:30:00Z",
-            user_id: 1,
-            device: {
-              id: 101,
-              name: "Cảm biến khói phòng khách",
-              serial: "SMOKE-2024-101",
-              type: "smoke_detector",
-              location: "Phòng khách",
-            },
-            ticket_type: {
-              id: 1,
-              name: "Sự cố thiết bị",
-              description: "Báo cáo khi thiết bị hoạt động không đúng",
-            },
-            comments_count: 2,
-            attachments_count: 1,
-            last_response: "2024-05-30T09:15:00Z",
-          },
-          {
-            id: 2,
-            title: "Đèn thông minh không phản hồi",
-            description: "Đèn thông minh phòng ngủ không phản hồi lệnh từ ứng dụng.",
-            status: "in_progress",
-            priority: "medium",
-            created_at: "2024-05-29T14:20:00Z",
-            updated_at: "2024-05-29T16:45:00Z",
-            user_id: 1,
-            device: {
-              id: 102,
-              name: "Đèn thông minh phòng ngủ",
-              serial: "LIGHT-2024-102",
-              type: "smart_light",
-              location: "Phòng ngủ",
-            },
-            ticket_type: {
-              id: 2,
-              name: "Lỗi kết nối",
-              description: "Báo cáo khi thiết bị không kết nối được",
-            },
-            comments_count: 3,
-            attachments_count: 0,
-            last_response: "2024-05-29T16:45:00Z",
-          },
-          {
-            id: 3,
-            title: "Nhiệt độ hiển thị không chính xác",
-            description: "Cảm biến nhiệt độ hiển thị 35°C trong khi nhiệt độ thực tế khoảng 28°C.",
-            status: "resolved",
-            priority: "low",
-            created_at: "2024-05-28T10:10:00Z",
-            updated_at: "2024-05-28T15:30:00Z",
-            user_id: 1,
-            device: {
-              id: 103,
-              name: "Cảm biến nhiệt độ phòng khách",
-              serial: "TEMP-2024-103",
-              type: "temperature_sensor",
-              location: "Phòng khách",
-            },
-            ticket_type: {
-              id: 3,
-              name: "Dữ liệu không chính xác",
-              description: "Báo cáo khi thiết bị hiển thị dữ liệu không chính xác",
-            },
-            comments_count: 4,
-            attachments_count: 2,
-            last_response: "2024-05-28T15:30:00Z",
-            resolution: "Đã hiệu chỉnh lại cảm biến và cập nhật firmware mới.",
-          },
-          {
-            id: 4,
-            title: "Khóa cửa thông minh không nhận dấu vân tay",
-            description: "Khóa cửa thông minh không nhận dấu vân tay đã đăng ký.",
-            status: "pending",
-            priority: "high",
-            created_at: "2024-05-27T09:00:00Z",
-            updated_at: "2024-05-27T11:20:00Z",
-            user_id: 1,
-            device: {
-              id: 104,
-              name: "Khóa cửa thông minh",
-              serial: "LOCK-2024-104",
-              type: "smart_lock",
-              location: "Cửa chính",
-            },
-            ticket_type: {
-              id: 1,
-              name: "Sự cố thiết bị",
-              description: "Báo cáo khi thiết bị hoạt động không đúng",
-            },
-            comments_count: 2,
-            attachments_count: 1,
-            last_response: "2024-05-27T11:20:00Z",
-          },
-          {
-            id: 5,
-            title: "Cần hướng dẫn cài đặt lịch tự động",
-            description: "Tôi cần hướng dẫn cách cài đặt lịch tự động cho hệ thống đèn trong nhà.",
-            status: "closed",
-            priority: "low",
-            created_at: "2024-05-26T16:15:00Z",
-            updated_at: "2024-05-26T17:30:00Z",
-            user_id: 1,
-            device: {
-              id: 105,
-              name: "Bộ điều khiển trung tâm",
-              serial: "HUB-2024-105",
-              type: "hub",
-              location: "Phòng khách",
-            },
-            ticket_type: {
-              id: 4,
-              name: "Yêu cầu hỗ trợ",
-              description: "Yêu cầu hướng dẫn hoặc hỗ trợ sử dụng",
-            },
-            comments_count: 3,
-            attachments_count: 0,
-            last_response: "2024-05-26T17:30:00Z",
-            resolution: "Đã hướng dẫn khách hàng cài đặt lịch tự động qua video call.",
-          },
-        ]
-
-        setTickets(mockTickets)
-      } catch (error) {
-        console.error("Lỗi khi tải dữ liệu:", error)
+        await Promise.all([fetchTickets(), fetchTicketTypes()]);
+      } catch (err) {
+        setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Không thể tải dữ liệu. Vui lòng thử lại.",
+          confirmButtonColor: "#2563eb",
+        });
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
+      }
+    };
+
+    if (accessToken) {
+      loadData();
+    } else {
+      setError("Vui lòng đăng nhập để xem yêu cầu hỗ trợ.");
+      setIsLoading(false);
+      Swal.fire({
+        icon: "warning",
+        title: "Chưa đăng nhập",
+        text: "Vui lòng đăng nhập để xem yêu cầu hỗ trợ.",
+        confirmButtonColor: "#2563eb",
+      });
+    }
+  }, [accessToken]);
+
+  // Handle ticket creation
+  const handleTicketCreated = (newTicket) => {
+    setTickets([newTicket, ...tickets]);
+    setShowCreateDialog(false);
+    Swal.fire({
+      icon: "success",
+      title: "Thành công",
+      text: "Yêu cầu hỗ trợ đã được tạo.",
+      confirmButtonColor: "#2563eb",
+      timer: 1500,
+      timerProgressBar: true,
+    });
+  };
+
+  // Handle ticket deletion
+  const handleTicketDeleted = async (ticketId) => {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa",
+      text: "Bạn có chắc muốn xóa yêu cầu hỗ trợ này? Hành động này không thể hoàn tác.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#2563eb",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(
+          `https://iothomeconnectapiv2-production.up.railway.app/api/tickets/${ticketId}/cancel`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || "Failed to delete ticket");
+        }
+
+        setTickets((prevTickets) => prevTickets.filter((ticket) => ticket.ticket_id !== ticketId));
+
+        Swal.fire({
+          icon: "success",
+          title: "Thành công",
+          text: "Yêu cầu hỗ trợ đã được xóa.",
+          confirmButtonColor: "#2563eb",
+          timer: 1500,
+          timerProgressBar: true,
+        });
+      } catch (error) {
+        console.error("Failed to delete ticket:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: error.message || "Không thể xóa yêu cầu. Vui lòng thử lại.",
+          confirmButtonColor: "#2563eb",
+        });
       }
     }
+  };
 
-    fetchTickets()
-  }, [])
-
-  // Xử lý tạo ticket mới
-  const handleTicketCreated = (newTicket) => {
-    setTickets([newTicket, ...tickets])
-    setShowCreateDialog(false)
-  }
-
-  // Xử lý filter và sort
+  // Filter and sort tickets
   const filteredTickets = tickets
     .filter((ticket) => {
       const matchesSearch =
-        ticket.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ticket.ticket_id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
         ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.device.serial.toLowerCase().includes(searchQuery.toLowerCase())
+        ticket.device_serial.toLowerCase().includes(searchQuery.toLowerCase());
 
-      const matchesStatus = filterOptions.status === "all" || ticket.status === filterOptions.status
-      const matchesDeviceType = filterOptions.device_type === "all" || ticket.device.type === filterOptions.device_type
+      const matchesStatus = filterOptions.status === "all" || ticket.status === filterOptions.status;
 
-      return matchesSearch && matchesStatus && matchesDeviceType
+      return matchesSearch && matchesStatus;
     })
     .sort((a, b) => {
-      // Xử lý sắp xếp
+      const key = sortBy === "priority" ? "priority" : sortBy;
+      const valueA = sortBy === "priority" ? (a.priority || 0) : a[sortBy];
+      const valueB = sortBy === "priority" ? (b.priority || 0) : b[sortBy];
       if (sortOrder === "asc") {
-        return a[sortBy] > b[sortBy] ? 1 : -1
+        return valueA > valueB ? 1 : -1;
       } else {
-        return a[sortBy] < b[sortBy] ? 1 : -1
+        return valueA < valueB ? 1 : -1;
       }
-    })
+    });
 
-  // Nhóm tickets theo trạng thái
+  // Group tickets by status
   const ticketsByStatus = filteredTickets.reduce((acc, ticket) => {
     if (!acc[ticket.status]) {
-      acc[ticket.status] = []
+      acc[ticket.status] = [];
     }
-    acc[ticket.status].push(ticket)
-    return acc
-  }, {})
+    acc[ticket.status].push(ticket);
+    return acc;
+  }, {});
 
-  // Thống kê
-  const totalTickets = tickets.length
-  const openTickets = tickets.filter((t) => ["open", "in_progress", "pending"].includes(t.status)).length
-  const resolvedTickets = tickets.filter((t) => t.status === "resolved").length
+  // Statistics
+  const totalTickets = tickets.length;
+  const openTickets = tickets.filter((t) => ["pending", "in_progress", "approved"].includes(t.status)).length;
+  const resolvedTickets = tickets.filter((t) => t.status === "resolved").length;
 
   // Helpers
-  const getDeviceIcon = (type) => {
-    switch (type) {
-      case "smart_light":
-        return <Lightbulb className="h-4 w-4 text-amber-500" />
-      case "smoke_detector":
-        return <Flame className="h-4 w-4 text-red-500" />
-      case "temperature_sensor":
-        return <Thermometer className="h-4 w-4 text-blue-500" />
-      case "hub":
-        return <Wifi className="h-4 w-4 text-purple-500" />
-      case "smart_lock":
-        return <Settings className="h-4 w-4 text-green-500" />
-      default:
-        return <Smartphone className="h-4 w-4 text-slate-500" />
-    }
-  }
+  const getDeviceIcon = () => {
+    return <Smartphone className="h-4 w-4 text-slate-500" />;
+  };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case "open":
-        return <Clock className="h-4 w-4 text-blue-500" />
-      case "in_progress":
-        return <RefreshCw className="h-4 w-4 text-amber-500" />
       case "pending":
-        return <AlertTriangle className="h-4 w-4 text-orange-500" />
+        return <Clock className="h-4 w-4 text-blue-500" />;
+      case "in_progress":
+        return <RefreshCw className="h-4 w-4 text-amber-500" />;
+      case "approved":
+        return <AlertTriangle className="h-4 w-4 text-orange-500" />;
       case "resolved":
-        return <CheckCircle className="h-4 w-4 text-emerald-500" />
-      case "closed":
-        return <XCircle className="h-4 w-4 text-slate-500" />
+        return <CheckCircle className="h-4 w-4 text-emerald-500" />;
+      case "rejected":
+        return <XCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <Clock className="h-4 w-4 text-slate-500" />
+        return <Clock className="h-4 w-4 text-slate-500" />;
     }
-  }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "open":
-        return "bg-blue-100 text-blue-700 border-blue-200"
-      case "in_progress":
-        return "bg-amber-100 text-amber-700 border-amber-200"
       case "pending":
-        return "bg-orange-100 text-orange-700 border-orange-200"
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case "in_progress":
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      case "approved":
+        return "bg-orange-100 text-orange-700 border-orange-200";
       case "resolved":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200"
-      case "closed":
-        return "bg-slate-100 text-slate-700 border-slate-200"
+        return "bg-emerald-100 text-emerald-700 border-emerald-200";
+      case "rejected":
+        return "bg-red-100 text-red-700 border-red-200";
       default:
-        return "bg-slate-100 text-slate-700 border-slate-200"
+        return "bg-slate-100 text-slate-700 border-slate-200";
     }
-  }
+  };
 
   const getStatusText = (status) => {
     switch (status) {
-      case "open":
-        return "Chờ xử lý"
-      case "in_progress":
-        return "Đang xử lý"
       case "pending":
-        return "Chờ phản hồi"
+        return "Chờ xử lý";
+      case "in_progress":
+        return "Đang xử lý";
+      case "approved":
+        return "Đã phê duyệt";
       case "resolved":
-        return "Đã giải quyết"
-      case "closed":
-        return "Đã đóng"
+        return "Đã giải quyết";
+      case "rejected":
+        return "Bị từ chối";
+      case "cancelled":
+        return "Đã hủy";
       default:
-        return "Không xác định"
+        return "Không xác định";
     }
-  }
+  };
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case "high":
-        return "bg-red-100 text-red-700 border-red-200"
-      case "medium":
-        return "bg-amber-100 text-amber-700 border-amber-200"
-      case "low":
-        return "bg-emerald-100 text-emerald-700 border-emerald-200"
+      case 1:
+        return "bg-red-100 text-red-700 border-red-200";
+      case 2:
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      case 3:
+        return "bg-emerald-100 text-emerald-700 border-emerald-200";
       default:
-        return "bg-slate-100 text-slate-700 border-slate-200"
+        return "bg-slate-100 text-slate-700 border-slate-200";
     }
-  }
+  };
 
   const getPriorityText = (priority) => {
     switch (priority) {
-      case "high":
-        return "Khẩn cấp"
-      case "medium":
-        return "Quan trọng"
-      case "low":
-        return "Bình thường"
+      case 1:
+        return "Khẩn cấp";
+      case 2:
+        return "Quan trọng";
+      case 3:
+        return "Bình thường";
       default:
-        return "Không xác định"
+        return "Không xác định";
     }
-  }
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(date)
-  }
-
+  };
+  
   const getTimeAgo = (dateString) => {
-    const now = new Date()
-    const date = new Date(dateString)
-    const diffInMinutes = Math.floor((now - date) / (1000 * 60))
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInMinutes = Math.floor((now - date) / (1000 * 60));
 
-    if (diffInMinutes < 1) return "Vừa xong"
-    if (diffInMinutes < 60) return `${diffInMinutes} phút trước`
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} giờ trước`
-    return `${Math.floor(diffInMinutes / 1440)} ngày trước`
-  }
+    if (diffInMinutes < 1) return "Vừa xong";
+    if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} giờ trước`;
+    return `${Math.floor(diffInMinutes / 1440)} ngày trước`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
@@ -375,7 +341,6 @@ export default function TicketList() {
                     </div>
                   )}
                 </div>
-
                 <div>
                   <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1">Yêu cầu hỗ trợ của tôi</h1>
                   <div className="flex flex-wrap items-center gap-2">
@@ -387,17 +352,13 @@ export default function TicketList() {
                       <RefreshCw className="h-3 w-3 mr-1" />
                       {openTickets} đang xử lý
                     </Badge>
-                    <Badge
-                      variant="secondary"
-                      className="bg-emerald-100 text-emerald-700 border-emerald-200 font-medium"
-                    >
+                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 border-emerald-200 font-medium">
                       <CheckCircle className="h-3 w-3 mr-1" />
                       {resolvedTickets} đã giải quyết
                     </Badge>
                   </div>
                 </div>
               </div>
-
               <Button
                 onClick={() => setShowCreateDialog(true)}
                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
@@ -410,6 +371,13 @@ export default function TicketList() {
         </header>
 
         <div className="p-4 sm:p-6">
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
+
           {/* Search and Filters */}
           <div className="mb-6 space-y-4">
             <div className="flex flex-col sm:flex-row gap-4">
@@ -422,7 +390,6 @@ export default function TicketList() {
                   className="pl-12 h-12 border-slate-200 bg-white/80 backdrop-blur-sm focus:bg-white transition-colors"
                 />
               </div>
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="h-12 px-4 border-slate-200">
@@ -433,32 +400,32 @@ export default function TicketList() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={() => {
-                      setSortBy("created_at")
-                      setSortOrder("desc")
+                      setSortBy("created_at");
+                      setSortOrder("desc");
                     }}
                   >
                     Mới nhất
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
-                      setSortBy("created_at")
-                      setSortOrder("asc")
+                      setSortBy("created_at");
+                      setSortOrder("asc");
                     }}
                   >
                     Cũ nhất
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
-                      setSortBy("priority")
-                      setSortOrder("asc")
+                      setSortBy("priority");
+                      setSortOrder("asc");
                     }}
                   >
                     Ưu tiên cao nhất
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => {
-                      setSortBy("updated_at")
-                      setSortOrder("desc")
+                      setSortBy("updated_at");
+                      setSortOrder("desc");
                     }}
                   >
                     Cập nhật gần đây
@@ -475,30 +442,11 @@ export default function TicketList() {
                   onChange={(e) => setFilterOptions({ ...filterOptions, status: e.target.value })}
                 >
                   <option value="all">Tất cả trạng thái</option>
-                  <option value="open">Chờ xử lý</option>
+                  <option value="pending">Chờ xử lý</option>
                   <option value="in_progress">Đang xử lý</option>
-                  <option value="pending">Chờ phản hồi</option>
+                  <option value="approved">Đã phê duyệt</option>
                   <option value="resolved">Đã giải quyết</option>
-                  <option value="closed">Đã đóng</option>
-                </select>
-                <ChevronDown
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                  size={16}
-                />
-              </div>
-
-              <div className="relative min-w-[160px]">
-                <select
-                  className="w-full h-11 pl-4 pr-10 text-sm border border-slate-200 rounded-xl appearance-none bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  value={filterOptions.device_type}
-                  onChange={(e) => setFilterOptions({ ...filterOptions, device_type: e.target.value })}
-                >
-                  <option value="all">Tất cả thiết bị</option>
-                  <option value="smart_light">Đèn thông minh</option>
-                  <option value="smoke_detector">Cảm biến khói</option>
-                  <option value="temperature_sensor">Cảm biến nhiệt độ</option>
-                  <option value="smart_lock">Khóa thông minh</option>
-                  <option value="hub">Bộ điều khiển</option>
+                  <option value="rejected">Bị từ chối</option>
                 </select>
                 <ChevronDown
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
@@ -528,6 +476,7 @@ export default function TicketList() {
                 <TicketListContent
                   tickets={filteredTickets}
                   onTicketClick={(ticket) => setSelectedTicket(ticket)}
+                  onTicketDelete={handleTicketDeleted}
                   getStatusIcon={getStatusIcon}
                   getStatusColor={getStatusColor}
                   getStatusText={getStatusText}
@@ -538,7 +487,6 @@ export default function TicketList() {
                 />
               )}
             </TabsContent>
-
             {Object.keys(ticketsByStatus).map((status) => (
               <TabsContent key={status} value={status} className="mt-6">
                 {isLoading ? (
@@ -547,6 +495,7 @@ export default function TicketList() {
                   <TicketListContent
                     tickets={ticketsByStatus[status]}
                     onTicketClick={(ticket) => setSelectedTicket(ticket)}
+                    onTicketDelete={handleTicketDeleted}
                     getStatusIcon={getStatusIcon}
                     getStatusColor={getStatusColor}
                     getStatusText={getStatusText}
@@ -596,6 +545,7 @@ export default function TicketList() {
             <TicketDetailDialog
               ticket={selectedTicket}
               onClose={() => setSelectedTicket(null)}
+              onTicketDeleted={handleTicketDeleted}
               getStatusIcon={getStatusIcon}
               getStatusColor={getStatusColor}
               getStatusText={getStatusText}
@@ -603,19 +553,18 @@ export default function TicketList() {
               getPriorityText={getPriorityText}
               getDeviceIcon={getDeviceIcon}
               getTimeAgo={getTimeAgo}
-              formatDate={formatDate}
             />
           )}
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
 
-// danh sách yêu cầu
 function TicketListContent({
   tickets,
   onTicketClick,
+  onTicketDelete,
   getStatusIcon,
   getStatusColor,
   getStatusText,
@@ -628,18 +577,17 @@ function TicketListContent({
     <div className="space-y-4">
       {tickets.map((ticket) => (
         <div
-          key={ticket.id}
+          key={ticket.ticket_id}
           onClick={() => onTicketClick(ticket)}
           className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-4 sm:p-6 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all duration-300 group"
         >
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
             <div className="flex items-start space-x-4 flex-1">
               <div className="flex-shrink-0 mt-1">{getStatusIcon(ticket.status)}</div>
-
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <h3 className="font-semibold text-lg text-slate-900 group-hover:text-blue-700 transition-colors">
-                    #{ticket.id} - {ticket.title}
+                    #{ticket.ticket_id} - {ticket.ticket_type_name}
                   </h3>
                   <Badge variant="outline" className={cn("text-xs px-2 py-1", getStatusColor(ticket.status))}>
                     {getStatusText(ticket.status)}
@@ -648,45 +596,37 @@ function TicketListContent({
                     {getPriorityText(ticket.priority)}
                   </Badge>
                 </div>
-
                 <p className="text-slate-700 mb-3 text-lg leading-relaxed line-clamp-2">{ticket.description}</p>
-
                 <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 mb-3">
                   <div className="flex items-center space-x-1">
-                    {getDeviceIcon(ticket.device.type)}
-                    <span>{ticket.device.name}</span>
+                    {getDeviceIcon()}
+                    <span>{ticket.device_serial}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Calendar className="h-4 w-4" />
                     <span>{getTimeAgo(ticket.created_at)}</span>
                   </div>
-                  {ticket.last_response && (
-                    <div className="flex items-center space-x-1">
-                      <MessageSquare className="h-4 w-4" />
-                      <span>Phản hồi {getTimeAgo(ticket.last_response)}</span>
-                    </div>
-                  )}
                 </div>
-
-                {/* Progress indicator */}
                 <div className="mb-3">
                   <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
                     <span>Tiến độ xử lý</span>
                     <span>
-                      {ticket.status === "open" && "0%"}
+                      {ticket.status === "pending" && "0%"}
                       {ticket.status === "in_progress" && "50%"}
-                      {ticket.status === "pending" && "75%"}
-                      {(ticket.status === "resolved" || ticket.status === "closed") && "100%"}
+                      {ticket.status === "approved" && "75%"}
+                      {ticket.status === "resolved" && "100%"}
+                      {ticket.status === "rejected" && "0%"}
                     </span>
                   </div>
                   <div className="w-full bg-slate-200 rounded-full h-1.5">
                     <div
                       className={cn(
                         "h-1.5 rounded-full transition-all duration-300",
-                        ticket.status === "open" && "bg-blue-500 w-[5%]",
+                        ticket.status === "pending" && "bg-blue-500 w-[5%]",
                         ticket.status === "in_progress" && "bg-amber-500 w-1/2",
-                        ticket.status === "pending" && "bg-orange-500 w-3/4",
-                        (ticket.status === "resolved" || ticket.status === "closed") && "bg-emerald-500 w-full",
+                        ticket.status === "approved" && "bg-orange-500 w-3/4",
+                        ticket.status === "resolved" && "bg-emerald-500 w-full",
+                        ticket.status === "rejected" && "bg-red-500 w-[5%]"
                       )}
                     />
                   </div>
@@ -694,51 +634,46 @@ function TicketListContent({
               </div>
             </div>
           </div>
-
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="bg-slate-50/80 backdrop-blur-sm rounded-lg px-3 py-1 text-xs">
-                <span className="text-slate-600">Thiết bị: </span>
-                <span className="font-mono">{ticket.device.serial}</span>
-              </div>
-
-              <div className="bg-slate-50/80 backdrop-blur-sm rounded-lg px-3 py-1 text-xs">
-                <span className="text-slate-600">Vị trí: </span>
-                <span className="font-medium">{ticket.device.location}</span>
-              </div>
             </div>
-
-            <div className="flex items-center space-x-3 text-xs text-slate-500">
-              {ticket.comments_count > 0 && (
-                <div className="flex items-center space-x-1">
-                  <MessageSquare className="h-3 w-3" />
-                  <span>{ticket.comments_count}</span>
-                </div>
-              )}
-              {ticket.attachments_count > 0 && (
-                <div className="flex items-center space-x-1">
-                  <Paperclip className="h-3 w-3" />
-                  <span>{ticket.attachments_count}</span>
-                </div>
-              )}
-              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 h-auto p-1">
+            <div className="flex items-center space-x-3 text-xs text-muted-foreground">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-blue-600 hover:text-blue-700 h-auto p-1"
+                aria-label={`Xem chi tiết ticket ${ticket.ticket_id}`}
+              >
                 <Eye className="h-4 w-4" />
               </Button>
+              {["pending", "in_progress", "approved"].includes(ticket.status) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent card click
+                    onTicketDelete(ticket.ticket_id);
+                  }}
+                  className="text-red-600 hover:text-red-700 h-auto p-1"
+                  aria-label={`Xóa ticket ${ticket.ticket_id}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
       ))}
     </div>
-  )
+  );
 }
 
-// Skeleton loader for ticket list
 function TicketListSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="bg-white/80 backdrop-blur-sm border border-slate-200 rounded-2xl p-6">
-          <div className="flex items-start space-x-4 mb-4">
+        <div key={i} className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-6">
+          <div className="flex items-start space-x-4">
             <Skeleton className="h-5 w-5 rounded-full" />
             <div className="flex-1 space-y-3">
               <div className="flex items-center space-x-2">
@@ -755,7 +690,7 @@ function TicketListSkeleton() {
               <Skeleton className="h-2 w-full" />
             </div>
           </div>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-4">
             <div className="flex items-center space-x-3">
               <Skeleton className="h-6 w-32" />
               <Skeleton className="h-6 w-24" />
@@ -768,5 +703,5 @@ function TicketListSkeleton() {
         </div>
       ))}
     </div>
-  )
+  );
 }
