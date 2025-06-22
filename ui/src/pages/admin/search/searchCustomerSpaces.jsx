@@ -26,6 +26,10 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import axiosPublic from '../../../apis/clients/public.client'
+import { SPACE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
+import { HOUSE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap"
+import React from "react"
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
@@ -112,7 +116,7 @@ export default function SearchCustomerSpaces() {
                         space_name: space.space_name || '',
                         space_description: space.space_description || 'Không có mô tả',
                         icon_name: space.icon_name || 'home',
-                        icon_color: space.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                        icon_color: space.icon_color || 'home',
                         created_at: space.created_at || new Date().toISOString(),
                         updated_at: space.updated_at || new Date().toISOString(),
                         is_deleted: space.is_deleted || false,
@@ -121,7 +125,7 @@ export default function SearchCustomerSpaces() {
                             house_name: house.house_name || '',
                             address: house.address || 'Chưa có địa chỉ',
                             icon_name: house.icon_name || 'home',
-                            icon_color: house.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`
+                            icon_color: house.icon_color || 'home'
                         } : null
                     }
                 }).filter(Boolean);
@@ -426,15 +430,19 @@ export default function SearchCustomerSpaces() {
                                                     <div className="flex items-center space-x-3">
                                                         <div
                                                             className="p-2 rounded-lg"
-                                                            style={{ backgroundColor: space.icon_color + '20' }}
+                                                            style={{
+                                                                backgroundColor: "#E3F2FD"
+                                                            }}
                                                         >
-                                                            {space.icon_name === 'floor' ? (
-                                                                <Layers className="h-5 w-5" style={{ color: space.icon_color }} />
-                                                            ) : space.icon_name === 'room' ? (
-                                                                <DoorOpen className="h-5 w-5" style={{ color: space.icon_color }} />
-                                                            ) : (
-                                                                <Home className="h-5 w-5" style={{ color: space.icon_color }} />
-                                                            )}
+                                                            {(() => {
+                                                                const SpaceIcon = SPACE_ICON_MAP[space.icon_name] || SPACE_ICON_MAP.LIVING;
+                                                                return (
+                                                                    <SpaceIcon
+                                                                        style={{ width: 24, height: 24 }}
+                                                                        fill={COLOR_MAP[space.icon_color] || "#2196F3"}
+                                                                    />
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <div>
                                                             <p className="font-medium text-slate-900">{space.space_name}</p>
@@ -447,13 +455,17 @@ export default function SearchCustomerSpaces() {
                                                         <div className="flex items-center space-x-3">
                                                             <div
                                                                 className="p-2 rounded-lg"
-                                                                style={{ backgroundColor: space.house.icon_color + '20' }}
+                                                                style={{ backgroundColor: "#E3F2FD" }}
                                                             >
-                                                                {space.house.icon_name === 'building' ? (
-                                                                    <Building className="h-5 w-5" style={{ color: space.house.icon_color }} />
-                                                                ) : (
-                                                                    <Home className="h-5 w-5" style={{ color: space.house.icon_color }} />
-                                                                )}
+                                                                {(() => {
+                                                                    const HouseIcon = HOUSE_ICON_MAP[space.house.icon_name] || HOUSE_ICON_MAP.HOUSE;
+                                                                    return (
+                                                                        <HouseIcon
+                                                                            style={{ width: 24, height: 24 }}
+                                                                            fill={COLOR_MAP[space.house.icon_color] || "#2196F3"}
+                                                                        />
+                                                                    );
+                                                                })()}
                                                             </div>
                                                             <div>
                                                                 <p className="font-medium text-slate-900">{space.house.house_name}</p>

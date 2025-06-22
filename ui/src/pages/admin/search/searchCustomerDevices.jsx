@@ -8,26 +8,12 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
-    Search,
-    User,
-    Mail,
-    Phone,
-    MoreHorizontal,
-    Settings,
-    Trash2,
-    Eye,
-    RefreshCw,
-    Calendar,
-    Shield,
-    Users,
-    Lightbulb,
-    Fan,
-    Thermometer,
-    Power,
-    Wifi,
+    Search, User, Mail, Phone, Trash2, Eye, RefreshCw, Calendar, Shield, Users, Lightbulb, Fan, Thermometer,
+    Power, Wifi, Lock, Unlock, CheckCircle, XCircle,
 } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { toast } from "sonner"
 import axiosPublic from '../../../apis/clients/public.client'
+import DeviceDetailsModal from '@/components/common/CustomerSearch/DeviceDetailsModal'
 
 export default function SearchCustomerDevices() {
     const [searchFilters, setSearchFilters] = useState({
@@ -39,6 +25,11 @@ export default function SearchCustomerDevices() {
     const [customerDevices, setCustomerDevices] = useState([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
+
+    // Modal states
+    const [selectedDevice, setSelectedDevice] = useState(null)
+    const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false)
+    const [isActionLoading, setIsActionLoading] = useState(false)
 
     const handleSearch = async () => {
         setIsLoading(true)
@@ -107,14 +98,14 @@ export default function SearchCustomerDevices() {
                         hub_id: device.hub_id,
                         firmware_id: device.firmware_id,
                         name: device.name,
-                        power_status: device.power_status === "on",
+                        power_status: device.power_status,
                         attribute: device.attribute,
                         wifi_ssid: device.wifi_ssid,
                         wifi_password: device.wifi_password,
                         current_value: parseInt(device.current_value),
-                        link_status: device.link_status === "online" ? "linked" : "unlinked",
+                        link_status: device.link_status === "linked" ? "linked" : "unlinked",
                         last_reset_at: device.last_reset_at,
-                        lock_status: device.lock_status === "locked",
+                        lock_status: device.lock_status ,
                         created_at: device.created_at,
                         updated_at: device.updated_at,
                         is_deleted: device.is_deleted,
@@ -157,11 +148,125 @@ export default function SearchCustomerDevices() {
         setError(null)
     }
 
+    const handleViewDeviceDetails = (device) => {
+        setSelectedDevice(device)
+        setIsDeviceModalOpen(true)
+    }
+
+    const handleDeviceAction = async (action, device) => {
+        setIsActionLoading(true)
+        try {
+            let response
+            const { device_id, serial_number } = device
+
+            switch (action) {
+                case 'lock':
+                    response = await axiosPublic.put(`customer-search/devices/${device_id}/${serial_number}/lock`)
+                    break
+                case 'unlock':
+                    response = await axiosPublic.put(`customer-search/devices/${device_id}/${serial_number}/unlock`)
+                    break
+                case 'delete':
+                    response = await axiosPublic.delete(`customer-search/devices/${device_id}/${serial_number}`)
+                    break
+                default:
+                    throw new Error('Invalid action')
+            }
+
+            if (response.success) {
+                // Update device list
+                const updatedDevices = customerDevices.map(d => {
+                    if (d.device_id === device_id && d.serial_number === serial_number) {
+                        if (action === 'lock') {
+                            return { ...d, lock_status: 'locked', locked_at: new Date().toISOString() }
+                        } else if (action === 'unlock') {
+                            return { ...d, lock_status: 'unlocked', locked_at: null }
+                        } else if (action === 'delete') {
+                            return { ...d, is_deleted: true }
+                        }
+                    }
+                    return d
+                })
+                setCustomerDevices(updatedDevices)
+
+                // Update selected device if it's the same
+                if (selectedDevice && selectedDevice.device_id === device_id) {
+                    const updatedDevice = updatedDevices.find(d => d.device_id === device_id)
+                    if (updatedDevice) {
+                        setSelectedDevice(updatedDevice)
+                    }
+                }
+
+                // Show success message
+                const actionText = action === 'lock' ? 'khóa' : action === 'unlock' ? 'mở khóa' : 'xóa'
+                toast.success(`Thiết bị đã được ${actionText} thành công!`, {
+                    description: `${device.name} (${device.serial_number})`,
+                    duration: 3000,
+                })
+
+                // Close modal if device was deleted
+                if (action === 'delete') {
+                    setIsDeviceModalOpen(false)
+                    setSelectedDevice(null)
+                }
+            }
+        } catch (error) {
+            console.error('Error performing device action:', error)
+            const errorMessage = error.response?.data?.error?.message || error.message
+            toast.error(`Lỗi: ${errorMessage}`, {
+                description: "Vui lòng thử lại sau",
+                duration: 5000,
+            })
+        } finally {
+            setIsActionLoading(false)
+        }
+    }
+
     const getDeviceIcon = (templateId) => {
         if (templateId === '1') return <Lightbulb className="h-5 w-5" />
         if (templateId === '2') return <Fan className="h-5 w-5" />
         if (templateId === '3') return <Thermometer className="h-5 w-5" />
         return <Power className="h-5 w-5" />
+    }
+
+    const getDeviceStatusIcon = (device) => {
+        if (device.lock_status === 'locked') {
+            return <Lock className="h-4 w-4 text-red-500" />
+        }
+        if (device.link_status === 'linked') {
+            return <CheckCircle className="h-4 w-4 text-green-500" />
+        }
+        return <XCircle className="h-4 w-4 text-gray-400" />
+    }
+
+    const getDeviceStatusText = (device) => {
+        if (device.lock_status === 'locked') return 'Đã khóa'
+        if (device.link_status === 'linked') return 'Đang kết nối'
+        return 'Mất kết nối'
+    }
+
+    const getDeviceStatusColor = (device) => {
+        if (device.lock_status === 'locked') return 'destructive'
+        if (device.link_status === 'linked') return 'success'
+        return 'secondary'
+    }
+
+    // Sửa lại hàm hiển thị trạng thái nguồn
+    const getPowerStatusText = (powerStatus) => {
+        return powerStatus === true ? "Bật" : "Tắt"
+    }
+
+    const getPowerStatusColor = (powerStatus) => {
+        return powerStatus === true ? "success" : "secondary"
+    }
+
+    // Sửa lại hàm hiển thị trạng thái kết nối
+    const getLinkStatusText = (linkStatus) => {
+        return linkStatus === 'linked' ? "Đang kết nối" : "Mất kết nối"
+    }
+
+    const getLinkStatusColor = (linkStatus) => {
+        return linkStatus === 'linked' ? "success" : "secondary"
     }
 
     return (
@@ -403,7 +508,7 @@ export default function SearchCustomerDevices() {
                     </Card>
                 )}
 
-                {/* Devices List */}
+                {/* Devices List - Updated Design */}
                 {customerDevices.length > 0 && (
                     <Card className="bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
                         <CardHeader>
@@ -411,7 +516,7 @@ export default function SearchCustomerDevices() {
                                 <div>
                                     <CardTitle className="text-xl font-semibold text-slate-900">Danh sách thiết bị</CardTitle>
                                     <CardDescription className="text-slate-600">
-                                        Tổng số: {customerDevices.length} thiết bị
+                                        Tổng số: {customerDevices.filter(d => !d.is_deleted).length} thiết bị
                                     </CardDescription>
                                 </div>
                             </div>
@@ -421,10 +526,7 @@ export default function SearchCustomerDevices() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="bg-slate-50/50">
-                                            <TableHead className="font-semibold">ID</TableHead>
-                                            <TableHead className="font-semibold">Serial</TableHead>
-                                            <TableHead className="font-semibold">Tên thiết bị</TableHead>
-                                            <TableHead className="font-semibold">Template</TableHead>
+                                            <TableHead className="font-semibold">Thiết bị</TableHead>
                                             <TableHead className="font-semibold">Vị trí</TableHead>
                                             <TableHead className="font-semibold">Trạng thái</TableHead>
                                             <TableHead className="font-semibold">Ngày tạo</TableHead>
@@ -432,10 +534,8 @@ export default function SearchCustomerDevices() {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {customerDevices.map((device) => (
-                                            <TableRow key={device.device_id} className="hover:bg-slate-50/50">
-                                                <TableCell className="font-medium">{device.device_id}</TableCell>
-                                                <TableCell>{device.serial_number}</TableCell>
+                                        {customerDevices.filter(device => !device.is_deleted).map((device) => (
+                                            <TableRow key={`${device.device_id}-${device.serial_number}`} className="hover:bg-slate-50/50">
                                                 <TableCell>
                                                     <div className="flex items-center space-x-3">
                                                         <div className="p-2 rounded-lg bg-blue-50">
@@ -443,36 +543,45 @@ export default function SearchCustomerDevices() {
                                                         </div>
                                                         <div>
                                                             <p className="font-medium text-slate-900">{device.name}</p>
+                                                            <p className="text-sm text-slate-500">ID: {device.device_id}</p>
+                                                            <p className="text-xs text-slate-400">SN: {device.serial_number}</p>
                                                         </div>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant="outline">
-                                                        {device.template_id}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
                                                     <div className="space-y-1">
-                                                        <p className="font-medium text-slate-900">{device.space.name}</p>
-                                                        <p className="text-sm text-slate-500">{device.space.house.name}</p>
-                                                        <p className="text-xs text-slate-400">{device.space.house.address}</p>
+                                                        <p className="font-medium text-slate-900">{device.space?.name || 'Chưa có vị trí'}</p>
+                                                        <p className="text-sm text-slate-500">{device.space?.house?.name || ''}</p>
+                                                        <p className="text-xs text-slate-400">{device.space?.house?.address || ''}</p>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex gap-2">
+                                                    <div className="flex flex-col gap-2">
+                                                        {/* Trạng thái khóa */}
                                                         <Badge
-                                                            variant={device.power_status ? "success" : "secondary"}
-                                                            className="flex items-center gap-1"
+                                                            variant="destructive"
+                                                            className={`flex items-center gap-1 w-fit border-2 border-black/50 bg-white px-3 py-1 ${device.lock_status === 'locked' ? 'text-red-500' : 'text-green-500'}`}
                                                         >
-                                                            <Power className="h-3 w-3" />
-                                                            {device.power_status ? "Đang bật" : "Đang tắt"}
+                                                            <Lock className="h-3 w-3" />
+                                                            {device.lock_status === 'locked' ? 'Đã khóa' : 'Mở khóa'}
                                                         </Badge>
+
+                                                        {/* Trạng thái kết nối */}
                                                         <Badge
-                                                            variant={device.link_status === "linked" ? "success" : "secondary"}
-                                                            className="flex items-center gap-1"
+                                                            variant={device.link_status === 'linked' ? 'success' : 'secondary'}
+                                                            className={`flex items-center gap-1 w-fit border-2 border-black/50 bg-white px-3 py-1 ${device.link_status === 'linked' ? 'text-green-500' : 'text-red-500'}`}
                                                         >
                                                             <Wifi className="h-3 w-3" />
-                                                            {device.link_status === "linked" ? "Đang kết nối" : "Mất kết nối"}
+                                                            {device.link_status === 'linked' ? 'Đang kết nối' : 'Mất kết nối'}
+                                                        </Badge>
+
+                                                        {/* Trạng thái nguồn */}
+                                                        <Badge
+                                                            variant={device.power_status ? 'success' : 'secondary'}
+                                                            className={`flex items-center gap-1 w-fit border-2 border-black/50 bg-white px-3 py-1 ${device.power_status ? 'text-green-500' : 'text-red-500'}`}
+                                                        >
+                                                            <Power className="h-3 w-3" />
+                                                            {device.power_status ? 'Bật' : 'Tắt'}
                                                         </Badge>
                                                     </div>
                                                 </TableCell>
@@ -480,27 +589,15 @@ export default function SearchCustomerDevices() {
                                                     {new Date(device.created_at).toLocaleDateString('vi-VN')}
                                                 </TableCell>
                                                 <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="hover:bg-slate-100">
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 shadow-lg rounded-lg">
-                                                            <DropdownMenuItem className="cursor-pointer hover:bg-slate-100">
-                                                                <Eye className="h-4 w-4 mr-2" />
-                                                                Xem chi tiết
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="cursor-pointer hover:bg-slate-100">
-                                                                <Settings className="h-4 w-4 mr-2" />
-                                                                Cài đặt
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="text-red-600 cursor-pointer hover:bg-slate-100">
-                                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                                Xóa thiết bị
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
+                                                    <Button
+                                                        onClick={() => handleViewDeviceDetails(device)}
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="mr-2"
+                                                    >
+                                                        <Eye className="h-4 w-4 mr-1" />
+                                                        Chi tiết
+                                                    </Button>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -510,6 +607,15 @@ export default function SearchCustomerDevices() {
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Device Details Modal Component */}
+                <DeviceDetailsModal
+                    isOpen={isDeviceModalOpen}
+                    onClose={() => setIsDeviceModalOpen(false)}
+                    device={selectedDevice}
+                    onDeviceAction={handleDeviceAction}
+                    isActionLoading={isActionLoading}
+                />
             </div>
         </div>
     )

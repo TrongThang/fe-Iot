@@ -27,7 +27,9 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import axiosPublic from '../../../apis/clients/public.client'
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
+import { HOUSE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap"
+import React from "react"
 
 export default function SearchCustomerHouses() {
     const [searchFilters, setSearchFilters] = useState({
@@ -108,7 +110,7 @@ export default function SearchCustomerHouses() {
                         house_name: house.house_name || '',
                         address: house.address || 'Chưa có địa chỉ',
                         icon_name: house.icon_name || 'home',
-                        icon_color: house.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                        icon_color: house.icon_color || `home`,
                         created_at: house.created_at || new Date().toISOString(),
                         updated_at: house.updated_at || new Date().toISOString(),
                         is_deleted: house.is_deleted || false,
@@ -416,15 +418,22 @@ export default function SearchCustomerHouses() {
                                                 <TableCell className="font-medium">{house.house_id}</TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center space-x-3">
+
                                                         <div
                                                             className="p-2 rounded-lg"
-                                                            style={{ backgroundColor: house.icon_color + '20' }}
+                                                            style={{
+                                                                backgroundColor: "#E3F2FD"
+                                                            }}
                                                         >
-                                                            {house.icon_name === 'building' ? (
-                                                                <Building className="h-5 w-5" style={{ color: house.icon_color }} />
-                                                            ) : (
-                                                                <Home className="h-5 w-5" style={{ color: house.icon_color }} />
-                                                            )}
+                                                            {(() => {
+                                                                const HouseIcon = HOUSE_ICON_MAP[house.icon_name] || HOUSE_ICON_MAP.HOUSE;
+                                                                return (
+                                                                    <HouseIcon
+                                                                        style={{ width: 24, height: 24 }}
+                                                                        fill={COLOR_MAP[house.icon_color] || "#2196F3"}
+                                                                    />
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <div>
                                                             <p className="font-medium text-slate-900">{house.house_name}</p>

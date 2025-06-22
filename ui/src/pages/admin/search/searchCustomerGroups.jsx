@@ -26,6 +26,9 @@ import {
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import axiosPublic from '../../../apis/clients/public.client'
+import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap"
+import React from "react"
 
 export default function SearchCustomerGroups() {
     const [searchFilters, setSearchFilters] = useState({
@@ -109,7 +112,7 @@ export default function SearchCustomerGroups() {
                         group_id: group.group.group_id || '',
                         group_name: group.group.group_name || '',
                         group_description: group.group.group_description || 'Không có mô tả',
-                        icon_color: group.group.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                        icon_color: group.group.icon_color || `users`,
                         icon_name: group.group.icon_name || 'users',
                         created_at: group.group.created_at || new Date().toISOString(),
                         updated_at: group.group.updated_at || new Date().toISOString(),
@@ -448,18 +451,22 @@ export default function SearchCustomerGroups() {
                                                     <TableCell className="font-medium">{group.group_id}</TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center space-x-3">
-                                                            <div
-                                                                className="p-2 rounded-lg"
-                                                                style={{ backgroundColor: group.icon_color + '20' }}
-                                                            >
-                                                                {group.icon_name === 'shield' ? (
-                                                                    <Shield className="h-5 w-5" style={{ color: group.icon_color }} />
-                                                                ) : group.icon_name === 'home' ? (
-                                                                    <Home className="h-5 w-5" style={{ color: group.icon_color }} />
-                                                                ) : (
-                                                                    <Users className="h-5 w-5" style={{ color: group.icon_color }} />
-                                                                )}
-                                                            </div>
+                                                        <div
+    className="p-2 rounded-lg"
+    style={{
+        backgroundColor: "#E3F2FD"
+    }}
+>
+    {(() => {
+        const GroupIcon = GROUP_ICON_MAP[group.icon_name] || GROUP_ICON_MAP.FAMILY;
+        return (
+            <GroupIcon
+                style={{ width: 24, height: 24 }}
+                fill={COLOR_MAP[group.icon_color] || "#2196F3"}
+            />
+        );
+    })()}
+</div>
                                                             <div>
                                                                 <p className="font-medium text-slate-900">{group.group_name}</p>
                                                                 {group.group_description && (

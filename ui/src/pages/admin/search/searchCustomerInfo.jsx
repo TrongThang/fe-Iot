@@ -80,7 +80,8 @@ export default function SearchCustomerInfo() {
                         account_id: response.data.account?.account_id || '',
                         username: response.data.account?.username || '',
                         role_id: 2,
-                        status: response.data.account?.status || 1,
+                        // status: response.data.account?.status || 1,
+                        is_locked: response.data.account?.is_locked,
                         created_at: response.data.account?.created_at || new Date().toISOString()
                     }
                 }
@@ -126,12 +127,13 @@ export default function SearchCustomerInfo() {
             try {
                 const response = await axiosPublic.put(`customer-search/lock/${selectedCustomer.customer_id}`);
 
-                if (response.success) {
+                // Kiểm tra cả 2 trường hợp
+                if (response.data.success || response.success) {
                     setSelectedCustomer(prev => ({
                         ...prev,
                         account: {
                             ...prev.account,
-                            status: 0
+                            is_locked: true
                         }
                     }));
                     Swal.fire(
@@ -139,12 +141,14 @@ export default function SearchCustomerInfo() {
                         'Tài khoản đã được khóa thành công.',
                         'success'
                     );
+                } else {
+                    throw new Error('Khóa tài khoản thất bại');
                 }
             } catch (error) {
                 console.error('Error locking account:', error);
                 Swal.fire(
                     'Lỗi!',
-                    'Có lỗi xảy ra khi khóa tài khoản.',
+                    error.response?.data?.error?.message || 'Có lỗi xảy ra khi khóa tài khoản.',
                     'error'
                 );
             }
@@ -167,12 +171,13 @@ export default function SearchCustomerInfo() {
             try {
                 const response = await axiosPublic.put(`customer-search/unlock/${selectedCustomer.customer_id}`);
 
-                if (response.success) {
+                // Kiểm tra cả 2 trường hợp
+                if (response.data.success || response.success) {
                     setSelectedCustomer(prev => ({
                         ...prev,
                         account: {
                             ...prev.account,
-                            status: 1
+                            is_locked: false
                         }
                     }));
                     Swal.fire(
@@ -180,12 +185,14 @@ export default function SearchCustomerInfo() {
                         'Tài khoản đã được mở khóa thành công.',
                         'success'
                     );
+                } else {
+                    throw new Error('Mở khóa tài khoản thất bại');
                 }
             } catch (error) {
                 console.error('Error unlocking account:', error);
                 Swal.fire(
                     'Lỗi!',
-                    'Có lỗi xảy ra khi mở khóa tài khoản.',
+                    error.response?.data?.error?.message || 'Có lỗi xảy ra khi mở khóa tài khoản.',
                     'error'
                 );
             }
@@ -416,17 +423,17 @@ export default function SearchCustomerInfo() {
                                                 <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 shadow-lg rounded-lg">
                                                     <DropdownMenuItem
                                                         className="cursor-pointer hover:bg-slate-100"
-                                                        onClick={() => selectedCustomer.account?.status === 1 ? handleLockAccount() : handleUnlockAccount()}
+                                                        onClick={() => selectedCustomer.account?.is_locked ? handleUnlockAccount() : handleLockAccount()}
                                                     >
-                                                        {selectedCustomer.account?.status === 1 ? (
-                                                            <>
-                                                                <Lock className="h-4 w-4 mr-2" />
-                                                                Khóa tài khoản
-                                                            </>
-                                                        ) : (
+                                                        {selectedCustomer.account?.is_locked ? (
                                                             <>
                                                                 <Unlock className="h-4 w-4 mr-2" />
                                                                 Mở khóa tài khoản
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Lock className="h-4 w-4 mr-2" />
+                                                                Khóa tài khoản
                                                             </>
                                                         )}
                                                     </DropdownMenuItem>
@@ -491,21 +498,21 @@ export default function SearchCustomerInfo() {
                                                         {selectedCustomer.gender ? "Nam" : "Nữ"}
                                                     </Badge>
                                                     <Badge
-                                                        variant={selectedCustomer.account?.status === 1 ? "success" : "destructive"}
-                                                        className={`text-xs px-3 py-1 ${selectedCustomer.account?.status === 1
-                                                            ? "bg-green-100 text-green-700 border border-green-200"
-                                                            : "bg-red-100 text-red-700 border border-red-200"
+                                                        variant={selectedCustomer.account?.is_locked ? "destructive" : "success"}
+                                                        className={`text-xs px-3 py-1 ${selectedCustomer.account?.is_locked
+                                                            ? "bg-red-100 text-red-700 border border-red-200"
+                                                            : "bg-green-100 text-green-700 border border-green-200"
                                                             }`}
                                                     >
-                                                        {selectedCustomer.account?.status === 1 ? (
+                                                        {selectedCustomer.account?.is_locked ? (
                                                             <>
-                                                                <Unlock className="h-3 w-3 mr-1" />
-                                                                Hoạt động
+                                                                <Lock className="h-3 w-3 mr-1" />
+                                                                Bị khóa
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <Lock className="h-3 w-3 mr-1" />
-                                                                Không hoạt động
+                                                                <Unlock className="h-3 w-3 mr-1" />
+                                                                Hoạt động
                                                             </>
                                                         )}
                                                     </Badge>
@@ -576,7 +583,7 @@ export default function SearchCustomerInfo() {
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium text-slate-500">Trạng thái tài khoản</p>
                                                     <p className="text-base font-semibold text-slate-900">
-                                                        {selectedCustomer.account?.status === 1 ? 'Hoạt động' : 'Không hoạt động'}
+                                                        {selectedCustomer.account?.is_locked ? 'Bị khóa' : 'Hoạt động bình thường'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -643,13 +650,13 @@ export default function SearchCustomerInfo() {
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-slate-500">Trạng thái</p>
                                                 <p className="text-base font-semibold text-slate-900">
-                                                    {selectedCustomer.account?.status === 1 ? (
-                                                        <span className="flex items-center gap-1 text-green-600">
-                                                            <Unlock className="h-4 w-4" /> Hoạt động
-                                                        </span>
-                                                    ) : (
+                                                    {selectedCustomer.account?.is_locked ? (
                                                         <span className="flex items-center gap-1 text-red-600">
                                                             <Lock className="h-4 w-4" /> Không hoạt động
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1 text-green-600">
+                                                            <Unlock className="h-4 w-4" /> Hoạt động
                                                         </span>
                                                     )}
                                                 </p>
