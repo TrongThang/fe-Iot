@@ -6,42 +6,82 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Users, FileText, Palette, X } from "lucide-react"
-import IconPickerPopup from "./icon-picker/icon-picker-popup"
+import IconPickerPopup from "../icon-picker/icon-picker-popup"
+import Swal from "sweetalert2"
 
-export default function AddGroupPopupImproved({ open, onOpenChange, onSave }) {
+export default function AddGroupPopup({ open, onOpenChange, onSave }) {
   const [groupData, setGroupData] = useState({
     name: "",
     description: "",
-    icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group" },
+    icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group", colorId: "blue" },
   })
-
   const [showIconPicker, setShowIconPicker] = useState(false)
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk2MjU3NiwiZXhwIjoxNzQ5OTY2MTc2fQ.3Vdqi8yV0to-NXeeQ8oKW-OQ97aBchb7zOvdMmJVu_Y"
 
-  const handleSave = () => {
-    if (!groupData.name.trim()) {
-      alert("Vui lòng nhập tên nhóm!")
-      return
+  const handleSave = async () => {
+    try {
+      const response = await fetch("http://localhost:7777/api/groups", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          group_name: groupData.name,
+          group_description: groupData.description,
+          icon_name: groupData.icon.id,
+          icon_color: groupData.icon.color,
+          icon_color_id: groupData.icon.colorId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Tạo nhóm thất bại");
+      }
+
+      const newGroup = await response.json();
+      onSave(newGroup);
+      onOpenChange(false);
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: "Thành công",
+        text: "Tạo nhóm thành công!",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#28a745",
+      });
+
+      // Reset form
+      setGroupData({
+        name: "",
+        description: "",
+        icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group", colorId: "blue" },
+      });
+    } catch (error) {
+      console.error("Lỗi khi tạo nhóm:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message || "Đã xảy ra lỗi khi tạo nhóm. Vui lòng thử lại.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#d33",
+      });
     }
-
-    const newGroup = {
-      ...groupData,
-      id: Date.now(),
-      createdAt: new Date().toISOString(),
-    }
-
-    onSave(newGroup)
-    onOpenChange(false)
-
-    // Reset form
-    setGroupData({
-      name: "",
-      description: "",
-      icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group" },
-    })
-  }
+  };
 
   const handleIconSelect = (selectedIcon) => {
     setGroupData((prev) => ({ ...prev, icon: selectedIcon }))
+  }
+
+  const handleCancel = () => {
+    setGroupData({
+      name: "",
+      description: "",
+      icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group", colorId: "blue" },
+    })
+    onOpenChange(false)
   }
 
   const IconComponent = groupData.icon.icon
@@ -49,7 +89,7 @@ export default function AddGroupPopupImproved({ open, onOpenChange, onSave }) {
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[600px] p-0 rounded-2xl shadow-2xl" >
+        <DialogContent className="sm:max-w-[600px] p-0 rounded-2xl shadow-2xl">
           {/* Header */}
           <DialogHeader className="px-6 pt-6 pb-2 border-b border-gray-100">
             <div className="flex items-center justify-between">
@@ -57,7 +97,7 @@ export default function AddGroupPopupImproved({ open, onOpenChange, onSave }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCancel}
                 className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
               >
                 <X className="h-4 w-4" />
@@ -130,7 +170,7 @@ export default function AddGroupPopupImproved({ open, onOpenChange, onSave }) {
             <div className="flex space-x-3 pt-4">
               <Button
                 variant="outline"
-                onClick={() => onOpenChange(false)}
+                onClick={handleCancel}
                 className="flex-1 h-12 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
               >
                 Hủy

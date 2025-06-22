@@ -6,14 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  ArrowLeft,
-  Search,
-  Plus,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Home,
-  Bed,
+  ArrowLeft, Search, Plus, MoreHorizontal, Edit, Trash2, Home, Bed,
   ChefHat,
   Sofa,
   Bath,
@@ -28,12 +21,45 @@ import {
   Clock,
   TrendingUp,
   Database,
+  ArrowRight
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import AddSpacePopup from "./spacePopups/Add-space-popup"
+import EditSpacePopup from "./spacePopups/Edit-space-popup"
+import DeviceList from "./device/deviceList"
+import Swal from "sweetalert2"
 
 export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [isAddSpacePopupOpen, setIsAddSpacePopupOpen] = useState(false);
+  const [isEditSpacePopupOpen, setIsEditSpacePopupOpen] = useState(false);
+  const [spaceToEdit, setSpaceToEdit] = useState(null);
+  const [selectedSpace, setSelectedSpace] = useState(null);
+  const [showDeviceList, setShowDeviceList] = useState(false);
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
+
+  const fetchSpaces = async (houseId) => {
+    try {
+      const res = await fetch(`http://localhost:7777/api/spaces/house/${houseId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (res.ok) {
+        const dataSpace = await res.json();
+        setSpaces(Array.isArray(dataSpace) ? dataSpace : [])
+      } else {
+        console.error(`Failed to fetch spaces for house ${houseId}: ${res.status} ${res.statusText}`);
+        return [];
+      }
+    } catch (error) {
+      console.error(`Error fetching spaces for house ${houseId}:`, error);
+      return [];
+    }
+  };
 
   // Mock data based on database schema
   const [spaces, setSpaces] = useState([
@@ -74,100 +100,12 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
       },
       icon_name: "sofa", // From houses table for space type
       icon_color: "#3B82F6",
-    },
-    {
-      space_id: 2,
-      house_id: houseId,
-      name: "Phòng ngủ chính",
-      created_at: "2024-01-01T08:30:00Z",
-      updated_at: "2024-01-20T16:45:00Z",
-      is_deleted: false,
-      devices_count: 5,
-      active_devices_count: 3,
-      alerts_count: 0,
-      recent_alerts: [],
-      hourly_values: {
-        latest_hour: "2024-01-20T14:00:00Z",
-        avg_temperature: 22.8,
-        avg_humidity: 58,
-        sample_count: 8,
-      },
-      icon_name: "bed",
-      icon_color: "#8B5CF6",
-    },
-    {
-      space_id: 3,
-      house_id: houseId,
-      name: "Nhà bếp",
-      created_at: "2024-01-01T09:00:00Z",
-      updated_at: "2024-01-20T17:20:00Z",
-      is_deleted: false,
-      devices_count: 12,
-      active_devices_count: 8,
-      alerts_count: 1,
-      recent_alerts: [
-        {
-          alert_id: 3,
-          device_serial: "GAS001-2024-005",
-          message: "Rò rỉ gas nhẹ",
-          timestamp: "2024-01-20T12:30:00Z",
-          status: "active",
-          alert_type_id: 3,
-        },
-      ],
-      hourly_values: {
-        latest_hour: "2024-01-20T14:00:00Z",
-        avg_temperature: 26.2,
-        avg_humidity: 72,
-        sample_count: 15,
-      },
-      icon_name: "chef-hat",
-      icon_color: "#F59E0B",
-    },
-    {
-      space_id: 4,
-      house_id: houseId,
-      name: "Phòng tắm",
-      created_at: "2024-01-01T09:30:00Z",
-      updated_at: "2024-01-20T15:10:00Z",
-      is_deleted: false,
-      devices_count: 4,
-      active_devices_count: 2,
-      alerts_count: 0,
-      recent_alerts: [],
-      hourly_values: {
-        latest_hour: "2024-01-20T14:00:00Z",
-        avg_temperature: 25.1,
-        avg_humidity: 85,
-        sample_count: 6,
-      },
-      icon_name: "bath",
-      icon_color: "#06B6D4",
-    },
-    {
-      space_id: 5,
-      house_id: houseId,
-      name: "Phòng làm việc",
-      created_at: "2024-01-02T10:00:00Z",
-      updated_at: "2024-01-20T18:00:00Z",
-      is_deleted: false,
-      devices_count: 6,
-      active_devices_count: 4,
-      alerts_count: 0,
-      recent_alerts: [],
-      hourly_values: {
-        latest_hour: "2024-01-20T14:00:00Z",
-        avg_temperature: 23.5,
-        avg_humidity: 60,
-        sample_count: 10,
-      },
-      icon_name: "briefcase",
-      icon_color: "#10B981",
-    },
+    }
   ])
 
   // Simulate loading
   useEffect(() => {
+    fetchSpaces(houseId)
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 1000)
@@ -202,30 +140,78 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
     return "text-red-500"
   }
 
-  const handleDeleteSpace = (spaceId) => {
-    setSpaces(
-      spaces
-        .map((space) =>
-          space.space_id === spaceId ? { ...space, is_deleted: true, updated_at: new Date().toISOString() } : space,
-        )
-        .filter((space) => !space.is_deleted),
-    )
-  }
+  const handleDeleteSpace = async (spaceId) => {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa",
+      text: "Bạn có chắc muốn xóa không gian này? Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`http://localhost:7777/api/spaces/${spaceId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        if (res.ok) {
+          setSpaces((prev) => prev.filter((s) => s.space_id !== spaceId));
+          Swal.fire({
+            icon: "success",
+            title: "Thành công",
+            text: "Xóa không gian thành công!",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#28a745",
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Lỗi",
+            text: `Xóa không gian thất bại: ${res.status} ${res.statusText}`,
+            confirmButtonText: "OK",
+            confirmButtonColor: "#dc3545",
+          });
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Xóa không gian thất bại: " + error.message,
+          confirmButtonText: "OK",
+          confirmButtonColor: "#dc3545",
+        });
+      }
+    }
+  };
 
   const handleEditSpace = (spaceId) => {
-    alert(`Chỉnh sửa không gian ID: ${spaceId}`)
-  }
+    const space = spaces.find((s) => s.space_id === spaceId);
+    if (space) {
+      setSpaceToEdit(space);
+      setIsEditSpacePopupOpen(true);
+    }
+  };
 
   const handleAddSpace = () => {
-    alert("Thêm không gian mới")
+    setIsAddSpacePopupOpen(true);
   }
 
   const handleSpaceClick = (space) => {
-    console.log("Space clicked:", space)
-    if (onSpaceClick) {
-      onSpaceClick(space)
-    }
-  }
+    setSelectedSpace(space);
+    setShowDeviceList(true);
+  };
+
+  const handleBackToSpaces = () => {
+    setShowDeviceList(false);
+    setSelectedSpace(null);
+  };
 
   const handleManageDevices = (space) => {
     console.log("Manage devices for space:", space)
@@ -235,7 +221,9 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   }
 
   const filteredSpaces = spaces.filter(
-    (space) => !space.is_deleted && space.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    (space) =>
+      !space.is_deleted &&
+      (space.name || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   )
 
   // Statistics
@@ -258,6 +246,18 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         </Card>
       </div>
     )
+  }
+
+  if (showDeviceList && selectedSpace) {
+    return (
+      <DeviceList
+        spaceId={selectedSpace.space_id}
+        houseId={houseId}
+        spaceName={selectedSpace.space_name}
+        spaceType={selectedSpace.icon_name}
+        onBack={handleBackToSpaces}
+      />
+    );
   }
 
   return (
@@ -290,7 +290,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-blue-600 font-medium">Tổng không gian</p>
-                  <p className="text-2xl font-bold text-blue-700">{filteredSpaces.length}</p>
+                  <p className="text-2xl font-bold text-blue-700">{filteredSpaces.length || 0}</p>
                 </div>
                 <Home className="h-8 w-8 text-blue-500" />
               </div>
@@ -301,7 +301,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                 <div>
                   <p className="text-sm text-emerald-600 font-medium">Thiết bị hoạt động</p>
                   <p className="text-2xl font-bold text-emerald-700">
-                    {totalActiveDevices}/{totalDevices}
+                    {totalActiveDevices || 0}/{totalDevices || 0}
                   </p>
                 </div>
                 <Activity className="h-8 w-8 text-emerald-500" />
@@ -312,7 +312,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-amber-600 font-medium">Cảnh báo</p>
-                  <p className="text-2xl font-bold text-amber-700">{totalAlerts}</p>
+                  <p className="text-2xl font-bold text-amber-700">{totalAlerts || 0}</p>
                 </div>
                 <AlertTriangle className={`h-8 w-8 ${getAlertSeverityColor(totalAlerts)}`} />
               </div>
@@ -376,8 +376,9 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                       {/* Space Info */}
                       <div>
                         <h3 className="font-semibold text-slate-900 text-lg group-hover:text-blue-700 transition-colors">
-                          {space.name}
+                          {space.space_name}
                         </h3>
+                        <p className="text-sm">{space.space_description}</p>
                         <div className="flex items-center space-x-2 mt-1">
                           <Badge variant="secondary" className="text-xs px-2 py-1 bg-slate-100 text-slate-600">
                             ID: {space.space_id}
@@ -517,9 +518,8 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                         {space.recent_alerts.slice(0, 2).map((alert) => (
                           <div key={alert.alert_id} className="flex items-start space-x-2">
                             <div
-                              className={`w-2 h-2 rounded-full mt-2 ${
-                                alert.status === "active" ? "bg-red-500" : "bg-gray-400"
-                              }`}
+                              className={`w-2 h-2 rounded-full mt-2 ${alert.status === "active" ? "bg-red-500" : "bg-gray-400"
+                                }`}
                             />
                             <div className="flex-1">
                               <p className="text-xs text-red-700 font-medium">{alert.message}</p>
@@ -597,6 +597,24 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
           )}
         </CardContent>
       </Card>
+      <AddSpacePopup
+        open={isAddSpacePopupOpen}
+        onOpenChange={setIsAddSpacePopupOpen}
+        onSave={(newSpace) => {
+          setSpaces((prev) => [...prev, newSpace]);
+          setIsAddSpacePopupOpen(false);
+        }}
+        houseId={houseId}
+      />
+      <EditSpacePopup
+        open={isEditSpacePopupOpen}
+        onOpenChange={setIsEditSpacePopupOpen}
+        onSave={(updatedSpace) => {
+          setSpaces((prev) => prev.map(s => s.space_id === updatedSpace.space_id ? { ...s, ...updatedSpace } : s));
+          setIsEditSpacePopupOpen(false);
+        }}
+        space={spaceToEdit}
+      />
     </div>
   )
 }

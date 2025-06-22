@@ -7,11 +7,12 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User } from "lucide-react"
 
-export default function AddMemberPopup({ open, onOpenChange, onSave }) {
+export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) {
   const [memberData, setMemberData] = useState({
     email: "",
     role: "",
   })
+  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk2MjU3NiwiZXhwIjoxNzQ5OTY2MTc2fQ.3Vdqi8yV0to-NXeeQ8oKW-OQ97aBchb7zOvdMmJVu_Y"
 
   const roles = [
     { value: "admin", label: "Chủ nhóm" },
@@ -20,7 +21,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
     { value: "viewer", label: "Người xem" },
   ]
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!memberData.email.trim() || !memberData.role) {
       alert("Vui lòng nhập đầy đủ thông tin!")
       return
@@ -33,23 +34,31 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
       return
     }
 
-    const newMember = {
-      id: Date.now(),
-      name: memberData.email.split("@")[0], // Extract name from email
-      email: memberData.email,
-      role: roles.find((r) => r.value === memberData.role)?.label || "Thành viên",
-      joinDate: new Date().toLocaleDateString("vi-VN"),
-      avatar: "",
+    try {
+      const res = await fetch(`http://localhost:7777/api/groups/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          group_id: groupId,
+          email: memberData.email,
+          role: memberData.role,
+        }),
+      })
+      if (res.ok) {
+        const newMember = await res.json()
+        onSave(newMember.data) // hoặc newMember tuỳ response
+        onOpenChange(false)
+        setMemberData({ email: "", role: "" })
+      } else {
+        const errorData = await res.json()
+        alert(errorData.message || "Thêm thành viên thất bại!")
+      }
+    } catch (error) {
+      alert(error.message || "Lỗi khi thêm thành viên!")
     }
-
-    onSave(newMember)
-    onOpenChange(false)
-
-    // Reset form
-    setMemberData({
-      email: "",
-      role: "",
-    })
   }
 
   const handleCancel = () => {
@@ -97,7 +106,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
                 value={memberData.role}
                 onValueChange={(value) => setMemberData((prev) => ({ ...prev, role: value }))}
               >
-                <SelectTrigger className="h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl bg-white shadow-sm transition-all duration-200">
+                <SelectTrigger className="w-full h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl bg-white shadow-sm transition-all duration-200">
                   <SelectValue placeholder="Chọn vai trò cho thành viên" className="text-gray-700" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl border-gray-200 shadow-lg bg-white">

@@ -6,12 +6,17 @@ import {
   HelpCircle,
   ChevronDown,
   LayoutDashboard,
-  Home,
   Thermometer,
   Settings,
   Clock,
+  Monitor,
+  FileText,
+  User,
+  History,
+  Search,
 } from "lucide-react"
 import { useSidebar } from "./contexts/Sidebar-context"
+import logo from "@/assets/img/icon-smarthomesolutions.jpg"
 import { Link } from "react-router-dom"
 
 const SidebarAdmin = () => {
@@ -28,6 +33,8 @@ const SidebarAdmin = () => {
     if (path === "/admin/customers") return "customers"
     if (path === "/admin/search-device") return "search-device"
     if (path === "/admin/search-group") return "search-group"
+    if (path === "/admin/device-transfer-history") return "device-transfer-history"
+    if (path === "/admin/share-permissions") return "share-permissions"
     if (path === "/admin/search-customer-groups") return "search-customer-groups"
     if (path === "/admin/search-customer-houses") return "search-customer-houses"
     if (path === "/admin/search-customer-spaces") return "search-customer-spaces"
@@ -67,26 +74,28 @@ const SidebarAdmin = () => {
             <Link
               to="/admin"
               onClick={() => handleItemClick("dashboard")}
-              className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "dashboard"
-                ? "bg-blue-600 text-white font-medium"
-                : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+              className={`flex items-center gap-3 transition-colors ${
+                activeItem === "dashboard" ? " text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+              } ${!isOpen && "justify-center"}`}
               title={!isOpen ? "Dashboard" : ""}
             >
-              <Home className="w-6 h-6 text-white" />
+              <img src={logo || "/placeholder.svg"} alt="" className="rounded-lg" height={50} width={150} />
             </Link>
           </div>
           {isOpen && (
             <div className="overflow-hidden">
-              <h2 className="font-bold text-lg text-white">SmartNet Solutions</h2>
-              <p className="text-xs text-blue-300 whitespace-nowrap">IoT Control Center</p>
+              <h2 className="font-bold text-lg text-white">HomeConnect</h2>
+              <p className="text-xs text-blue-300 whitespace-nowrap">
+                a product by <br></br>
+                smartNet Solutions
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Sidebar Content */}
-      <div className={`py-4 h-[calc(100vh-140px)] overflow-y-auto ${isOpen ? "px-3" : "px-2"}`}>
+      {/* Sidebar Content with Custom Scrollbar */}
+      <div className={`py-4 h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar ${isOpen ? "px-3" : "px-2"}`}>
         {/* Overview Section */}
         <div className="mb-4">
           {isOpen ? (
@@ -108,10 +117,11 @@ const SidebarAdmin = () => {
               <Link
                 to="/admin"
                 onClick={() => handleItemClick("dashboard")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "dashboard"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "dashboard"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Dashboard" : ""}
               >
                 <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
@@ -142,47 +152,49 @@ const SidebarAdmin = () => {
               <Link
                 to="/admin/customers"
                 onClick={() => handleItemClick("customers")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "customers"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "customers"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Khách hàng" : ""}
               >
-                <Users className="w-4 h-4 flex-shrink-0" />
+                <User className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Khách hàng</span>}
               </Link>
               <Link
                 to="/admin/tickets"
                 onClick={() => handleItemClick("tickets")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "tickets"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "tickets" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Yêu cầu" : ""}
               >
-                <Users className="w-4 h-4 flex-shrink-0" />
+                <FileText className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Yêu Cầu</span>}
               </Link>
               <Link
                 to="/admin/search-device"
                 onClick={() => handleItemClick("search-device")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-device"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "search-device"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Tra Cứu Thiết Bị" : ""}
               >
-                <Users className="w-4 h-4 flex-shrink-0" />
+                <Monitor className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Tra Cứu Thiết Bị Của Khách Hàng</span>}
               </Link>
               <Link
                 to="/admin/search-group"
                 onClick={() => handleItemClick("search-group")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-group"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tra   Cứu Nhóm" : ""}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "search-group"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tra Cứu Nhóm" : ""}
               >
                 <Users className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Tra Cứu Nhóm Của Khách Hàng</span>}
@@ -270,24 +282,24 @@ const SidebarAdmin = () => {
           {(isAutomationOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
               <Link
-                href="/schedules"
+                to="/admin/schedules"
                 onClick={() => handleItemClick("schedules")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "schedules"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "schedules"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Lịch trình" : ""}
               >
                 <Clock className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Lịch trình</span>}
               </Link>
               <Link
-                href="/scenes"
+                to="/admin/scenes"
                 onClick={() => handleItemClick("scenes")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "scenes"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "scenes" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Cảnh" : ""}
               >
                 <Thermometer className="w-4 h-4 flex-shrink-0" />
@@ -302,7 +314,7 @@ const SidebarAdmin = () => {
       <div className={`absolute bottom-0 left-0 right-0 border-t border-blue-800/50 p-4 ${!isOpen && "px-2"}`}>
         <div className="space-y-3">
           <Link
-            href="/settings"
+            to="/admin/settings"
             onClick={() => handleItemClick("settings")}
             className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg text-blue-200 hover:bg-blue-800/40 transition-colors ${!isOpen && "justify-center"}`}
             title={!isOpen ? "Cài đặt" : ""}
@@ -311,7 +323,7 @@ const SidebarAdmin = () => {
             {isOpen && <span>Cài đặt</span>}
           </Link>
           <Link
-            href="/help"
+            to="/admin/help"
             onClick={() => handleItemClick("help")}
             className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg text-blue-200 hover:bg-blue-800/40 transition-colors ${!isOpen && "justify-center"}`}
             title={!isOpen ? "Trợ giúp" : ""}
@@ -321,6 +333,7 @@ const SidebarAdmin = () => {
           </Link>
         </div>
       </div>
+
     </aside>
   )
 }

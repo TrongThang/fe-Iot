@@ -26,6 +26,8 @@ import SearchCustomerHouses from "@/pages/admin/search/searchCustomerHouses";
 import SearchCustomerSpaces from "@/pages/admin/search/searchCustomerSpaces";
 import SearchCustomerDevices from "@/pages/admin/search/searchCustomerDevices";
 import SearchCustomerInfo from "@/pages/admin/search/searchCustomerInfo";
+import DashboardAdmin from "@/pages/admin/Dashboard/dashboard";
+import CustomerShare from "@/pages/admin/customer_manager/customerShareList";
 
 export const router = createBrowserRouter([
     {
@@ -45,12 +47,20 @@ export const router = createBrowserRouter([
         element: <DefaultLayoutAdmin />,
         children: [
             {
+                path: '',
+                element: <DashboardAdmin />
+            },
+            {
                 path: 'tickets',
                 element: <AdminTicketsDashboard />
             },
             {
                 path: 'customers',
                 element: <AdminCustomerDashboard />
+            },
+            {
+                path: 'share-permissions',
+                element: <CustomerShare />
             },
             {
                 path: 'search-device',
@@ -95,7 +105,7 @@ export const router = createBrowserRouter([
                 path: '/groups', element: <Groups />,
             },
             {
-                path: '/EditGroup',
+                path: '/editGroup/:id',
                 element: <EditGroups />
             },
             {

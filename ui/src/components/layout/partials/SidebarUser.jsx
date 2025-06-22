@@ -7,16 +7,17 @@ import {
   HelpCircle,
   ChevronDown,
   LayoutDashboard,
-  Home,
   Gauge,
   Lightbulb,
   Thermometer,
   Settings,
   Clock,
-  House,
+  HomeIcon as House,
   Space,
 } from "lucide-react"
 import { useSidebar } from "./contexts/Sidebar-context"
+import logo from "@/assets/img/icon-smarthomesolutions.jpg"
+import '@/assets/css/globals.css'
 import { Link } from "react-router-dom"
 
 const SidebarUser = () => {
@@ -72,26 +73,28 @@ const SidebarUser = () => {
             <Link
               to="/"
               onClick={() => handleItemClick("dashboard")}
-              className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "dashboard"
-                ? "bg-blue-600 text-white font-medium"
-                : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+              className={`flex items-center gap-3 transition-colors ${
+                activeItem === "dashboard" ? " text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+              } ${!isOpen && "justify-center"}`}
               title={!isOpen ? "Dashboard" : ""}
             >
-              <Home className="w-6 h-6 text-white" />
+              <img src={logo || "/placeholder.svg"} alt="" className="rounded-lg" height={50} width={150} />
             </Link>
           </div>
           {isOpen && (
             <div className="overflow-hidden">
-              <h2 className="font-bold text-lg text-white">SmartNet Solutions</h2>
-              <p className="text-xs text-blue-300 whitespace-nowrap">IoT Control Center</p>
+              <h2 className="font-bold text-lg text-white">HomeConnect</h2>
+              <p className="text-xs text-blue-300 whitespace-nowrap">
+                a product by <br></br>
+                smartNet Solutions
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Sidebar Content */}
-      <div className={`py-4 h-[calc(100vh-250px)] overflow-y-auto overflow-hidden ${isOpen ? "px-3" : "px-2"}`}>
+      {/* Sidebar Content with Custom Scrollbar */}
+      <div className={`py-4 h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar ${isOpen ? "px-3" : "px-2"}`}>
         {/* Overview Section */}
         <div className="mb-4">
           {isOpen ? (
@@ -113,10 +116,11 @@ const SidebarUser = () => {
               <Link
                 to="/"
                 onClick={() => handleItemClick("dashboard")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "dashboard"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "dashboard"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Dashboard" : ""}
               >
                 <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
@@ -125,10 +129,9 @@ const SidebarUser = () => {
               <Link
                 to="/stats"
                 onClick={() => handleItemClick("stats")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "stats"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "stats" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Thống kê" : ""}
               >
                 <Gauge className="w-4 h-4 flex-shrink-0" />
@@ -157,36 +160,32 @@ const SidebarUser = () => {
           {(isManagementOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
               <Link
+                to="/devices"
+                onClick={() => handleItemClick("devices")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "devices" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Thiết bị" : ""}
+              >
+                <Lightbulb className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Thiết bị</span>}
+              </Link>
+              <Link
                 to="/groups"
                 onClick={() => handleItemClick("groups")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "groups"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "groups" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Nhóm" : ""}
               >
                 <Users className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Nhóm</span>}
               </Link>
               <Link
-                to="/house"
-                onClick={() => handleItemClick("house")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "house"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Nhà" : ""}
-              >
-                <House className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Nhà</span>}
-              </Link>
-              <Link
                 to="/spaces"
                 onClick={() => handleItemClick("spaces")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "spaces"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "spaces" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Không gian" : ""}
               >
                 <Space className="w-4 h-4 flex-shrink-0" />
@@ -195,10 +194,11 @@ const SidebarUser = () => {
               <Link
                 to="/notifications"
                 onClick={() => handleItemClick("notifications")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "notifications"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "notifications"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Thông báo" : ""}
               >
                 <Package className="w-4 h-4 flex-shrink-0" />
@@ -207,14 +207,23 @@ const SidebarUser = () => {
               <Link
                 to="/ticket"
                 onClick={() => handleItemClick("ticket")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "ticket"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "ticket" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Yêu Cầu" : ""}
               >
                 <Lightbulb className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Yêu Cầu</span>}
+              </Link>
+              <Link
+                to="/profile"
+                onClick={() => handleItemClick("profile")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "profile" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Tài khoản" : ""}
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Tài khoản</span>}
               </Link>
             </div>
           )}
@@ -241,10 +250,11 @@ const SidebarUser = () => {
               <Link
                 to="/schedules"
                 onClick={() => handleItemClick("schedules")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "schedules"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "schedules"
+                    ? "bg-blue-600 text-white font-medium"
+                    : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Lịch trình" : ""}
               >
                 <Clock className="w-4 h-4 flex-shrink-0" />
@@ -253,10 +263,9 @@ const SidebarUser = () => {
               <Link
                 to="/scenes"
                 onClick={() => handleItemClick("scenes")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "scenes"
-                  ? "bg-blue-600 text-white font-medium"
-                  : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "scenes" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Cảnh" : ""}
               >
                 <Thermometer className="w-4 h-4 flex-shrink-0" />
@@ -290,6 +299,8 @@ const SidebarUser = () => {
           </Link>
         </div>
       </div>
+
+      
     </aside>
   )
 }

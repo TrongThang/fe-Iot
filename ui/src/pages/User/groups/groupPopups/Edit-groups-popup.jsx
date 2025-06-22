@@ -1,109 +1,167 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Users, Edit3 } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Users, FileText, Palette, X } from "lucide-react"
+import Swal from "sweetalert2"
+import { useParams } from "react-router-dom"
+import IconPickerPopup from "../icon-picker/icon-picker-popup"
 
-export default function EditGroupPopup({ open, onOpenChange, groupData, onSave }) {
-  const [formData, setFormData] = useState({
-    name: groupData?.name || "",
-    description: groupData?.description || "",
-  })
+export default function EditGroupPopup({ open, onOpenChange, onSave, formData, setFormData }) {
+  const [showIconPicker, setShowIconPicker] = useState(false)
 
-  const handleSave = () => {
-    if (!formData.name.trim()) {
-      alert("Vui lòng nhập tên nhóm!")
-      return
+  // Khi popup mở, đồng bộ dữ liệu từ formData cha
+  useEffect(() => {
+    if (open && formData) {
+      setFormData((prev) => ({ ...prev, ...formData }))
     }
+    // eslint-disable-next-line
+  }, [open])
 
-    onSave(formData)
-    onOpenChange(false)
+  const handleSave = async () => {
+    try {
+      // Chuẩn hóa dữ liệu gửi lên
+      const updateData = {
+        group_name: formData.group_name || "",
+        group_description: formData.group_description || "",
+        icon_name: formData.icon?.id || formData.icon_name || "group",
+        icon_color: formData.icon?.color || formData.icon_color || "bg-blue-500",
+        icon_color_id: formData.icon?.colorId || formData.icon_color_id || "blue",
+      }
+      await onSave(updateData)
+      onOpenChange(false)
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi",
+        text: error.message || "Đã xảy ra lỗi khi cập nhật nhóm. Vui lòng thử lại.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#d33",
+      })
+    }
+  }
+
+  const handleIconSelect = (selectedIcon) => {
+    setFormData((prev) => ({ ...prev, icon: selectedIcon }))
   }
 
   const handleCancel = () => {
-    // Reset form to original data
-    setFormData({
-      name: groupData?.name || "",
-      description: groupData?.description || "",
-    })
     onOpenChange(false)
   }
 
+  const IconComponent = formData.icon?.icon || Users
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg p-0 rounded-2xl overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-50 to-white p-6 border-b">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
-              <Edit3 className="h-6 w-6 text-white" />
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[600px] p-0 rounded-2xl shadow-2xl">
+          {/* Header */}
+          <DialogHeader className="px-6 pt-6 pb-2 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold text-gray-900">Chỉnh sửa nhóm</DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancel}
+                className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </Button>
             </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Chỉnh sửa nhóm</h2>
-              <p className="text-sm text-gray-600">Cập nhật thông tin và mô tả nhóm</p>
-            </div>
-          </div>
-        </div>
+          </DialogHeader>
 
-        {/* Form */}
-        <div className="p-6 space-y-6">
-          {/* Group Name */}
-          <div className="space-y-2">
-            <Label htmlFor="groupName" className="text-sm font-medium text-gray-700">
-              Tên nhóm <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <Users className="h-5 w-5 text-gray-400" />
+          {/* Content */}
+          <div className="px-6 py-6 space-y-6">
+            {/* Icon Preview */}
+            <div className="flex justify-center">
+              <div
+                className={`w-20 h-20 rounded-2xl ${formData.icon?.color || formData.icon_color || "bg-blue-500"} flex items-center justify-center shadow-lg`}
+              >
+                <IconComponent className="h-10 w-10 text-white" />
               </div>
-              <Input
-                id="groupName"
-                placeholder="Nhập tên nhóm..."
-                value={formData.name}
-                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                className="pl-11 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-gray-700 shadow-sm"
-              />
+            </div>
+
+            {/* Group Name */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Tên nhóm</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+                  <Users className="h-5 w-5 text-gray-400" />
+                </div>
+                <Input
+                  placeholder="Nhập tên nhóm..."
+                  value={formData.group_name || ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, group_name: e.target.value }))}
+                  className="pl-11 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl"
+                />
+              </div>
+            </div>
+
+            {/* Group Description */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Mô tả nhóm</label>
+              <div className="relative">
+                <div className="absolute left-3 top-4">
+                  <FileText className="h-5 w-5 text-gray-400" />
+                </div>
+                <Textarea
+                  placeholder="Mô tả về nhóm của bạn..."
+                  value={formData.group_description || ""}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, group_description: e.target.value }))}
+                  className="pl-11 min-h-[100px] border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Icon Picker Button */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Biểu tượng nhóm</label>
+              <Button
+                variant="outline"
+                onClick={() => setShowIconPicker(true)}
+                className="w-full h-12 border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl flex items-center justify-between group"
+              >
+                <div className="flex items-center space-x-3">
+                  <Palette className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+                  <span className="text-gray-600 group-hover:text-blue-600">Chọn biểu tượng</span>
+                </div>
+                <div className={`w-8 h-8 rounded-lg ${formData.icon?.color || formData.icon_color || "bg-blue-500"} flex items-center justify-center`}>
+                  <IconComponent className="h-4 w-4 text-white" />
+                </div>
+              </Button>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex space-x-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={handleCancel}
+                className="flex-1 h-12 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="flex-1 h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all"
+                disabled={!formData.group_name?.trim()}
+              >
+                Lưu thay đổi
+              </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* Group Description */}
-          <div className="space-y-2">
-            <Label htmlFor="groupDescription" className="text-sm font-medium text-gray-700">
-              Mô tả nhóm
-            </Label>
-            <Textarea
-              id="groupDescription"
-              placeholder="Nhập mô tả về nhóm, mục đích sử dụng..."
-              value={formData.description}
-              onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-              className="min-h-[100px] border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl text-gray-700 shadow-sm resize-none"
-            />
-            <p className="text-xs text-gray-500">Mô tả sẽ giúp các thành viên hiểu rõ hơn về mục đích của nhóm</p>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3">
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            className="px-6 py-2 border-gray-200 text-gray-700 hover:bg-gray-100 rounded-xl transition-colors"
-          >
-            Hủy
-          </Button>
-          <Button
-            onClick={handleSave}
-            className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200"
-            disabled={!formData.name.trim()}
-          >
-            Lưu thay đổi
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Icon Picker Popup */}
+      <IconPickerPopup
+        open={showIconPicker}
+        onOpenChange={setShowIconPicker}
+        onSelectIcon={handleIconSelect}
+        selectedIcon={formData.icon}
+      />
+    </>
   )
 }
