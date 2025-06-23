@@ -9,7 +9,7 @@ import { User } from "lucide-react"
 
 export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) {
   const [memberData, setMemberData] = useState({
-    email: "",
+    username: "",
     role: "",
   })
   const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk2MjU3NiwiZXhwIjoxNzQ5OTY2MTc2fQ.3Vdqi8yV0to-NXeeQ8oKW-OQ97aBchb7zOvdMmJVu_Y"
@@ -22,15 +22,8 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
   ]
 
   const handleSave = async () => {
-    if (!memberData.email.trim() || !memberData.role) {
+    if (!memberData.username.trim() || !memberData.role) {
       alert("Vui lòng nhập đầy đủ thông tin!")
-      return
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(memberData.email)) {
-      alert("Vui lòng nhập email hợp lệ!")
       return
     }
 
@@ -43,7 +36,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
         },
         body: JSON.stringify({
           group_id: groupId,
-          email: memberData.email,
+          username: memberData.username,
           role: memberData.role,
         }),
       })
@@ -51,7 +44,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
         const newMember = await res.json()
         onSave(newMember.data) // hoặc newMember tuỳ response
         onOpenChange(false)
-        setMemberData({ email: "", role: "" })
+        setMemberData({ username: "", role: "" })
       } else {
         const errorData = await res.json()
         alert(errorData.message || "Thêm thành viên thất bại!")
@@ -65,7 +58,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
     onOpenChange(false)
     // Reset form
     setMemberData({
-      email: "",
+      username: "",
       role: "",
     })
   }
@@ -83,17 +76,17 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
           </div>
 
           <div className="space-y-6">
-            {/* Email Input */}
+            {/* Username Input */}
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tên người dùng</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input
-                  placeholder="Nhập địa chỉ email"
-                  value={memberData.email}
-                  onChange={(e) => setMemberData((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Nhập tên người dùng"
+                  value={memberData.username}
+                  onChange={(e) => setMemberData((prev) => ({ ...prev, username: e.target.value }))}
                   className="pl-11 h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-gray-700 bg-white shadow-sm transition-all duration-200"
                 />
               </div>
@@ -131,7 +124,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
               <Button
                 onClick={handleSave}
                 className="flex-1 h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                disabled={!memberData.email.trim() || !memberData.role}
+                disabled={!memberData.username.trim() || !memberData.role}
               >
                 Thêm thành viên
               </Button>
