@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import Login from "../pages/User/auth/Login";
 import Register from "../pages/User/auth/Register";
 import DefaultLayout from "@/components/layout/defaultLayout";
+import Devices from "@/pages/User/devices/deviceManagement";
 import Groups from "@/pages/User/groups/groupsList";
 import Profile from "@/pages/User/Profile";
 import ComponentExamples from "@/pages/User/ComponentExamples";
@@ -12,20 +13,20 @@ import ChangePassword from "@/pages/User/ChangePassword";
 import NotificationList from "@/pages/User/notification/notificationList";
 import TicketList from "@/pages/User/ticket/ticketList";
 import DefaultLayoutAdmin from "@/components/layout/defaultLayoutAdmin";
-import AdminTicketsDashboard from "@/pages/Admin/ticket_manager/ticket-list-manager";
+import AdminTicketsDashboard from "@/pages/admin/ticket_manager/ticket-list-manager";
 import NotFoundPage from "@/pages/User/404";
 import HouseList from "@/pages/User/house/houseList";
 import SpaceList from "@/pages/User/space/spaceList";
-import AdminCustomerDashboard from "@/pages/Admin/customer_manager/customerList";
+import AdminCustomerDashboard from "@/pages/admin/customer_manager/customerList";
 import UserActivity from "@/pages/User/setting/user-activity";
 import DeviceSharingList from "@/pages/User/share/shareDeviceList";
-import SearchCustomerGroups from "@/pages/Admin/search/searchCustomerGroups";
-import SearchCustomerHouses from "@/pages/Admin/search/searchCustomerHouses";
-import SearchCustomerSpaces from "@/pages/Admin/search/searchCustomerSpaces";
-import SearchCustomerDevices from "@/pages/Admin/search/searchCustomerDevices";
-import SearchCustomerInfo from "@/pages/Admin/search/searchCustomerInfo";
-import DashboardAdmin from "@/pages/Admin/Dashboard/dashboard";
-import CustomerShare from "@/pages/Admin/customer_manager/customerShareList";
+import SearchCustomerGroups from "@/pages/admin/search/searchCustomerGroups";
+import SearchCustomerHouses from "@/pages/admin/search/searchCustomerHouses";
+import SearchCustomerSpaces from "@/pages/admin/search/searchCustomerSpaces";
+import SearchCustomerDevices from "@/pages/admin/search/searchCustomerDevices";
+import SearchCustomerInfo from "@/pages/admin/search/searchCustomerInfo";
+import DashboardAdmin from "@/pages/admin/Dashboard/dashboard";
+import CustomerShare from "@/pages/admin/customer_manager/customerShareList";
 
 export const router = createBrowserRouter([
     {
@@ -91,6 +92,9 @@ export const router = createBrowserRouter([
         element: <DefaultLayout />,
         children: [
             { path: '/', element: <IoTDashboard /> },
+            {
+                path: '/devices', element: <Devices />,
+            },
             {
                 path: '/groups', element: <Groups />,
             },

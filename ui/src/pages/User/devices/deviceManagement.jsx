@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import {
   ChevronLeft,
-  Settings,
   Edit,
   Trash2,
   ChevronDown,
@@ -14,11 +13,11 @@ import {
   Home,
   Lightbulb,
   Thermometer,
-  Power,
-  SlidersHorizontal,
-  ArrowUpRight,
   Smartphone,
   Loader2,
+  Camera,
+  Wifi,
+  WifiOff,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -29,10 +28,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import LightDetail from "@/components/common/devices/type/LightDetail"
-import SmokeDetectorDetail from "@/components/common/devices/type/SmokeDetectorDetail"
+import CameraControl from "./cameraControl"
+import DeviceGrid from "./deviceGrid"
 
-export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack }) {
+export default function DeviceManagement({
+  spaceId = "1",
+  spaceName = "Phòng khách",
+  spaceType = "living_room",
+  onBack = () => {},
+}) {
   const [selectedDevice, setSelectedDevice] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
@@ -42,10 +46,54 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
     status: "all",
   })
 
-  // Mock data for devices in this space
+  // Mock data - Thêm camera vào danh sách devices
   const [devices, setDevices] = useState([
+    // Camera devices
     {
       id: 1,
+      name: "Camera cổng chính",
+      room: spaceName,
+      type: "camera",
+      isOn: true,
+      resolution: "1080p",
+      lastActivity: "1 phút trước",
+      status: "active",
+      group: 1,
+      group_name: "Nhóm 1",
+      house: 1,
+      house_name: "Nhà 1",
+    },
+    {
+      id: 2,
+      name: "Camera sảnh lớn",
+      room: spaceName,
+      type: "camera",
+      isOn: true,
+      resolution: "4K",
+      lastActivity: "Đang hoạt động",
+      status: "active",
+      group: 1,
+      group_name: "Nhóm 1",
+      house: 1,
+      house_name: "Nhà 1",
+    },
+    {
+      id: 3,
+      name: "Camera hành lang",
+      room: spaceName,
+      type: "camera",
+      isOn: false,
+      resolution: "720p",
+      lastActivity: "15 phút trước",
+      status: "inactive",
+      group: 2,
+      group_name: "Nhóm 2",
+      house: 1,
+      house_name: "Nhà 1",
+    },
+    // Other devices
+    {
+      id: 4,
       name: "Máy báo khói",
       room: spaceName,
       type: "smoke",
@@ -61,7 +109,7 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
       house_name: "Nhà 1",
     },
     {
-      id: 2,
+      id: 5,
       name: "Máy báo khói phụ",
       room: spaceName,
       type: "smoke",
@@ -77,7 +125,7 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
       house_name: "Nhà 1",
     },
     {
-      id: 3,
+      id: 6,
       name: "Đèn bàn",
       room: spaceName,
       type: "light",
@@ -92,7 +140,7 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
       house_name: "Nhà 1",
     },
     {
-      id: 4,
+      id: 7,
       name: "Đèn trần",
       room: spaceName,
       type: "light",
@@ -107,7 +155,7 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
       house_name: "Nhà 1",
     },
     {
-      id: 5,
+      id: 8,
       name: "Cảm biến nhiệt độ",
       room: spaceName,
       type: "temperature",
@@ -173,6 +221,8 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
   const getDeviceIcon = (type) => {
     const iconProps = { className: "h-5 w-5" }
     switch (type) {
+      case "camera":
+        return <Camera {...iconProps} />
       case "light":
         return <Lightbulb {...iconProps} />
       case "smoke":
@@ -186,6 +236,8 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
 
   const getDeviceColor = (type) => {
     switch (type) {
+      case "camera":
+        return "from-blue-500 to-blue-600"
       case "light":
         return "from-amber-500 to-amber-600"
       case "smoke":
@@ -223,16 +275,9 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
 
   // Filter and search devices
   const filteredDevices = devices.filter((device) => {
-    // Search filter
     const matchesSearch = device.name.toLowerCase().includes(searchQuery.toLowerCase())
-
-    // Group filter
     const matchesGroup = filterOptions.group === 0 || device.group === filterOptions.group
-
-    // House filter
     const matchesHouse = filterOptions.house === 0 || device.house === filterOptions.house
-
-    // Status filter
     const matchesStatus =
       filterOptions.status === "all" ||
       (filterOptions.status === "active" && device.isOn) ||
@@ -250,8 +295,21 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
     return acc
   }, {})
 
-  // Count active devices
   const activeDevices = devices.filter((device) => device.isOn).length
+
+  // Nếu device được chọn là camera, hiển thị CameraControl component
+  if (selectedDevice && selectedDevice.type === "camera") {
+    return (
+      <CameraControl
+        camera={selectedDevice}
+        onBack={() => setSelectedDevice(null)}
+        onUpdateCamera={(updatedCamera) => {
+          setDevices(devices.map((d) => (d.id === updatedCamera.id ? { ...d, ...updatedCamera } : d)))
+          setSelectedDevice(updatedCamera)
+        }}
+      />
+    )
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -287,7 +345,6 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
             </div>
 
             <div className="flex items-center space-x-2">
-            
               <Button onClick={handleAddDevice} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 <span>Thêm thiết bị</span>
@@ -382,10 +439,11 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
                     </TabsTrigger>
                     {Object.keys(devicesByType).map((type) => (
                       <TabsTrigger key={type} value={type} className="data-[state=active]:bg-white">
+                        {type === "camera" && "Camera"}
                         {type === "light" && "Đèn"}
                         {type === "smoke" && "Báo khói"}
                         {type === "temperature" && "Nhiệt độ"}
-                        {type !== "light" && type !== "smoke" && type !== "temperature" && type}(
+                        {type !== "camera" && type !== "light" && type !== "smoke" && type !== "temperature" && type}(
                         {devicesByType[type].length})
                       </TabsTrigger>
                     ))}
@@ -437,8 +495,8 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
             )}
           </div>
 
-          {/* Device Detail */}
-          {selectedDevice && (
+          {/* Device Detail - Chỉ hiển thị cho non-camera devices */}
+          {selectedDevice && selectedDevice.type !== "camera" && (
             <div
               className={`bg-[#213148] text-white p-6 w-full md:w-1/2 lg:w-3/5 transition-all duration-300 ease-in-out ${selectedDevice ? "opacity-100" : "opacity-0"}`}
             >
@@ -496,113 +554,9 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
 
                   <Separator className="bg-white/10 my-6" />
 
-                  {/* Device Type Specific Controls */}
-                  {(() => {
-                    const deviceComponents = {
-                      smoke: <SmokeDetectorDetail device={selectedDevice} />,
-                      light: <LightDetail device={selectedDevice} />,
-                      temperature: <TemperatureDetail device={selectedDevice} />,
-                      // Thêm các loại device khác ở đây
-                    }
-
-                    return (
-                      deviceComponents[selectedDevice.type] || (
-                        <div className="text-center py-8">
-                          <p>Chi tiết thiết bị không khả dụng</p>
-                        </div>
-                      )
-                    )
-                  })()}
-
-                  {/* Device Info */}
-                  <div className="mt-8 bg-white/5 rounded-xl p-5">
-                    <h3 className="text-lg font-medium mb-4">Thông tin thiết bị</h3>
-
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-blue-200">ID thiết bị</span>
-                        <span>{selectedDevice.id}</span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-blue-200">Nhóm</span>
-                        <span>{selectedDevice.group_name}</span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-blue-200">Nhà</span>
-                        <span>{selectedDevice.house_name}</span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-blue-200">Hoạt động gần đây</span>
-                        <span>{selectedDevice.lastActivity}</span>
-                      </div>
-
-                      {selectedDevice.battery && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-blue-200">Pin</span>
-                          <div className="flex items-center">
-                            <div className="w-24 bg-white/10 rounded-full h-2 mr-2">
-                              <div
-                                className={`h-2 rounded-full ${
-                                  selectedDevice.battery > 70
-                                    ? "bg-green-500"
-                                    : selectedDevice.battery > 30
-                                      ? "bg-yellow-500"
-                                      : "bg-red-500"
-                                }`}
-                                style={{ width: `${selectedDevice.battery}%` }}
-                              />
-                            </div>
-                            <span>{selectedDevice.battery}%</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Device History */}
-                  <div className="mt-6 bg-white/5 rounded-xl p-5">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-medium">Lịch sử hoạt động</h3>
-                      <Button variant="ghost" size="sm" className="text-blue-300 hover:text-white hover:bg-white/10">
-                        Xem tất cả
-                        <ArrowUpRight className="ml-1 h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mt-1">
-                          <Power className="h-4 w-4 text-green-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Thiết bị được bật</p>
-                          <p className="text-sm text-blue-200">2 phút trước</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center mt-1">
-                          <Settings className="h-4 w-4 text-blue-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Cài đặt được thay đổi</p>
-                          <p className="text-sm text-blue-200">1 giờ trước</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center mt-1">
-                          <Power className="h-4 w-4 text-red-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Thiết bị được tắt</p>
-                          <p className="text-sm text-blue-200">1 ngày trước</p>
-                        </div>
-                      </div>
-                    </div>
+                  {/* Device Type Specific Details */}
+                  <div className="text-center py-8">
+                    <p>Chi tiết thiết bị {selectedDevice.type}</p>
                   </div>
                 </div>
               </ScrollArea>
@@ -614,164 +568,3 @@ export default function DeviceManagement({ spaceId, spaceName, spaceType, onBack
   )
 }
 
-// Device Grid Component
-function DeviceGrid({
-  devices,
-  selectedDevice,
-  onDeviceClick,
-  onToggle,
-  onEdit,
-  onDelete,
-  getDeviceIcon,
-  getDeviceColor,
-  getDeviceStatusColor,
-}) {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {devices.map((device) => (
-        <div
-          key={device.id}
-          onClick={() => onDeviceClick(device)}
-          className={cn(
-            "bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200 relative group",
-            selectedDevice?.id === device.id && "ring-2 ring-blue-500 shadow-md",
-          )}
-        >
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex items-center space-x-3">
-              <div
-                className={`w-10 h-10 bg-gradient-to-br ${getDeviceColor(device.type)} rounded-lg flex items-center justify-center shadow-sm`}
-              >
-                {getDeviceIcon(device.type)}
-              </div>
-              <div>
-                <h3 className="font-medium text-slate-900">{device.name}</h3>
-                <p className="text-xs text-slate-500">{device.room}</p>
-              </div>
-            </div>
-            <Switch
-              checked={device.isOn}
-              onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
-              onClick={(e) => e.stopPropagation()}
-              className="data-[state=checked]:bg-green-500"
-            />
-          </div>
-
-          {/* Device Status */}
-          <div className="flex items-center justify-between mb-3">
-            <Badge
-              variant="outline"
-              className={cn("text-xs px-2 py-1", getDeviceStatusColor(device.status, device.isOn))}
-            >
-              {device.isOn ? "Đang hoạt động" : "Đã tắt"}
-            </Badge>
-            <span className="text-xs text-slate-500">{device.lastActivity}</span>
-          </div>
-
-          {/* Device Type Specific Info */}
-          <div className="bg-slate-50 rounded-lg p-3 mb-3">
-            {device.type === "light" && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Độ sáng</span>
-                <div className="flex items-center">
-                  <div className="w-16 bg-slate-200 rounded-full h-1.5 mr-2">
-                    <div
-                      className="bg-amber-500 h-1.5 rounded-full"
-                      style={{ width: `${device.brightness}%`, opacity: device.isOn ? 1 : 0.5 }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium">{device.brightness}%</span>
-                </div>
-              </div>
-            )}
-
-            {device.type === "smoke" && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">PPM</span>
-                <span className={`text-sm font-medium ${device.ppm > 1000 ? "text-red-600" : "text-slate-700"}`}>
-                  {device.ppm}
-                </span>
-              </div>
-            )}
-
-            {device.type === "temperature" && (
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-600">Nhiệt độ</span>
-                <span className={`text-sm font-medium ${device.temp > 30 ? "text-red-600" : "text-slate-700"}`}>
-                  {device.temp}°C
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-between items-center">
-            <div className="text-xs text-slate-500">{device.group_name}</div>
-            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-slate-100"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit(device.id)
-                }}
-              >
-                <Edit size={14} className="text-slate-600" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete(device.id)
-                }}
-              >
-                <Trash2 size={14} className="text-slate-600 hover:text-red-600" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// Temperature Detail Component
-function TemperatureDetail({ device }) {
-  return (
-    <div className="space-y-6">
-      <div className="bg-white/5 rounded-xl p-6 text-center">
-        <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/20 mb-4">
-          <div className="text-4xl font-bold">{device.temp}°C</div>
-        </div>
-        <p className="text-blue-200">Nhiệt độ hiện tại</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white/5 rounded-xl p-4 text-center">
-          <div className="text-2xl font-semibold mb-1">{device.humidity}%</div>
-          <p className="text-sm text-blue-200">Độ ẩm</p>
-        </div>
-
-        <div className="bg-white/5 rounded-xl p-4 text-center">
-          <div className="text-2xl font-semibold mb-1">Bình thường</div>
-          <p className="text-sm text-blue-200">Trạng thái</p>
-        </div>
-      </div>
-
-      <div className="bg-white/5 rounded-xl p-5">
-        <h3 className="text-lg font-medium mb-4">Lịch sử nhiệt độ</h3>
-        <div className="h-40 flex items-end space-x-2">
-          {[28, 27, 29, 30, 32, 31, 29, 28, 27, 28, 29, 28].map((temp, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center">
-              <div className="w-full bg-blue-500/30 rounded-t-sm" style={{ height: `${(temp - 20) * 10}%` }} />
-              <span className="text-xs mt-1">{i * 2}h</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
