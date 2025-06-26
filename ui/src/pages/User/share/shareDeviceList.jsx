@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { ArrowLeft,  User } from "lucide-react"
+import { ArrowLeft, User } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { useState } from "react"
 import DeviceSharingDialog from "./shareDeviceDialog"

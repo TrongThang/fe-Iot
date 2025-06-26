@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"; // Explicitly import React
+import React from "react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  ArrowLeft, Users, UserPlus, Edit,
+  ArrowLeft,
+  Users,
+  UserPlus,
+  Edit,
   Home,
   Briefcase,
   GraduationCap,
@@ -27,6 +30,7 @@ import EditGroupPopup from "./groupPopups/Edit-groups-popup"
 import AddMemberPopup from "./groupPopups/Add-member-popup"
 import HouseTab from "./house/houseTab"
 import Swal from "sweetalert2"
+import EditMemberPopup from "./groupPopups/Edit-member-popup"
 
 export default function EditGroups() {
   const [activeTab, setActiveTab] = useState("members")
@@ -40,19 +44,20 @@ export default function EditGroups() {
   const [members, setMembers] = useState([])
   const [houses, setHouses] = useState([])
   const navigate = useNavigate()
-  const { id } = useParams() // Matches the route parameter :id
+  const { id } = useParams()
 
-  const accessToken = localStorage.getItem('authToken');
+  const accessToken = localStorage.getItem("authToken")
 
   // State for popups and navigation
   const [isAddMemberPopupOpen, setIsAddMemberPopupOpen] = useState(false)
   const [isEditGroupPopupOpen, setIsEditGroupPopupOpen] = useState(false)
   const [isAddHousePopupOpen, setIsAddHousePopupOpen] = useState(false)
+  const [isEditMemberPopupOpen, setIsEditMemberPopupOpen] = useState(false) // New state for edit popup
+  const [selectedMember, setSelectedMember] = useState(null) // Store the member to edit
   const [selectedHouse, setSelectedHouse] = useState(null)
   const [selectedSpace, setSelectedSpace] = useState(null)
   const [showSpaceList, setShowSpaceList] = useState(false)
   const [showDeviceList, setShowDeviceList] = useState(false)
-
 
   // Fetch lấy nhóm theo ID
   const fetchGroupById = async (id) => {
@@ -87,6 +92,7 @@ export default function EditGroups() {
       return null
     }
   }
+
   // Fetch lấy thành viên nhóm theo ID
   const fetchGroupsUser = async (id) => {
     try {
@@ -99,7 +105,7 @@ export default function EditGroups() {
       })
       if (res.ok) {
         const membersData = await res.json()
-        console.log("Members data:", membersData); // Debug the response structure
+        console.log("Members data:", membersData)
         setMembers(membersData?.data || [])
       }
     } catch (error) {
@@ -124,17 +130,42 @@ export default function EditGroups() {
         text: "Không tìm thấy ID nhóm trong URL. Vui lòng kiểm tra lại.",
         confirmButtonText: "OK",
         confirmButtonColor: "#d33",
-      });
-      navigate("/groups");
+      })
+      navigate("/groups")
     }
-  }, [id, navigate]);
+  }, [id, navigate])
 
   const handleDeleteMember = (memberId) => {
     // Implement deletion logic if needed
+    Swal.fire({
+      title: "Xác nhận xóa",
+      text: "Bạn có chắc muốn xóa thành viên này? Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setMembers(members.filter((m) => m.id !== memberId))
+        // Optional: Add API call to delete member
+      }
+    })
   }
 
   const handleEditMember = (memberId) => {
-    alert(`Chỉnh sửa thành viên ID: ${memberId}`)
+    const memberToEdit = members.find((m) => m.id === memberId)
+    if (memberToEdit) {
+      setSelectedMember(memberToEdit)
+      setIsEditMemberPopupOpen(true)
+    }
+  }
+
+  const handleSaveMember = (updatedMember) => {
+    setMembers(members.map((m) => (m.id === updatedMember.id ? updatedMember : m)))
+    setIsEditMemberPopupOpen(false)
+    setSelectedMember(null)
   }
 
   const handleDeleteHouse = (houseId) => {
@@ -202,11 +233,6 @@ export default function EditGroups() {
   const handleSaveHouse = (newHouse) => {
     setHouses([...houses, newHouse])
     setIsAddHousePopupOpen(false)
-  }
-
-  const handleSaveMember = (newMember) => {
-    setMembers([...members, { ...newMember, id: Date.now(), joinDate: new Date().toLocaleDateString("vi-VN") }])
-    setIsAddMemberPopupOpen(false)
   }
 
   const handleSaveGroup = async (updatedData) => {
@@ -296,22 +322,19 @@ export default function EditGroups() {
 
   const getColorClass = (color) => {
     if (!color) return "bg-gray-500"
-    if (color.startsWith("bg-")) return color // Nếu là class Tailwind
-    if (color.startsWith("#")) return ""      // Nếu là mã hex, sẽ dùng style
-    return colorMap[color] || "bg-gray-500"   // Nếu là tên màu
+    if (color.startsWith("bg-")) return color
+    if (color.startsWith("#")) return ""
+    return colorMap[color] || "bg-gray-500"
   }
 
-  // Dynamic icon and color for header
   const HeaderIconComponent = getIconComponent(formData.icon_name)
   const headerColorClass = getColorClass(formData.icon_color)
 
-  // Dynamic icon and color for group info card
   const CardIconComponent = getIconComponent(formData.icon_name)
   const cardColorClass = getColorClass(formData.icon_color)
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -346,9 +369,7 @@ export default function EditGroups() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Group Info Card */}
         <Card className="mb-8">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -381,27 +402,10 @@ export default function EditGroups() {
                   <p className="text-xs text-gray-500 mt-1">Được tạo ngày {new Date().toLocaleDateString("vi-VN")}</p>
                 </div>
               </div>
-              {/* <div className="flex items-center space-x-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{members.length}</div>
-                  <div className="text-sm text-gray-600">Thành viên</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{houses.length}</div>
-                  <div className="text-sm text-gray-600">Nhà</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {houses.reduce((total, house) => total + house.devices, 0)}
-                  </div>
-                  <div className="text-sm text-gray-600">Không gian</div>
-                </div>
-              </div> */}
             </div>
           </CardContent>
         </Card>
 
-        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md mb-2">
             <TabsTrigger value="members" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white p-3">
@@ -434,7 +438,7 @@ export default function EditGroups() {
               <CardContent>
                 <div className="relative mb-6">
                   <Input
-                    placeholder="Tìm kiếm theo tên hoặc email..."
+                    placeholder="Tìm kiếm theo tên..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 h-12"
@@ -449,7 +453,7 @@ export default function EditGroups() {
                           <div className="flex items-center space-x-3">
                             <Avatar className="h-12 w-12 bg-blue-500">
                               <AvatarFallback className="bg-blue-500 text-white font-semibold">
-                                {member.name?.charAt(0) || "U"}
+                                {member.full_name?.charAt(0) || "U"}
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -518,7 +522,6 @@ export default function EditGroups() {
         </Tabs>
       </div>
 
-      {/* Popups */}
       <AddMemberPopup open={isAddMemberPopupOpen} onOpenChange={setIsAddMemberPopupOpen} onSave={handleSaveMember} />
       <EditGroupPopup
         open={isEditGroupPopupOpen}
@@ -526,6 +529,12 @@ export default function EditGroups() {
         onSave={handleSaveGroup}
         formData={formData}
         setFormData={setFormData}
+      />
+      <EditMemberPopup
+        open={isEditMemberPopupOpen}
+        onOpenChange={setIsEditMemberPopupOpen}
+        onSave={handleSaveMember}
+        member={selectedMember}
       />
     </div>
   )
