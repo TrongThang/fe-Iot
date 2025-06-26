@@ -18,12 +18,12 @@ import Swal from "sweetalert2";
 import AddGroups from "./groupPopups/Add-group-popup";
 
 export default function GroupsManagement() {
-  const [viewMode, setViewMode] = useState("grid");
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [groups, setGroups] = useState([]);
-  const [groupMembers, setGroupMembers] = useState({});
-  const navigate = useNavigate();
-  const accessToken = localStorage.getItem('authToken');
+    const [viewMode, setViewMode] = useState("grid")
+    const [showAddDialog, setShowAddDialog] = useState(false)
+    const [groups, setGroups] = useState([])
+    const [groupMembers, setGroupMembers] = useState({}) // Object to map group_id to member count
+    const navigate = useNavigate()
+    const accessToken = localStorage.getItem('authToken');
 
   const iconMap = { ...GROUP_ICON_MAP };
 

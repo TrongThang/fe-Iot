@@ -181,6 +181,17 @@ const SidebarUser = () => {
                 {isOpen && <span>Nhóm</span>}
               </Link>
               <Link
+                to="/house"
+                onClick={() => handleItemClick("house")}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                  activeItem === "house" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
+                title={!isOpen ? "Nhà" : ""}
+              >
+                <House className="w-4 h-4 flex-shrink-0" />
+                {isOpen && <span>Nhà</span>}
+              </Link>
+              <Link
                 to="/spaces"
                 onClick={() => handleItemClick("spaces")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
@@ -214,16 +225,6 @@ const SidebarUser = () => {
               >
                 <Lightbulb className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Yêu Cầu</span>}
-              </Link>
-              <Link
-                to="/profile"
-                onClick={() => handleItemClick("profile")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "profile" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tài khoản" : ""}
-              >
-                <Users className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Tài khoản</span>}
               </Link>
             </div>
           )}

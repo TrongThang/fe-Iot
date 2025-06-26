@@ -133,10 +133,10 @@ export default function EditGroups() {
         text: "Không tìm thấy ID nhóm trong URL. Vui lòng kiểm tra lại.",
         confirmButtonText: "OK",
         confirmButtonColor: "#d33",
-      });
-      navigate("/groups");
+      })
+      navigate("/groups")
     }
-  }, [id, navigate]);
+  }, [id, navigate])
 
   const handleDeleteMember = async (memberId) => {
     const result = await Swal.fire({

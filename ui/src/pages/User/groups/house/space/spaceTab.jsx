@@ -20,14 +20,14 @@ import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap"
 export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [isAddSpacePopupOpen, setIsAddSpacePopupOpen] = useState(false)
-  const [isEditSpacePopupOpen, setIsEditSpacePopupOpen] = useState(false)
-  const [spaceToEdit, setSpaceToEdit] = useState(null)
-  const [devices, setDevices] = useState([])
-  const [selectedSpace, setSelectedSpace] = useState(null)
-  const [showDeviceList, setShowDeviceList] = useState(false)
+  const [isAddSpacePopupOpen, setIsAddSpacePopupOpen] = useState(false);
+  const [isEditSpacePopupOpen, setIsEditSpacePopupOpen] = useState(false);
+  const [spaceToEdit, setSpaceToEdit] = useState(null);
+  const [devices, setDevices] = useState([]);
+  const [selectedSpace, setSelectedSpace] = useState(null);
+  const [showDeviceList, setShowDeviceList] = useState(false);
   const [spaces, setSpaces] = useState([])
-  const accessToken = localStorage.getItem("authToken")
+  const accessToken = localStorage.getItem('authToken');
 
   const fetchSpaces = async (id) => {
     try {
@@ -51,9 +51,9 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
     }
   }
 
-  const fetchDevices = async (spaceId) => {
+  const fetchDevice = async (id) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/devices/space/${spaceId}`, {
+      const res = await fetch(`http://localhost:7777/api/devices/space/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -147,10 +147,10 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
             text: "Xóa không gian thành công!",
             confirmButtonText: "OK",
             confirmButtonColor: "#28a745",
-          })
-          await refreshData()
+          });
+          refreshData(); // Refresh data after deletion
         } else {
-          const errorData = await res.json()
+          const errorData = await res.json();
           Swal.fire({
             icon: "error",
             title: "Lỗi",
@@ -206,28 +206,22 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
       (space.space_name || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   )
 
-  const totalDevices = devices.length
-  const totalActiveDevices = devices.filter(device => device.power_status && device.link_status === "linked").length
-  const totalAlerts = devices.filter(device => device.alert_status === "active").length
+  // Statistics - Calculate from real device data
+  const totalDevices = devices.length;
+  const totalActiveDevices = devices.filter(device => device.power_status && device.link_status === "linked").length;
+  const totalAlerts = devices.filter(device => device.alert_status === "active").length;
 
   const refreshData = async () => {
     try {
-      setIsLoading(true)
-      await fetchSpaces(houseId)
-      const allDevices = []
-      for (const space of spaces) {
-        if (space.space_id) {
-          const spaceDevices = await fetchDevices(space.space_id)
-          allDevices.push(...spaceDevices)
-        }
-      }
-      setDevices(allDevices)
+      setIsLoading(true);
+      await fetchSpaces(houseId);
+      await fetchDevice();
     } catch (error) {
-      console.error("Error refreshing data:", error)
+      console.error("Error refreshing data:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (isLoading) {
     return (
