@@ -12,7 +12,6 @@ import {
     User,
     Mail,
     Phone,
-    Building,
     Home,
     MapPin,
     MoreHorizontal,

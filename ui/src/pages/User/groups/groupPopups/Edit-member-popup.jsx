@@ -59,18 +59,6 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
         return
       }
 
-      if (!member?.id) {
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: "Không tìm thấy thông tin thành viên để chỉnh sửa!",
-          confirmButtonText: "OK",
-          customClass: { confirmButton: "bg-red-500 text-white hover:bg-red-600" },
-          didOpen: () => Swal.getConfirmButton()?.focus(),
-        })
-        return
-      }
-
       setIsLoading(true)
       try {
         const res = await fetch(`http://localhost:7777/api/groups/${parsedGroupId}/members/role`, {

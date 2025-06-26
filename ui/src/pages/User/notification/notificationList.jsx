@@ -1,4 +1,4 @@
-    "use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import {
@@ -39,148 +39,27 @@ export default function NotificationList() {
     is_read: "all",
     role_id: "all",
   })
+  const accessToken = localStorage.getItem('authToken');
   const [isLoading, setIsLoading] = useState(true)
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch(`http://localhost:7777/api/notifications/user`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (res.ok) {
+
+      }
+    } catch (error) {
+
+    }
+  }
   // Mock data based on database schema
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      account_id: "ACC001-2024-001",
-      role_id: 1,
-      text: "Cảm biến khói phòng khách phát hiện mức PPM cao (1250 ppm). Vui lòng kiểm tra ngay.",
-      type: "device_alert",
-      is_read: false,
-      created_at: "2024-01-20T14:30:00Z",
-      updated_at: "2024-01-20T14:30:00Z",
-      deleted_at: null,
-      device_info: {
-        device_id: 1,
-        device_name: "Máy báo khói phòng khách",
-        device_type: "smoke",
-        serial_number: "SMK001-2024-001",
-      },
-      priority: "high",
-      category: "safety",
-    },
-    {
-      id: 2,
-      account_id: "ACC001-2024-001",
-      role_id: 2,
-      text: "Đèn LED thông minh đã được bật tự động theo lịch trình.",
-      type: "device_status",
-      is_read: true,
-      created_at: "2024-01-20T18:00:00Z",
-      updated_at: "2024-01-20T18:05:00Z",
-      deleted_at: null,
-      device_info: {
-        device_id: 2,
-        device_name: "Đèn LED thông minh",
-        device_type: "light",
-        serial_number: "LED001-2024-002",
-      },
-      priority: "low",
-      category: "automation",
-    },
-    {
-      id: 3,
-      account_id: "ACC001-2024-001",
-      role_id: null,
-      text: "Cập nhật firmware v2.1.4 có sẵn cho 3 thiết bị. Nhấn để cập nhật ngay.",
-      type: "system_update",
-      is_read: false,
-      created_at: "2024-01-20T10:15:00Z",
-      updated_at: "2024-01-20T10:15:00Z",
-      deleted_at: null,
-      device_info: null,
-      priority: "medium",
-      category: "system",
-    },
-    {
-      id: 4,
-      account_id: "ACC001-2024-001",
-      role_id: 3,
-      text: "Nhiệt độ phòng ngủ đã vượt quá ngưỡng an toàn (32°C). Khuyến nghị bật điều hòa.",
-      type: "device_warning",
-      is_read: false,
-      created_at: "2024-01-20T13:45:00Z",
-      updated_at: "2024-01-20T13:45:00Z",
-      deleted_at: null,
-      device_info: {
-        device_id: 3,
-        device_name: "Cảm biến nhiệt độ phòng ngủ",
-        device_type: "temperature",
-        serial_number: "TEMP001-2024-003",
-      },
-      priority: "medium",
-      category: "environment",
-    },
-    {
-      id: 5,
-      account_id: "ACC001-2024-001",
-      role_id: 1,
-      text: "Thiết bị đèn bàn làm việc mất kết nối WiFi. Kiểm tra kết nối mạng.",
-      type: "device_offline",
-      is_read: true,
-      created_at: "2024-01-20T09:20:00Z",
-      updated_at: "2024-01-20T11:30:00Z",
-      deleted_at: null,
-      device_info: {
-        device_id: 4,
-        device_name: "Đèn bàn làm việc",
-        device_type: "light",
-        serial_number: "LED002-2024-004",
-      },
-      priority: "medium",
-      category: "connectivity",
-    },
-    {
-      id: 6,
-      account_id: "ACC001-2024-001",
-      role_id: 2,
-      text: "Pin của cảm biến khói dự phòng còn 15%. Cần thay pin sớm.",
-      type: "device_maintenance",
-      is_read: false,
-      created_at: "2024-01-20T08:00:00Z",
-      updated_at: "2024-01-20T08:00:00Z",
-      deleted_at: null,
-      device_info: {
-        device_id: 5,
-        device_name: "Cảm biến khói dự phòng",
-        device_type: "smoke",
-        serial_number: "SMK002-2024-005",
-      },
-      priority: "medium",
-      category: "maintenance",
-    },
-    {
-      id: 7,
-      account_id: "ACC001-2024-001",
-      role_id: null,
-      text: "Hệ thống đã tự động sao lưu dữ liệu thành công lúc 02:00 AM.",
-      type: "system_info",
-      is_read: true,
-      created_at: "2024-01-20T02:00:00Z",
-      updated_at: "2024-01-20T07:30:00Z",
-      deleted_at: null,
-      device_info: null,
-      priority: "low",
-      category: "system",
-    },
-    {
-      id: 8,
-      account_id: "ACC001-2024-001",
-      role_id: 1,
-      text: "Phát hiện hoạt động bất thường: 5 lần thử đăng nhập sai trong 10 phút.",
-      type: "security_alert",
-      is_read: false,
-      created_at: "2024-01-19T23:45:00Z",
-      updated_at: "2024-01-19T23:45:00Z",
-      deleted_at: null,
-      device_info: null,
-      priority: "high",
-      category: "security",
-    },
-  ])
+  const [notifications, setNotifications] = useState([])
 
   // Simulate loading
   useEffect(() => {

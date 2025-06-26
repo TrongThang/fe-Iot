@@ -1,63 +1,59 @@
-"use client"
+"use client";
 
-import React from "react"
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import React from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   ArrowLeft,
   Users,
   UserPlus,
   Edit,
-  Home,
-  Briefcase,
-  GraduationCap,
-  Building,
-  Building2,
-  Bed,
-  Castle,
-  TreePine,
-  Crown,
-  BookOpen,
-} from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { useNavigate, useParams } from "react-router-dom"
-import EditGroupPopup from "./groupPopups/Edit-groups-popup"
-import AddMemberPopup from "./groupPopups/Add-member-popup"
-import HouseTab from "./house/houseTab"
-import Swal from "sweetalert2"
-import EditMemberPopup from "./groupPopups/Edit-member-popup"
+} from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useNavigate, useParams } from "react-router-dom";
+import EditGroupPopup from "./groupPopups/Edit-groups-popup";
+import AddMemberPopup from "./groupPopups/Add-member-popup";
+import HouseTab from "./house/houseTab";
+import Swal from "sweetalert2";
+import EditMemberPopup from "./groupPopups/Edit-member-popup";
+import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
 
 export default function EditGroups() {
-  const [activeTab, setActiveTab] = useState("members")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState("members");
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     group_name: "",
     group_description: "",
-    icon_name: "",
-    icon_color: "",
-  })
-  const [members, setMembers] = useState([])
-  const [houses, setHouses] = useState([])
-  const navigate = useNavigate()
-  const { id } = useParams()
-
-  const accessToken = localStorage.getItem("authToken")
+    icon: {
+      iconId: "COMPANY",
+      component: GROUP_ICON_MAP.COMPANY,
+      color: COLOR_MAP.BLUE,
+      colorId: "BLUE",
+      name: "Công ty",
+    },
+  });
+  const [members, setMembers] = useState([]);
+  const [houses, setHouses] = useState([]);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const accessToken = localStorage.getItem("authToken");
 
   // State for popups and navigation
-  const [isAddMemberPopupOpen, setIsAddMemberPopupOpen] = useState(false)
-  const [isEditGroupPopupOpen, setIsEditGroupPopupOpen] = useState(false)
-  const [isAddHousePopupOpen, setIsAddHousePopupOpen] = useState(false)
-  const [isEditMemberPopupOpen, setIsEditMemberPopupOpen] = useState(false) // New state for edit popup
-  const [selectedMember, setSelectedMember] = useState(null) // Store the member to edit
-  const [selectedHouse, setSelectedHouse] = useState(null)
-  const [selectedSpace, setSelectedSpace] = useState(null)
-  const [showSpaceList, setShowSpaceList] = useState(false)
-  const [showDeviceList, setShowDeviceList] = useState(false)
+  const [isAddMemberPopupOpen, setIsAddMemberPopupOpen] = useState(false);
+  const [isEditGroupPopupOpen, setIsEditGroupPopupOpen] = useState(false);
+  const [isAddHousePopupOpen, setIsAddHousePopupOpen] = useState(false);
+  const [isEditMemberPopupOpen, setIsEditMemberPopupOpen] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [selectedHouse, setSelectedHouse] = useState(null);
+  const [selectedSpace, setSelectedSpace] = useState(null);
+  const [showSpaceList, setShowSpaceList] = useState(false);
+  const [showDeviceList, setShowDeviceList] = useState(false);
 
   // Fetch lấy nhóm theo ID
   const fetchGroupById = async (id) => {
@@ -68,18 +64,26 @@ export default function EditGroups() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-      })
+      });
       if (res.ok) {
-        const groupData = await res.json()
+        const groupData = await res.json();
         if (groupData) {
           setFormData({
+            group_id: groupData.group_id,
             group_name: groupData.group_name || "",
             group_description: groupData.group_description || "",
-            icon_name: groupData.icon_name || "",
-            icon_color: groupData.icon_color || "",
-          })
+            icon: {
+              iconId: groupData.icon_name?.toUpperCase() || "COMPANY",
+              component: GROUP_ICON_MAP[groupData.icon_name?.toUpperCase()] || GROUP_ICON_MAP.COMPANY,
+              color: groupData.icon_color || COLOR_MAP.BLUE,
+              colorId: groupData.icon_color_id || "BLUE",
+              name: groupData.icon_name
+                ? groupData.icon_name.charAt(0).toUpperCase() + groupData.icon_name.slice(1).toLowerCase()
+                : "Công ty",
+            },
+          });
         }
-        return groupData
+        return groupData;
       }
     } catch (error) {
       Swal.fire({
@@ -88,10 +92,10 @@ export default function EditGroups() {
         text: error.message || "Đã xảy ra lỗi khi lấy thông tin nhóm. Vui lòng thử lại.",
         confirmButtonText: "OK",
         confirmButtonColor: "#d33",
-      })
-      return null
+      });
+      return null;
     }
-  }
+  };
 
   // Fetch lấy thành viên nhóm theo ID
   const fetchGroupsUser = async (id) => {
@@ -102,11 +106,10 @@ export default function EditGroups() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-      })
+      });
       if (res.ok) {
-        const membersData = await res.json()
-        console.log("Members data:", membersData)
-        setMembers(membersData?.data || [])
+        const membersData = await res.json();
+        setMembers(membersData?.data || []);
       }
     } catch (error) {
       Swal.fire({
@@ -115,14 +118,14 @@ export default function EditGroups() {
         text: error.message || "Đã xảy ra lỗi khi lấy thông tin thành viên nhóm. Vui lòng thử lại.",
         confirmButtonText: "OK",
         confirmButtonColor: "#d33",
-      })
+      });
     }
-  }
+  };
 
   useEffect(() => {
     if (id) {
-      fetchGroupById(id)
-      fetchGroupsUser(id)
+      fetchGroupById(id);
+      fetchGroupsUser(id);
     } else {
       Swal.fire({
         icon: "error",
@@ -130,14 +133,13 @@ export default function EditGroups() {
         text: "Không tìm thấy ID nhóm trong URL. Vui lòng kiểm tra lại.",
         confirmButtonText: "OK",
         confirmButtonColor: "#d33",
-      })
-      navigate("/groups")
+      });
+      navigate("/groups");
     }
-  }, [id, navigate])
+  }, [id, navigate]);
 
-  const handleDeleteMember = (memberId) => {
-    // Implement deletion logic if needed
-    Swal.fire({
+  const handleDeleteMember = async (memberId) => {
+    const result = await Swal.fire({
       title: "Xác nhận xóa",
       text: "Bạn có chắc muốn xóa thành viên này? Hành động này không thể hoàn tác!",
       icon: "warning",
@@ -146,61 +148,89 @@ export default function EditGroups() {
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Xóa",
       cancelButtonText: "Hủy",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setMembers(members.filter((m) => m.id !== memberId))
-        // Optional: Add API call to delete member
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`http://localhost:7777/api/groups/${id}/members/${memberId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        if (res.ok) {
+          setMembers(members.filter((m) => m.id !== memberId));
+          Swal.fire({
+            icon: "success",
+            title: "Thành công",
+            text: "Xóa thành viên thành công!",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#28a745",
+          });
+        } else {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Xóa thành viên thất bại");
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: error.message || "Đã xảy ra lỗi khi xóa thành viên. Vui lòng thử lại.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#d33",
+        });
       }
-    })
-  }
+    }
+  };
 
   const handleEditMember = (memberId) => {
-    const memberToEdit = members.find((m) => m.id === memberId)
+    const memberToEdit = members.find((m) => m.id === memberId);
     if (memberToEdit) {
-      setSelectedMember(memberToEdit)
-      setIsEditMemberPopupOpen(true)
+      setSelectedMember(memberToEdit);
+      setIsEditMemberPopupOpen(true);
     }
-  }
+  };
 
   const handleSaveMember = (updatedMember) => {
-    setMembers(members.map((m) => (m.id === updatedMember.id ? updatedMember : m)))
-    setIsEditMemberPopupOpen(false)
-    setSelectedMember(null)
-  }
+    setMembers(members.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
+    setIsEditMemberPopupOpen(false);
+    setSelectedMember(null);
+  };
 
   const handleDeleteHouse = (houseId) => {
-    setHouses(houses.filter((h) => h.id !== houseId))
-  }
+    setHouses(houses.filter((h) => h.id !== houseId));
+  };
 
   const handleEditHouse = (houseId) => {
-    const house = houses.find((h) => h.id === houseId)
+    const house = houses.find((h) => h.id === houseId);
     if (house) {
-      setSelectedHouse(house)
-      setShowSpaceList(true)
-      setShowDeviceList(false)
-      setSelectedSpace(null)
+      setSelectedHouse(house);
+      setShowSpaceList(true);
+      setShowDeviceList(false);
+      setSelectedSpace(null);
     }
-  }
+  };
 
   const handleSpaceClick = (space) => {
-    setSelectedSpace(space)
-    setShowDeviceList(true)
-  }
+    setSelectedSpace(space);
+    setShowDeviceList(true);
+  };
 
   const handleBackToHouses = () => {
-    setShowSpaceList(false)
-    setShowDeviceList(false)
-    setSelectedHouse(null)
-    setSelectedSpace(null)
-  }
+    setShowSpaceList(false);
+    setShowDeviceList(false);
+    setSelectedHouse(null);
+    setSelectedSpace(null);
+  };
 
   const handleBackToSpaces = () => {
-    setShowDeviceList(false)
-    setSelectedSpace(null)
-  }
+    setShowDeviceList(false);
+    setSelectedSpace(null);
+  };
 
-  const handleLeaveGroup = () => {
-    Swal.fire({
+  const handleLeaveGroup = async () => {
+    const result = await Swal.fire({
       title: "Xác nhận rời nhóm",
       text: "Bạn có chắc muốn rời nhóm? Hành động này không thể hoàn tác!",
       icon: "warning",
@@ -209,34 +239,74 @@ export default function EditGroups() {
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Rời",
       cancelButtonText: "Hủy",
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Optional: Add API call to leave group
-        alert("Đã rời khỏi nhóm")
-        navigate("/groups")
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const res = await fetch(`http://localhost:7777/api/groups/${id}/leave`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        if (res.ok) {
+          Swal.fire({
+            icon: "success",
+            title: "Thành công",
+            text: "Đã rời khỏi nhóm!",
+            confirmButtonText: "OK",
+            confirmButtonColor: "#28a745",
+          });
+          navigate("/groups");
+        } else {
+          const errorData = await res.json();
+          throw new Error(errorData.message || "Rời nhóm thất bại");
+        }
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: error.message || "Đã xảy ra lỗi khi rời nhóm. Vui lòng thử lại.",
+          confirmButtonText: "OK",
+          confirmButtonColor: "#d33",
+        });
       }
-    })
-  }
+    }
+  };
 
   const handleAddMember = () => {
-    setIsAddMemberPopupOpen(true)
-  }
+    setIsAddMemberPopupOpen(true);
+  };
 
   const handleAddHouse = () => {
-    setIsAddHousePopupOpen(true)
-  }
+    setIsAddHousePopupOpen(true);
+  };
 
   const handleEditGroup = () => {
-    setIsEditGroupPopupOpen(true)
-  }
+    setIsEditGroupPopupOpen(true);
+  };
 
   const handleSaveHouse = (newHouse) => {
-    setHouses([...houses, newHouse])
-    setIsAddHousePopupOpen(false)
-  }
+    setHouses([...houses, newHouse]);
+    setIsAddHousePopupOpen(false);
+  };
 
   const handleSaveGroup = async (updatedData) => {
-    setFormData((prev) => ({ ...prev, ...updatedData }))
+    const updatedFormData = {
+      ...formData,
+      group_name: updatedData.group_name,
+      group_description: updatedData.group_description,
+      icon: {
+        iconId: updatedData.icon_name,
+        component: GROUP_ICON_MAP[updatedData.icon_name] || GROUP_ICON_MAP.COMPANY,
+        color: updatedData.icon_color,
+        colorId: updatedData.icon_color_id,
+        name: updatedData.icon_name.charAt(0).toUpperCase() + updatedData.icon_name.slice(1).toLowerCase(),
+      },
+    };
+    setFormData(updatedFormData);
+
     try {
       const res = await fetch(`http://localhost:7777/api/groups/${id}`, {
         method: "PUT",
@@ -249,8 +319,9 @@ export default function EditGroups() {
           group_description: updatedData.group_description,
           icon_name: updatedData.icon_name,
           icon_color: updatedData.icon_color,
+          icon_color_id: updatedData.icon_color_id,
         }),
-      })
+      });
       if (res.ok) {
         Swal.fire({
           icon: "success",
@@ -258,80 +329,40 @@ export default function EditGroups() {
           text: "Cập nhật nhóm thành công!",
           confirmButtonText: "OK",
           confirmButtonColor: "#28a745",
-        })
-        setIsEditGroupPopupOpen(false)
+        });
+        setIsEditGroupPopupOpen(false);
       } else {
-        const errorData = await res.json()
-        throw new Error(errorData.message || "Cập nhật nhóm thất bại")
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Cập nhật nhóm thất bại");
       }
     } catch (error) {
-      console.error("Error updating group:", error)
+      console.error("Error updating group:", error);
       Swal.fire({
         icon: "error",
         title: "Lỗi",
         text: error.message || "Đã xảy ra lỗi khi cập nhật nhóm. Vui lòng thử lại.",
         confirmButtonText: "OK",
         confirmButtonColor: "#d33",
-      })
+      });
     }
-  }
+  };
 
   const filteredMembers = members.filter(
     (member) =>
       (member.name?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (member.email?.toLowerCase() || "").includes(searchQuery.toLowerCase())
-  )
+  );
 
   const getRoleColor = (role) => {
     switch (role) {
       case "Chủ nhóm":
-        return "bg-blue-100 text-blue-700 border-blue-200"
+        return "bg-blue-100 text-blue-700 border-blue-200";
       case "Phó nhóm":
-        return "bg-purple-100 text-purple-700 border-purple-200"
+        return "bg-purple-100 text-purple-700 border-purple-200";
       default:
-        return "bg-gray-100 text-gray-700 border-gray-200"
+        return "bg-gray-100 text-gray-700 border-gray-200";
     }
-  }
-
-  const iconMap = {
-    home: Home,
-    office: Briefcase,
-    school: GraduationCap,
-    bank: Building,
-    apartment: Building2,
-    hotel: Bed,
-    villa: Castle,
-    wooden: TreePine,
-    castle: Crown,
-    library: BookOpen,
-  }
-
-  const colorMap = {
-    "#FF5733": "bg-red-500",
-    blue: "bg-blue-500",
-    "#FFF00F": "bg-yellow-500",
-    "#0000FF": "bg-blue-700",
-    "#FF0000": "bg-red-600",
-  }
-
-  const getIconComponent = (iconName) => {
-    if (!iconName) return Users
-    const IconComponent = iconMap[iconName.toLowerCase()] || Users
-    return IconComponent
-  }
-
-  const getColorClass = (color) => {
-    if (!color) return "bg-gray-500"
-    if (color.startsWith("bg-")) return color
-    if (color.startsWith("#")) return ""
-    return colorMap[color] || "bg-gray-500"
-  }
-
-  const HeaderIconComponent = getIconComponent(formData.icon_name)
-  const headerColorClass = getColorClass(formData.icon_color)
-
-  const CardIconComponent = getIconComponent(formData.icon_name)
-  const cardColorClass = getColorClass(formData.icon_color)
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -344,10 +375,12 @@ export default function EditGroups() {
               </Button>
               <div className="flex items-center space-x-4">
                 <div
-                  className={`w-12 h-12 ${headerColorClass} rounded-xl flex items-center justify-center shadow-lg`}
-                  style={formData.icon_color && formData.icon_color.startsWith("#") ? { backgroundColor: formData.icon_color } : {}}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
+                  style={{ backgroundColor: formData.icon.color }}
                 >
-                  <HeaderIconComponent className="h-6 w-6 text-white" />
+                  <formData.icon.component
+                    className={`h-6 w-6 ${formData.icon.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                  />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">{formData.group_name}</h1>
@@ -375,10 +408,12 @@ export default function EditGroups() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div
-                  className={`w-16 h-16 ${cardColorClass} rounded-2xl flex items-center justify-center shadow-lg`}
-                  style={formData.icon_color && formData.icon_color.startsWith("#") ? { backgroundColor: formData.icon_color } : {}}
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg"
+                  style={{ backgroundColor: formData.icon.color }}
                 >
-                  <CardIconComponent className="h-8 w-8 text-white" />
+                  <formData.icon.component
+                    className={`h-8 w-8 ${formData.icon.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                  />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
@@ -387,7 +422,6 @@ export default function EditGroups() {
                       onChange={(e) => setFormData((prev) => ({ ...prev, group_name: e.target.value }))}
                       className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent"
                       placeholder="Tên nhóm"
-                      readOnly
                     />
                     <Button
                       variant="ghost"
@@ -537,5 +571,6 @@ export default function EditGroups() {
         member={selectedMember}
       />
     </div>
-  )
+  );
 }
+

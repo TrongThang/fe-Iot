@@ -1,37 +1,46 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Users, FileText, Palette, X } from "lucide-react"
-import Swal from "sweetalert2"
-import IconPickerPopup from "../icon-picker/icon-picker-popup"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Users, FileText, Palette, X } from "lucide-react";
+import Swal from "sweetalert2";
+import IconPickerPopup from "../icon-picker/icon-picker-popup";
+import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
 
 export default function EditGroupPopup({ open, onOpenChange, onSave, formData, setFormData }) {
-  const [showIconPicker, setShowIconPicker] = useState(false)
+  const [showIconPicker, setShowIconPicker] = useState(false);
 
-  // Khi popup mở, đồng bộ dữ liệu từ formData cha
+  // Đồng bộ formData khi popup mở
   useEffect(() => {
     if (open && formData) {
-      setFormData((prev) => ({ ...prev, ...formData }))
+      setFormData((prev) => ({
+        ...prev,
+        icon: {
+          iconId: formData.icon_name?.toUpperCase() || "COMPANY",
+          component: GROUP_ICON_MAP[formData.icon_name?.toUpperCase()] || GROUP_ICON_MAP.COMPANY,
+          color: formData.icon_color || COLOR_MAP.BLUE,
+          colorId: formData.icon_color_id || "BLUE",
+          name: formData.icon_name ? formData.icon_name.charAt(0).toUpperCase() + formData.icon_name.slice(1).toLowerCase() : "Công ty",
+        },
+      }));
     }
-    // eslint-disable-next-line
-  }, [open])
+  }, [open, formData.icon_name, formData.icon_color, formData.icon_color_id, setFormData]);
 
   const handleSave = async () => {
     try {
-      // Chuẩn hóa dữ liệu gửi lên
       const updateData = {
         group_name: formData.group_name || "",
         group_description: formData.group_description || "",
-        icon_name: formData.icon?.id || formData.icon_name || "group",
-        icon_color: formData.icon?.color || formData.icon_color || "bg-blue-500",
-        icon_color_id: formData.icon?.colorId || formData.icon_color_id || "blue",
-      }
-      await onSave(updateData)
-      onOpenChange(false)
+        icon_name: formData.icon.iconId,
+        icon_color: formData.icon.color,
+        icon_color_id: formData.icon.colorId,
+      };
+      await onSave(updateData);
+      onOpenChange(false);
     } catch (error) {
       Swal.fire({
         icon: "error",
@@ -39,19 +48,20 @@ export default function EditGroupPopup({ open, onOpenChange, onSave, formData, s
         text: error.message || "Đã xảy ra lỗi khi cập nhật nhóm. Vui lòng thử lại.",
         confirmButtonText: "OK",
         confirmButtonColor: "#d33",
-      })
+      });
     }
-  }
+  };
 
   const handleIconSelect = (selectedIcon) => {
-    setFormData((prev) => ({ ...prev, icon: selectedIcon }))
-  }
+    setFormData((prev) => ({ ...prev, icon: selectedIcon }));
+    setShowIconPicker(false);
+  };
 
   const handleCancel = () => {
-    onOpenChange(false)
-  }
+    onOpenChange(false);
+  };
 
-  const IconComponent = formData.icon?.icon || Users
+  const IconComponent = formData.icon?.component || Users;
 
   return (
     <>
@@ -77,9 +87,12 @@ export default function EditGroupPopup({ open, onOpenChange, onSave, formData, s
             {/* Icon Preview */}
             <div className="flex justify-center">
               <div
-                className={`w-20 h-20 rounded-2xl ${formData.icon?.color || formData.icon_color || "bg-blue-500"} flex items-center justify-center shadow-lg`}
+                className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: formData.icon?.color || COLOR_MAP.BLUE }}
               >
-                <IconComponent className="h-10 w-10 text-white" />
+                <IconComponent
+                  className={`h-10 w-10 ${formData.icon?.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                />
               </div>
             </div>
 
@@ -127,8 +140,13 @@ export default function EditGroupPopup({ open, onOpenChange, onSave, formData, s
                   <Palette className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
                   <span className="text-gray-600 group-hover:text-blue-600">Chọn biểu tượng</span>
                 </div>
-                <div className={`w-8 h-8 rounded-lg ${formData.icon?.color || formData.icon_color || "bg-blue-500"} flex items-center justify-center`}>
-                  <IconComponent className="h-4 w-4 text-white" />
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: formData.icon?.color || COLOR_MAP.BLUE }}
+                >
+                  <IconComponent
+                    className={`h-4 w-4 ${formData.icon?.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                  />
                 </div>
               </Button>
             </div>
@@ -162,5 +180,6 @@ export default function EditGroupPopup({ open, onOpenChange, onSave, formData, s
         selectedIcon={formData.icon}
       />
     </>
-  )
+  );
 }
+
