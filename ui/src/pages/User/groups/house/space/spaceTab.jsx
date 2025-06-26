@@ -51,9 +51,9 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
     }
   }
 
-  const fetchDevice = async (id) => {
+  const fetchDevices = async (spaceId) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/devices/space/${id}`, {
+      const res = await fetch(`http://localhost:7777/api/devices/space/${spaceId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -215,7 +215,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
     try {
       setIsLoading(true);
       await fetchSpaces(houseId);
-      await fetchDevice();
+      await fetchDevices();
     } catch (error) {
       console.error("Error refreshing data:", error);
     } finally {
