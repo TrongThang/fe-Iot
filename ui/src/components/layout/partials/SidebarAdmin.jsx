@@ -174,32 +174,6 @@ const SidebarAdmin = () => {
                 {isOpen && <span>Yêu Cầu</span>}
               </Link>
               <Link
-                to="/admin/search-device"
-                onClick={() => handleItemClick("search-device")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "search-device"
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tra Cứu Thiết Bị" : ""}
-              >
-                <Monitor className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Tra Cứu Thiết Bị Của Khách Hàng</span>}
-              </Link>
-              <Link
-                to="/admin/search-group"
-                onClick={() => handleItemClick("search-group")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "search-group"
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Tra Cứu Nhóm" : ""}
-              >
-                <Users className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Tra Cứu Nhóm Của Khách Hàng</span>}
-              </Link>
-              <Link
                 to="/admin/search-customer-groups"
                 onClick={() => handleItemClick("search-customer-groups")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "search-customer-groups"

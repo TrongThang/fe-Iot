@@ -4,19 +4,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Home, Palette, X, FileText } from "lucide-react";
+import { X, Home } from "lucide-react";
 import Swal from "sweetalert2";
-import IconPickerPopup from "../../../icon-picker/icon-picker-popup";
+import IconSpacePickerPopup from "../../../icon-picker/icon-space-picker-popup";
 import { Textarea } from "@/components/ui/textarea";
+import { SPACE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
 
 export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
     const [spaceData, setSpaceData] = useState({
         name: "",
         description: "",
-        icon: { icon: Home, color: "bg-blue-500", name: "home", id: "home", colorId: "blue" },
+        icon: {
+            iconId: "LIVING",
+            component: SPACE_ICON_MAP.LIVING,
+            color: COLOR_MAP.BLUE,
+            colorId: "BLUE",
+            name: "Phòng khách",
+        },
     });
     const [showIconPicker, setShowIconPicker] = useState(false);
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
+    const accessToken = localStorage.getItem("authToken");
 
     const handleSave = async () => {
         try {
@@ -27,9 +35,9 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
                 houseId: Number(houseId),
                 space_name: spaceData.name,
                 space_description: spaceData.description || "",
-                icon_name: spaceData.icon.id,
-                icon_color: spaceData.icon.colorId,
-            }
+                icon_name: spaceData.icon.iconId,
+                icon_color: spaceData.icon.color,
+            };
 
             const response = await fetch("http://localhost:7777/api/spaces", {
                 method: "POST",
@@ -60,7 +68,13 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
             setSpaceData({
                 name: "",
                 description: "",
-                icon: { icon: Home, color: "bg-blue-500", name: "home", id: "home", colorId: "blue" },
+                icon: {
+                    iconId: "LIVING",
+                    component: SPACE_ICON_MAP.LIVING,
+                    color: COLOR_MAP.BLUE,
+                    colorId: "BLUE",
+                    name: "Phòng khách",
+                },
             });
         } catch (error) {
             console.error("Lỗi khi thêm không gian:", error);
@@ -76,18 +90,25 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
 
     const handleIconSelect = (selectedIcon) => {
         setSpaceData((prev) => ({ ...prev, icon: selectedIcon }));
+        setShowIconPicker(false);
     };
 
     const handleCancel = () => {
         setSpaceData({
             name: "",
             description: "",
-            icon: { icon: Home, color: "bg-blue-500", name: "home", id: "home", colorId: "blue" },
+            icon: {
+                iconId: "LIVING",
+                component: SPACE_ICON_MAP.LIVING,
+                color: COLOR_MAP.BLUE,
+                colorId: "BLUE",
+                name: "Phòng khách",
+            },
         });
         onOpenChange(false);
     };
 
-    const IconComponent = spaceData.icon.icon || Home;
+    const IconComponent = spaceData.icon.component || SPACE_ICON_MAP.LIVING;
 
     return (
         <>
@@ -110,9 +131,12 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
                     <div className="px-6 py-6 space-y-6">
                         <div className="flex justify-center">
                             <div
-                                className={`w-20 h-20 rounded-2xl ${spaceData.icon.color} flex items-center justify-center shadow-lg`}
+                                className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg"
+                                style={{ backgroundColor: spaceData.icon.color }}
                             >
-                                <IconComponent className="h-10 w-10 text-white" />
+                                <IconComponent
+                                    className={`h-10 w-10 ${spaceData.icon.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                                />
                             </div>
                         </div>
 
@@ -135,7 +159,7 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
                             <label className="text-sm font-medium text-gray-700">Mô tả không gian</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-4">
-                                    <FileText className="h-5 w-5 text-gray-400" />
+                                    <Home className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <Textarea
                                     placeholder="Mô tả về không gian..."
@@ -154,11 +178,16 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
                                 className="w-full h-12 border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl flex items-center justify-between group"
                             >
                                 <div className="flex items-center space-x-3">
-                                    <Palette className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
+                                    <Home className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
                                     <span className="text-gray-600 group-hover:text-blue-600">Chọn biểu tượng</span>
                                 </div>
-                                <div className={`w-8 h-8 rounded-lg ${spaceData.icon.color} flex items-center justify-center`}>
-                                    <IconComponent className="h-4 w-4 text-white" />
+                                <div
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                    style={{ backgroundColor: spaceData.icon.color }}
+                                >
+                                    <IconComponent
+                                        className={`h-4 w-4 ${spaceData.icon.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                                    />
                                 </div>
                             </Button>
                         </div>
@@ -183,7 +212,7 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
                 </DialogContent>
             </Dialog>
 
-            <IconPickerPopup
+            <IconSpacePickerPopup
                 open={showIconPicker}
                 onOpenChange={setShowIconPicker}
                 onSelectIcon={handleIconSelect}

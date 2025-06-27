@@ -25,6 +25,11 @@ import {
     Layers,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import axiosPublic from '../../../apis/clients/public.client'
+import { SPACE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
+import { HOUSE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap"
+import React from "react"
 // import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
@@ -65,51 +70,45 @@ export default function SearchCustomerSpaces() {
             if (searchFilters.phone) params.append('phone', searchFilters.phone)
             if (searchFilters.username) params.append('username', searchFilters.username)
 
-            const response = await fetch(`http://localhost:7777/api/customer-search?${params.toString()}`)
+            const response = await axiosPublic.get(`customer-search?${params.toString()}`)
 
-            if (!response.ok) {
-                throw new Error('Không tìm thấy khách hàng hoặc có lỗi xảy ra')
-            }
-
-            const data = await response.json()
-
-            if (data.success && data.data?.customer) {
+            if (response.success && response.data?.customer) {
                 // Format lại dữ liệu khách hàng để phù hợp với giao diện hiện tại
-                const fullName = data.data.customer.full_name || '';
+                const fullName = response.data.customer.full_name || '';
                 const fullNameParts = fullName.split(' ');
                 const surname = fullNameParts[0] || '';
                 const lastname = fullNameParts.slice(1).join(' ') || '';
 
                 const customerData = {
-                    customer_id: data.data.customer.customer_id || '',
+                    customer_id: response.data.customer.customer_id || '',
                     surname: surname,
                     lastname: lastname,
-                    image: data.data.customer.avatar || "/placeholder.svg?height=64&width=64",
-                    phone: data.data.customer.phone || '',
-                    email: data.data.customer.email || '',
-                    email_verified: data.data.customer.email_verified || false,
-                    birthdate: data.data.customer.birthdate || new Date().toISOString(),
-                    gender: data.data.customer.gender === true,
-                    created_at: data.data.customer.created_at || new Date().toISOString(),
-                    updated_at: data.data.customer.updated_at || new Date().toISOString(),
-                    deleted_at: data.data.customer.is_deleted ? data.data.customer.updated_at : null,
+                    image: response.data.customer.avatar || "/placeholder.svg?height=64&width=64",
+                    phone: response.data.customer.phone || '',
+                    email: response.data.customer.email || '',
+                    email_verified: response.data.customer.email_verified || false,
+                    birthdate: response.data.customer.birthdate || new Date().toISOString(),
+                    gender: response.data.customer.gender === true,
+                    created_at: response.data.customer.created_at || new Date().toISOString(),
+                    updated_at: response.data.customer.updated_at || new Date().toISOString(),
+                    deleted_at: response.data.customer.is_deleted ? response.data.customer.updated_at : null,
                     account: {
-                        account_id: data.data.account?.account_id || '',
-                        username: data.data.account?.username || '',
+                        account_id: response.data.account?.account_id || '',
+                        username: response.data.account?.username || '',
                         role_id: 2,
                         status: 1,
-                        created_at: data.data.account?.created_at || new Date().toISOString()
+                        created_at: response.data.account?.created_at || new Date().toISOString()
                     }
                 }
 
                 setSelectedCustomer(customerData)
 
                 // Format lại dữ liệu không gian
-                const formattedSpaces = (data.data.spaces || []).map(space => {
+                const formattedSpaces = (response.data.spaces || []).map(space => {
                     if (!space) return null;
 
                     // Tìm house tương ứng
-                    const house = data.data.houses?.find(h => h.house_id === space.house_id);
+                    const house = response.data.houses?.find(h => h.house_id === space.house_id);
 
                     return {
                         space_id: space.space_id || '',
@@ -117,7 +116,7 @@ export default function SearchCustomerSpaces() {
                         space_name: space.space_name || '',
                         space_description: space.space_description || 'Không có mô tả',
                         icon_name: space.icon_name || 'home',
-                        icon_color: space.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                        icon_color: space.icon_color || 'home',
                         created_at: space.created_at || new Date().toISOString(),
                         updated_at: space.updated_at || new Date().toISOString(),
                         is_deleted: space.is_deleted || false,
@@ -126,13 +125,13 @@ export default function SearchCustomerSpaces() {
                             house_name: house.house_name || '',
                             address: house.address || 'Chưa có địa chỉ',
                             icon_name: house.icon_name || 'home',
-                            icon_color: house.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`
+                            icon_color: house.icon_color || 'home'
                         } : null
                     }
                 }).filter(Boolean);
 
                 setCustomerSpaces(formattedSpaces)
-        } else {
+            } else {
                 setSelectedCustomer(null)
                 setCustomerSpaces([])
                 setError('Không tìm thấy dữ liệu khách hàng')
@@ -248,8 +247,8 @@ export default function SearchCustomerSpaces() {
                                             </>
                                         ) : (
                                             <>
-                                        <Search className="h-4 w-4 mr-2" />
-                                        Tìm kiếm
+                                                <Search className="h-4 w-4 mr-2" />
+                                                Tìm kiếm
                                             </>
                                         )}
                                     </Button>
@@ -258,7 +257,7 @@ export default function SearchCustomerSpaces() {
                         </CardContent>
                     </Card>
                 </div>
-                
+
                 {/* Customer Information */}
                 {selectedCustomer && (
                     <Card className="mb-8 bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg shadow-black/5">
@@ -431,15 +430,19 @@ export default function SearchCustomerSpaces() {
                                                     <div className="flex items-center space-x-3">
                                                         <div
                                                             className="p-2 rounded-lg"
-                                                            style={{ backgroundColor: space.icon_color + '20' }}
+                                                            style={{
+                                                                backgroundColor: "#E3F2FD"
+                                                            }}
                                                         >
-                                                            {space.icon_name === 'floor' ? (
-                                                                <Layers className="h-5 w-5" style={{ color: space.icon_color }} />
-                                                            ) : space.icon_name === 'room' ? (
-                                                            <DoorOpen className="h-5 w-5" style={{ color: space.icon_color }} />
-                                                            ) : (
-                                                                <Home className="h-5 w-5" style={{ color: space.icon_color }} />
-                                                            )}
+                                                            {(() => {
+                                                                const SpaceIcon = SPACE_ICON_MAP[space.icon_name] || SPACE_ICON_MAP.LIVING;
+                                                                return (
+                                                                    <SpaceIcon
+                                                                        style={{ width: 24, height: 24 }}
+                                                                        fill={COLOR_MAP[space.icon_color] || "#2196F3"}
+                                                                    />
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <div>
                                                             <p className="font-medium text-slate-900">{space.space_name}</p>
@@ -449,19 +452,23 @@ export default function SearchCustomerSpaces() {
                                                 </TableCell>
                                                 <TableCell>
                                                     {space.house ? (
-                                                    <div className="flex items-center space-x-3">
-                                                        <div
-                                                            className="p-2 rounded-lg"
-                                                            style={{ backgroundColor: space.house.icon_color + '20' }}
-                                                        >
-                                                            {space.house.icon_name === 'building' ? (
-                                                                <Building className="h-5 w-5" style={{ color: space.house.icon_color }} />
-                                                            ) : (
-                                                                <Home className="h-5 w-5" style={{ color: space.house.icon_color }} />
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-slate-900">{space.house.house_name}</p>
+                                                        <div className="flex items-center space-x-3">
+                                                            <div
+                                                                className="p-2 rounded-lg"
+                                                                style={{ backgroundColor: "#E3F2FD" }}
+                                                            >
+                                                                {(() => {
+                                                                    const HouseIcon = HOUSE_ICON_MAP[space.house.icon_name] || HOUSE_ICON_MAP.HOUSE;
+                                                                    return (
+                                                                        <HouseIcon
+                                                                            style={{ width: 24, height: 24 }}
+                                                                            fill={COLOR_MAP[space.house.icon_color] || "#2196F3"}
+                                                                        />
+                                                                    );
+                                                                })()}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium text-slate-900">{space.house.house_name}</p>
                                                                 <p className="text-xs text-slate-500">{space.house.address}</p>
                                                             </div>
                                                         </div>

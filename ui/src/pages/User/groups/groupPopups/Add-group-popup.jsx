@@ -1,22 +1,30 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Users, FileText, Palette, X } from "lucide-react"
-import IconPickerPopup from "../icon-picker/icon-picker-popup"
-import Swal from "sweetalert2"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Users, FileText, Palette, X } from "lucide-react";
+import IconPickerPopup from "../icon-picker/icon-picker-popup";
+import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
+import Swal from "sweetalert2";
 
 export default function AddGroupPopup({ open, onOpenChange, onSave }) {
   const [groupData, setGroupData] = useState({
     name: "",
     description: "",
-    icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group", colorId: "blue" },
-  })
-  const [showIconPicker, setShowIconPicker] = useState(false)
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk2MjU3NiwiZXhwIjoxNzQ5OTY2MTc2fQ.3Vdqi8yV0to-NXeeQ8oKW-OQ97aBchb7zOvdMmJVu_Y"
+    icon: {
+      iconId: "COMPANY",
+      component: GROUP_ICON_MAP.COMPANY,
+      color: COLOR_MAP.BLUE,
+      colorId: "BLUE",
+      name: "Công ty",
+    },
+  });
+  const [showIconPicker, setShowIconPicker] = useState(false);
+  const accessToken = localStorage.getItem("authToken");
 
   const handleSave = async () => {
     try {
@@ -29,7 +37,7 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
         body: JSON.stringify({
           group_name: groupData.name,
           group_description: groupData.description,
-          icon_name: groupData.icon.id,
+          icon_name: groupData.icon.iconId,
           icon_color: groupData.icon.color,
           icon_color_id: groupData.icon.colorId,
         }),
@@ -57,7 +65,13 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
       setGroupData({
         name: "",
         description: "",
-        icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group", colorId: "blue" },
+        icon: {
+          iconId: "COMPANY",
+          component: GROUP_ICON_MAP.COMPANY,
+          color: COLOR_MAP.BLUE,
+          colorId: "BLUE",
+          name: "Công ty",
+        },
       });
     } catch (error) {
       console.error("Lỗi khi tạo nhóm:", error);
@@ -72,19 +86,26 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
   };
 
   const handleIconSelect = (selectedIcon) => {
-    setGroupData((prev) => ({ ...prev, icon: selectedIcon }))
-  }
+    setGroupData((prev) => ({ ...prev, icon: selectedIcon }));
+    setShowIconPicker(false);
+  };
 
   const handleCancel = () => {
     setGroupData({
       name: "",
       description: "",
-      icon: { icon: Users, color: "bg-blue-500", name: "Nhóm", id: "group", colorId: "blue" },
-    })
-    onOpenChange(false)
-  }
+      icon: {
+        iconId: "COMPANY",
+        component: GROUP_ICON_MAP.COMPANY,
+        color: COLOR_MAP.BLUE,
+        colorId: "BLUE",
+        name: "Công ty",
+      },
+    });
+    onOpenChange(false);
+  };
 
-  const IconComponent = groupData.icon.icon
+  const IconComponent = groupData.icon.component || Users;
 
   return (
     <>
@@ -110,9 +131,12 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
             {/* Icon Preview */}
             <div className="flex justify-center">
               <div
-                className={`w-20 h-20 rounded-2xl ${groupData.icon.color} flex items-center justify-center shadow-lg`}
+                className="w-20 h-10 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: groupData.icon.color }}
               >
-                <IconComponent className="h-10 w-10 text-white" />
+                <IconComponent
+                  className={`h-10 w-10 ${groupData.icon.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                />
               </div>
             </div>
 
@@ -160,8 +184,13 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
                   <Palette className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
                   <span className="text-gray-600 group-hover:text-blue-600">Chọn biểu tượng</span>
                 </div>
-                <div className={`w-8 h-8 rounded-lg ${groupData.icon.color} flex items-center justify-center`}>
-                  <IconComponent className="h-4 w-4 text-white" />
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: groupData.icon.color }}
+                >
+                  <IconComponent
+                    className={`h-4 w-4 ${groupData.icon.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                  />
                 </div>
               </Button>
             </div>
@@ -195,5 +224,6 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
         selectedIcon={groupData.icon}
       />
     </>
-  )
+  );
 }
+

@@ -25,6 +25,10 @@ import {
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import axiosPublic from '../../../apis/clients/public.client'
+import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap"
+import React from "react"
 
 export default function SearchCustomerGroups() {
     const [searchFilters, setSearchFilters] = useState({
@@ -67,54 +71,48 @@ export default function SearchCustomerGroups() {
             // Thêm các tham số lọc nhóm
             if (filterOptions.role !== "all") params.append('role', filterOptions.role)
 
-            const response = await fetch(`http://localhost:7777/api/customer-search?${params.toString()}`)
+            const response = await axiosPublic.get(`customer-search?${params.toString()}`)
 
-            if (!response.ok) {
-                throw new Error('Không tìm thấy khách hàng hoặc có lỗi xảy ra')
-            }
-
-            const data = await response.json()
-
-            if (data.success && data.data?.customer) {
+            if (response.success && response.data?.customer) {
                 // Format lại dữ liệu khách hàng để phù hợp với giao diện hiện tại
-                const fullName = data.data.customer.full_name || '';
+                const fullName = response.data.customer.full_name || '';
                 const fullNameParts = fullName.split(' ');
                 const surname = fullNameParts[0] || '';
                 const lastname = fullNameParts.slice(1).join(' ') || '';
 
                 const customerData = {
-                    customer_id: data.data.customer.customer_id || '',
+                    customer_id: response.data.customer.customer_id || '',
                     surname: surname,
                     lastname: lastname,
-                    image: data.data.customer.avatar || "/placeholder.svg?height=64&width=64",
-                    phone: data.data.customer.phone || '',
-                    email: data.data.customer.email || '',
-                    email_verified: data.data.customer.email_verified || false,
-                    birthdate: data.data.customer.birthdate || new Date().toISOString(),
-                    gender: data.data.customer.gender === true,
-                    created_at: data.data.customer.created_at || new Date().toISOString(),
-                    updated_at: data.data.customer.updated_at || new Date().toISOString(),
-                    deleted_at: data.data.customer.is_deleted ? data.data.customer.updated_at : null,
+                    image: response.data.customer.avatar || "/placeholder.svg?height=64&width=64",
+                    phone: response.data.customer.phone || '',
+                    email: response.data.customer.email || '',
+                    email_verified: response.data.customer.email_verified || false,
+                    birthdate: response.data.customer.birthdate || new Date().toISOString(),
+                    gender: response.data.customer.gender === true,
+                    created_at: response.data.customer.created_at || new Date().toISOString(),
+                    updated_at: response.data.customer.updated_at || new Date().toISOString(),
+                    deleted_at: response.data.customer.is_deleted ? response.data.customer.updated_at : null,
                     account: {
-                        account_id: data.data.account?.account_id || '',
-                        username: data.data.account?.username || '',
+                        account_id: response.data.account?.account_id || '',
+                        username: response.data.account?.username || '',
                         role_id: 2,
                         status: 1,
-                        created_at: data.data.account?.created_at || new Date().toISOString()
+                        created_at: response.data.account?.created_at || new Date().toISOString()
                     }
                 }
 
                 setSelectedCustomer(customerData)
 
                 // Format lại dữ liệu nhóm
-                const formattedGroups = (data.data.groups || []).map(group => {
+                const formattedGroups = (response.data.groups || []).map(group => {
                     if (!group || !group.group) return null;
 
                     return {
                         group_id: group.group.group_id || '',
                         group_name: group.group.group_name || '',
                         group_description: group.group.group_description || 'Không có mô tả',
-                        icon_color: group.group.icon_color || `#${Math.floor(Math.random() * 16777215).toString(16)}`,
+                        icon_color: group.group.icon_color || `users`,
                         icon_name: group.group.icon_name || 'users',
                         created_at: group.group.created_at || new Date().toISOString(),
                         updated_at: group.group.updated_at || new Date().toISOString(),
@@ -453,18 +451,22 @@ export default function SearchCustomerGroups() {
                                                     <TableCell className="font-medium">{group.group_id}</TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center space-x-3">
-                                                            <div
-                                                                className="p-2 rounded-lg"
-                                                                style={{ backgroundColor: group.icon_color + '20' }}
-                                                            >
-                                                                {group.icon_name === 'shield' ? (
-                                                                    <Shield className="h-5 w-5" style={{ color: group.icon_color }} />
-                                                                ) : group.icon_name === 'home' ? (
-                                                                    <Home className="h-5 w-5" style={{ color: group.icon_color }} />
-                                                                ) : (
-                                                                    <Users className="h-5 w-5" style={{ color: group.icon_color }} />
-                                                                )}
-                                                            </div>
+                                                        <div
+    className="p-2 rounded-lg"
+    style={{
+        backgroundColor: "#E3F2FD"
+    }}
+>
+    {(() => {
+        const GroupIcon = GROUP_ICON_MAP[group.icon_name] || GROUP_ICON_MAP.FAMILY;
+        return (
+            <GroupIcon
+                style={{ width: 24, height: 24 }}
+                fill={COLOR_MAP[group.icon_color] || "#2196F3"}
+            />
+        );
+    })()}
+</div>
                                                             <div>
                                                                 <p className="font-medium text-slate-900">{group.group_name}</p>
                                                                 {group.group_description && (

@@ -6,28 +6,16 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  ArrowLeft, Search, Plus, MoreHorizontal, Edit, Trash2, Home, Bed,
-  ChefHat,
-  Sofa,
-  Bath,
-  Car,
-  Briefcase,
-  TreePine,
-  Lightbulb,
-  Thermometer,
-  Wifi,
-  AlertTriangle,
-  Activity,
-  Clock,
-  TrendingUp,
-  Database,
-  ArrowRight
+  ArrowLeft, Search, Plus, MoreHorizontal, Edit, Trash2, Home,
+  Lightbulb, Thermometer, Wifi, AlertTriangle, Activity, Clock, TrendingUp, Database
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import AddSpacePopup from "./spacePopups/Add-space-popup"
 import EditSpacePopup from "./spacePopups/Edit-space-popup"
 import DeviceList from "./device/deviceList"
 import Swal from "sweetalert2"
+import { SPACE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap"
 
 export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   const [searchQuery, setSearchQuery] = useState("")
@@ -35,109 +23,99 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   const [isAddSpacePopupOpen, setIsAddSpacePopupOpen] = useState(false);
   const [isEditSpacePopupOpen, setIsEditSpacePopupOpen] = useState(false);
   const [spaceToEdit, setSpaceToEdit] = useState(null);
+  const [devices, setDevices] = useState([]);
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [showDeviceList, setShowDeviceList] = useState(false);
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
+  const [spaces, setSpaces] = useState([])
+  const accessToken = localStorage.getItem('authToken');
 
-  const fetchSpaces = async (houseId) => {
+  const fetchSpaces = async (id) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/spaces/house/${houseId}`, {
+      const res = await fetch(`http://localhost:7777/api/spaces/house/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-      });
+      })
       if (res.ok) {
-        const dataSpace = await res.json();
+        const dataSpace = await res.json()
         setSpaces(Array.isArray(dataSpace) ? dataSpace : [])
       } else {
-        console.error(`Failed to fetch spaces for house ${houseId}: ${res.status} ${res.statusText}`);
-        return [];
+        console.error(`Failed to fetch spaces for house ${houseId}: ${res.status} ${res.statusText}`)
+        setSpaces([])
       }
     } catch (error) {
-      console.error(`Error fetching spaces for house ${houseId}:`, error);
-      return [];
+      console.error(`Error fetching spaces for house ${houseId}:`, error)
+      setSpaces([])
     }
-  };
+  }
 
-  // Mock data based on database schema
-  const [spaces, setSpaces] = useState([
-    {
-      space_id: 1,
-      house_id: houseId,
-      name: "Phòng khách",
-      created_at: "2024-01-01T08:00:00Z",
-      updated_at: "2024-01-20T14:30:00Z",
-      is_deleted: false,
-      // Related data from other tables
-      devices_count: 8,
-      active_devices_count: 6,
-      alerts_count: 2,
-      recent_alerts: [
-        {
-          alert_id: 1,
-          device_serial: "SMK001-2024-001",
-          message: "Phát hiện khói bất thường",
-          timestamp: "2024-01-20T14:25:00Z",
-          status: "active",
-          alert_type_id: 1,
+  const fetchDevices = async (spaceId) => {
+    try {
+      const res = await fetch(`http://localhost:7777/api/devices/space/${spaceId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
-        {
-          alert_id: 2,
-          device_serial: "TEMP001-2024-003",
-          message: "Nhiệt độ cao bất thường",
-          timestamp: "2024-01-20T13:15:00Z",
-          status: "resolved",
-          alert_type_id: 2,
-        },
-      ],
-      hourly_values: {
-        latest_hour: "2024-01-20T14:00:00Z",
-        avg_temperature: 24.5,
-        avg_humidity: 65,
-        sample_count: 12,
-      },
-      icon_name: "sofa", // From houses table for space type
-      icon_color: "#3B82F6",
+      })
+      if (res.ok) {
+        const dataDevice = await res.json()
+        return Array.isArray(dataDevice) ? dataDevice : []
+      } else {
+        console.error(`Failed to fetch devices for space ${spaceId}: ${res.status} ${res.statusText}`)
+        return []
+      }
+    } catch (error) {
+      console.error(`Error fetching devices for space ${spaceId}:`, error)
+      return []
     }
-  ])
+  }
 
-  // Simulate loading
   useEffect(() => {
-    fetchSpaces(houseId)
-    const timer = setTimeout(() => {
+    const loadSpaces = async () => {
+      setIsLoading(true)
+      await fetchSpaces(houseId)
       setIsLoading(false)
-    }, 1000)
-    return () => clearTimeout(timer)
-  }, [])
+    }
+    loadSpaces()
+  }, [houseId])
+
+  useEffect(() => {
+    if (spaces.length > 0) {
+      const loadDevices = async () => {
+        const allDevices = []
+        for (const space of spaces) {
+          if (space.space_id) {
+            const spaceDevices = await fetchDevices(space.space_id)
+            allDevices.push(...spaceDevices)
+          }
+        }
+        setDevices(allDevices)
+      }
+      loadDevices()
+    }
+  }, [spaces])
 
   const getSpaceIcon = (iconName) => {
-    const iconProps = { className: "h-6 w-6 text-white" }
-    switch (iconName) {
-      case "sofa":
-        return <Sofa {...iconProps} />
-      case "bed":
-        return <Bed {...iconProps} />
-      case "chef-hat":
-        return <ChefHat {...iconProps} />
-      case "bath":
-        return <Bath {...iconProps} />
-      case "briefcase":
-        return <Briefcase {...iconProps} />
-      case "car":
-        return <Car {...iconProps} />
-      case "tree-pine":
-        return <TreePine {...iconProps} />
-      default:
-        return <Home {...iconProps} />
-    }
+    const IconComponent = SPACE_ICON_MAP[iconName?.toUpperCase()] || SPACE_ICON_MAP.LIVING
+    return <IconComponent className={`h-6 w-6 ${spaces.icon_color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`} />
   }
 
   const getAlertSeverityColor = (alertsCount) => {
     if (alertsCount === 0) return "text-emerald-500"
     if (alertsCount <= 2) return "text-amber-500"
     return "text-red-500"
+  }
+
+  const getSpaceDeviceStats = (spaceId) => {
+    const spaceDevices = devices.filter(device => device.space_id === spaceId)
+    return {
+      totalDevices: spaceDevices.length,
+      activeDevices: spaceDevices.filter(device => device.power_status && device.link_status === "linked").length,
+      alertsCount: spaceDevices.filter(device => device.alert_status === "active").length,
+    }
   }
 
   const handleDeleteSpace = async (spaceId) => {
@@ -150,7 +128,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Xóa",
       cancelButtonText: "Hủy",
-    });
+    })
 
     if (result.isConfirmed) {
       try {
@@ -160,9 +138,9 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-        });
+        })
+
         if (res.ok) {
-          setSpaces((prev) => prev.filter((s) => s.space_id !== spaceId));
           Swal.fire({
             icon: "success",
             title: "Thành công",
@@ -170,51 +148,53 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
             confirmButtonText: "OK",
             confirmButtonColor: "#28a745",
           });
+          refreshData(); // Refresh data after deletion
         } else {
+          const errorData = await res.json();
           Swal.fire({
             icon: "error",
             title: "Lỗi",
-            text: `Xóa không gian thất bại: ${res.status} ${res.statusText}`,
+            text: errorData.message || "Có lỗi xảy ra khi xóa không gian",
             confirmButtonText: "OK",
             confirmButtonColor: "#dc3545",
-          });
+          })
         }
       } catch (error) {
+        console.error("Error deleting space:", error)
         Swal.fire({
           icon: "error",
           title: "Lỗi",
-          text: "Xóa không gian thất bại: " + error.message,
+          text: "Có lỗi xảy ra khi xóa không gian",
           confirmButtonText: "OK",
           confirmButtonColor: "#dc3545",
-        });
+        })
       }
     }
-  };
+  }
 
   const handleEditSpace = (spaceId) => {
-    const space = spaces.find((s) => s.space_id === spaceId);
+    const space = spaces.find((s) => s.space_id === spaceId)
     if (space) {
-      setSpaceToEdit(space);
-      setIsEditSpacePopupOpen(true);
+      setSpaceToEdit(space)
+      setIsEditSpacePopupOpen(true)
     }
-  };
+  }
 
   const handleAddSpace = () => {
-    setIsAddSpacePopupOpen(true);
+    setIsAddSpacePopupOpen(true)
   }
 
   const handleSpaceClick = (space) => {
-    setSelectedSpace(space);
-    setShowDeviceList(true);
-  };
+    setSelectedSpace(space)
+    setShowDeviceList(true)
+  }
 
   const handleBackToSpaces = () => {
-    setShowDeviceList(false);
-    setSelectedSpace(null);
-  };
+    setShowDeviceList(false)
+    setSelectedSpace(null)
+  }
 
   const handleManageDevices = (space) => {
-    console.log("Manage devices for space:", space)
     if (onSpaceClick) {
       onSpaceClick(space)
     }
@@ -223,13 +203,25 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   const filteredSpaces = spaces.filter(
     (space) =>
       !space.is_deleted &&
-      (space.name || "").toLowerCase().includes((searchQuery || "").toLowerCase())
+      (space.space_name || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   )
 
-  // Statistics
-  const totalDevices = spaces.reduce((sum, space) => sum + space.devices_count, 0)
-  const totalActiveDevices = spaces.reduce((sum, space) => sum + space.active_devices_count, 0)
-  const totalAlerts = spaces.reduce((sum, space) => sum + space.alerts_count, 0)
+  // Statistics - Calculate from real device data
+  const totalDevices = devices.length;
+  const totalActiveDevices = devices.filter(device => device.power_status && device.link_status === "linked").length;
+  const totalAlerts = devices.filter(device => device.alert_status === "active").length;
+
+  const refreshData = async () => {
+    try {
+      setIsLoading(true);
+      await fetchSpaces(houseId);
+      await fetchDevices();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -257,7 +249,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         spaceType={selectedSpace.icon_name}
         onBack={handleBackToSpaces}
       />
-    );
+    )
   }
 
   return (
@@ -350,14 +342,10 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                 className="bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:border-blue-300 transition-all duration-300 group relative overflow-hidden cursor-pointer"
                 onClick={() => handleSpaceClick(space)}
               >
-                {/* Background gradient accent */}
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-
                 <div className="relative z-10">
-                  {/* Header */}
                   <div className="flex items-start justify-between mb-6">
                     <div className="flex items-center space-x-4">
-                      {/* Space Icon */}
                       <div className="relative">
                         <div
                           className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-200"
@@ -365,15 +353,12 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                         >
                           {getSpaceIcon(space.icon_name)}
                         </div>
-                        {/* Alert indicator */}
                         {space.alerts_count > 0 && (
                           <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center border-2 border-white">
                             <span className="text-xs font-bold text-white">{space.alerts_count}</span>
                           </div>
                         )}
                       </div>
-
-                      {/* Space Info */}
                       <div>
                         <h3 className="font-semibold text-slate-900 text-lg group-hover:text-blue-700 transition-colors">
                           {space.space_name}
@@ -389,8 +374,6 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                         </div>
                       </div>
                     </div>
-
-                    {/* Actions */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -435,43 +418,44 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-
-                  {/* Device Stats */}
                   <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-blue-50 transition-colors">
-                      <div className="flex items-center justify-center mb-1">
-                        <Lightbulb className="h-4 w-4 text-blue-500 mr-1" />
-                        <span className="text-lg font-bold text-slate-700 group-hover:text-blue-600">
-                          {space.devices_count}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-500">Thiết bị</span>
-                    </div>
-
-                    <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-emerald-50 transition-colors">
-                      <div className="flex items-center justify-center mb-1">
-                        <Wifi className="h-4 w-4 text-emerald-500 mr-1" />
-                        <span className="text-lg font-bold text-slate-700 group-hover:text-emerald-600">
-                          {space.active_devices_count}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-500">Hoạt động</span>
-                    </div>
-
-                    <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-amber-50 transition-colors">
-                      <div className="flex items-center justify-center mb-1">
-                        <AlertTriangle className={`h-4 w-4 mr-1 ${getAlertSeverityColor(space.alerts_count)}`} />
-                        <span
-                          className={`text-lg font-bold group-hover:text-amber-600 ${getAlertSeverityColor(space.alerts_count)}`}
-                        >
-                          {space.alerts_count}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-500">Cảnh báo</span>
-                    </div>
+                    {(() => {
+                      const stats = getSpaceDeviceStats(space.space_id)
+                      return (
+                        <>
+                          <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-blue-50 transition-colors">
+                            <div className="flex items-center justify-center mb-1">
+                              <Lightbulb className="h-4 w-4 text-blue-500 mr-1" />
+                              <span className="text-lg font-bold text-slate-700 group-hover:text-blue-600">
+                                {stats.totalDevices}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500">Thiết bị</span>
+                          </div>
+                          <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-emerald-50 transition-colors">
+                            <div className="flex items-center justify-center mb-1">
+                              <Wifi className="h-4 w-4 text-emerald-500 mr-1" />
+                              <span className="text-lg font-bold text-slate-700 group-hover:text-emerald-600">
+                                {stats.activeDevices}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500">Hoạt động</span>
+                          </div>
+                          <div className="text-center p-3 bg-slate-50 rounded-xl group-hover:bg-amber-50 transition-colors">
+                            <div className="flex items-center justify-center mb-1">
+                              <AlertTriangle className={`h-4 w-4 mr-1 ${getAlertSeverityColor(stats.alertsCount)}`} />
+                              <span
+                                className={`text-lg font-bold group-hover:text-amber-600 ${getAlertSeverityColor(stats.alertsCount)}`}
+                              >
+                                {stats.alertsCount}
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500">Cảnh báo</span>
+                          </div>
+                        </>
+                      )
+                    })()}
                   </div>
-
-                  {/* Environmental Data */}
                   {space.hourly_values && (
                     <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl p-4 mb-4">
                       <div className="flex items-center justify-between mb-3">
@@ -506,8 +490,6 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                       </div>
                     </div>
                   )}
-
-                  {/* Recent Alerts */}
                   {space.recent_alerts && space.recent_alerts.length > 0 && (
                     <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
                       <h4 className="text-sm font-medium text-red-700 mb-2 flex items-center">
@@ -518,8 +500,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                         {space.recent_alerts.slice(0, 2).map((alert) => (
                           <div key={alert.alert_id} className="flex items-start space-x-2">
                             <div
-                              className={`w-2 h-2 rounded-full mt-2 ${alert.status === "active" ? "bg-red-500" : "bg-gray-400"
-                                }`}
+                              className={`w-2 h-2 rounded-full mt-2 ${alert.status === "active" ? "bg-red-500" : "bg-gray-400"}`}
                             />
                             <div className="flex-1">
                               <p className="text-xs text-red-700 font-medium">{alert.message}</p>
@@ -532,26 +513,29 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                       </div>
                     </div>
                   )}
-
-                  {/* Progress Bar */}
                   <div className="space-y-2">
-                    <div className="flex justify-between text-xs text-slate-600">
-                      <span>Thiết bị hoạt động</span>
-                      <span>
-                        {space.active_devices_count}/{space.devices_count}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{
-                          width: `${space.devices_count > 0 ? (space.active_devices_count / space.devices_count) * 100 : 0}%`,
-                        }}
-                      />
-                    </div>
+                    {(() => {
+                      const stats = getSpaceDeviceStats(space.space_id)
+                      return (
+                        <>
+                          <div className="flex justify-between text-xs text-slate-600">
+                            <span>Thiết bị hoạt động</span>
+                            <span>
+                              {stats.activeDevices}/{stats.totalDevices}
+                            </span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+                              style={{
+                                width: `${stats.totalDevices > 0 ? (stats.activeDevices / stats.totalDevices) * 100 : 0}%`,
+                              }}
+                            />
+                          </div>
+                        </>
+                      )
+                    })()}
                   </div>
-
-                  {/* Footer */}
                   <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
                     <div className="flex items-center space-x-2">
                       <Clock className="h-3 w-3 text-slate-400" />
@@ -559,7 +543,6 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                         Cập nhật: {new Date(space.updated_at).toLocaleString("vi-VN")}
                       </span>
                     </div>
-
                     <div className="flex items-center space-x-2">
                       <span className="text-xs text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity">
                         Click để xem thiết bị
@@ -588,7 +571,6 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
               </div>
             ))}
           </div>
-
           {filteredSpaces.length === 0 && (
             <div className="text-center py-12">
               <Home className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -601,8 +583,9 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         open={isAddSpacePopupOpen}
         onOpenChange={setIsAddSpacePopupOpen}
         onSave={(newSpace) => {
-          setSpaces((prev) => [...prev, newSpace]);
-          setIsAddSpacePopupOpen(false);
+          setSpaces((prev) => [...prev, newSpace])
+          setIsAddSpacePopupOpen(false)
+          refreshData()
         }}
         houseId={houseId}
       />
@@ -610,8 +593,9 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         open={isEditSpacePopupOpen}
         onOpenChange={setIsEditSpacePopupOpen}
         onSave={(updatedSpace) => {
-          setSpaces((prev) => prev.map(s => s.space_id === updatedSpace.space_id ? { ...s, ...updatedSpace } : s));
-          setIsEditSpacePopupOpen(false);
+          setSpaces((prev) => prev.map(s => s.space_id === updatedSpace.space_id ? { ...s, ...updatedSpace } : s))
+          setIsEditSpacePopupOpen(false)
+          refreshData()
         }}
         space={spaceToEdit}
       />

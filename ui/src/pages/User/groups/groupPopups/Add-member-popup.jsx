@@ -7,59 +7,189 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User } from "lucide-react"
 import axiosPrivate from "@/apis/clients/private.client"
+import { useParams } from "react-router-dom"
+import Swal from "sweetalert2" // Import SweetAlert2
 
-export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) {
+export default function AddMemberPopup({ open, onOpenChange, onSave }) {
+  const { id } = useParams()
   const [memberData, setMemberData] = useState({
-    email: "",
+    username: "",
     role: "",
   })
+  const [isLoading, setIsLoading] = useState(false) // Add loading state
+  const accessToken = localStorage.getItem("authToken")
 
+  // Define roles matching the GroupRole enum based on API response
   const roles = [
-    { value: "admin", label: "Chủ nhóm" },
     { value: "moderator", label: "Phó nhóm" },
     { value: "member", label: "Thành viên" },
     { value: "viewer", label: "Người xem" },
-  ] 
+  ] // Adjusted to match API response
 
   const handleSave = async () => {
-    if (!memberData.email.trim() || !memberData.role) {
-      alert("Vui lòng nhập đầy đủ thông tin!")
+    if (!memberData.username.trim() || !memberData.role) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Vui lòng nhập đầy đủ thông tin!",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "bg-blue-500 text-white hover:bg-blue-600",
+        },
+        didOpen: () => {
+          Swal.getConfirmButton().focus() // Ensure the OK button is focused
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // No action needed on dismissal, just return
+        }
+      })
       return
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(memberData.email)) {
-      alert("Vui lòng nhập email hợp lệ!")
+    // Basic username validation
+    const usernameRegex = /^[a-zA-Z0-9_]{3,}$/
+    if (!usernameRegex.test(memberData.username)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Cảnh báo!",
+        text: "Vui lòng nhập username hợp lệ (ít nhất 3 ký tự, chỉ chữ cái, số và dấu gạch dưới).",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "bg-blue-500 text-white hover:bg-blue-600",
+        },
+        didOpen: () => {
+          Swal.getConfirmButton().focus() // Ensure the OK button is focused
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // No action needed on dismissal, just return
+        }
+      })
       return
     }
 
+    // Validate groupId from useParams
+    console.log("Raw id from useParams:", id) // Debug the raw id value
+    const parsedGroupId = Number(id)
+    if (!id || isNaN(parsedGroupId) || parsedGroupId <= 0) {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi!",
+        text: "ID nhóm không hợp lệ hoặc không được cung cấp trong URL!",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "bg-red-500 text-white hover:bg-red-600",
+        },
+        didOpen: () => {
+          Swal.getConfirmButton().focus() // Ensure the OK button is focused
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // No action needed on dismissal, just return
+        }
+      })
+      console.error("Invalid groupId:", id, "Parsed:", parsedGroupId)
+      return
+    }
+
+    setIsLoading(true)
     try {
       const res = await axiosPrivate.post(`http://localhost:7777/api/groups/users`, {
-          group_id: groupId,
+          group_id: parsedGroupId,
           email: memberData.email,
           role: memberData.role,
       })
-      if (res.success) {
-        const newMember = res.data
-        onSave(newMember.data) // hoặc newMember tuỳ response
-        onOpenChange(false)
-        setMemberData({ email: "", role: "" })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        onOpenChange(false) // ✅ Đóng Dialog TRƯỚC
+        setTimeout(() => {
+          Swal.fire({
+            icon: "success",
+            title: "Thành công!",
+            text: `Thành viên ${memberData.username} đã được thêm với vai trò ${memberData.role}!`,
+            confirmButtonText: "OK",
+            customClass: {
+              confirmButton: "bg-green-500 text-white hover:bg-green-600",
+            },
+            didOpen: () => {
+              Swal.getConfirmButton().focus()
+            },
+          }).then((result) => {
+            if (result.isConfirmed) {
+              onSave(data)
+              setMemberData({ username: "", role: "" })
+            }
+          })
+        }, 200) // Đợi một chút để dialog unmount xong
       } else {
-        const errorData = res.data
-        alert(errorData.message || "Thêm thành viên thất bại!")
+        // Handle specific API errors based on message
+        const errorMessage = data.message || "Thêm thành viên thất bại!"
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi!",
+          text: errorMessage,
+          confirmButtonText: "OK",
+          customClass: {
+            confirmButton: "bg-red-500 text-white hover:bg-red-600",
+          },
+          didOpen: () => {
+            Swal.getConfirmButton().focus() // Ensure the OK button is focused
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            // No action needed on dismissal, just return
+          }
+        })
       }
     } catch (error) {
-      alert(error.message || "Lỗi khi thêm thành viên!")
+      console.error("API Error:", error)
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi!",
+        text: error.message || "Lỗi khi thêm thành viên do kết nối mạng!",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "bg-red-500 text-white hover:bg-red-600",
+        },
+        didOpen: () => {
+          Swal.getConfirmButton().focus() // Ensure the OK button is focused
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // No action needed on dismissal, just return
+        }
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleCancel = () => {
-    onOpenChange(false)
-    // Reset form
-    setMemberData({
-      email: "",
-      role: "",
+    Swal.fire({
+      icon: "info",
+      title: "Hủy bỏ",
+      text: "Bạn có chắc muốn hủy thêm thành viên?",
+      showCancelButton: true,
+      confirmButtonText: "Có",
+      cancelButtonText: "Không",
+      customClass: {
+        confirmButton: "bg-blue-500 text-white hover:bg-blue-600",
+        cancelButton: "bg-gray-300 text-gray-700 hover:bg-gray-400",
+      },
+      didOpen: () => {
+        Swal.getConfirmButton().focus() // Ensure the confirm button is focused
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        onOpenChange(false)
+        setMemberData({
+          username: "",
+          role: "",
+        })
+      }
     })
   }
 
@@ -76,18 +206,19 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
           </div>
 
           <div className="space-y-6">
-            {/* Email Input */}
+            {/* Username Input */}
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tên người dùng</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
                   <User className="h-5 w-5 text-gray-400" />
                 </div>
                 <Input
-                  placeholder="Nhập địa chỉ email"
-                  value={memberData.email}
-                  onChange={(e) => setMemberData((prev) => ({ ...prev, email: e.target.value }))}
+                  placeholder="Nhập tên người dùng"
+                  value={memberData.username}
+                  onChange={(e) => setMemberData((prev) => ({ ...prev, username: e.target.value }))}
                   className="pl-11 h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-gray-700 bg-white shadow-sm transition-all duration-200"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -98,6 +229,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
               <Select
                 value={memberData.role}
                 onValueChange={(value) => setMemberData((prev) => ({ ...prev, role: value }))}
+                disabled={isLoading}
               >
                 <SelectTrigger className="w-full h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl bg-white shadow-sm transition-all duration-200">
                   <SelectValue placeholder="Chọn vai trò cho thành viên" className="text-gray-700" />
@@ -118,15 +250,16 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
                 onClick={handleCancel}
                 variant="outline"
                 className="flex-1 h-12 border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl transition-all duration-200"
+                disabled={isLoading}
               >
                 Hủy
               </Button>
               <Button
                 onClick={handleSave}
                 className="flex-1 h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                disabled={!memberData.email.trim() || !memberData.role}
+                disabled={!memberData.username.trim() || !memberData.role || isLoading}
               >
-                Thêm thành viên
+                {isLoading ? "Đang thêm..." : "Thêm thành viên"}
               </Button>
             </div>
           </div>

@@ -4,54 +4,42 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Home, MapPin, Palette, X, Briefcase, GraduationCap, Building, Building2, Bed, Castle, TreePine, Crown, BookOpen } from "lucide-react";
-import IconPickerPopup from "../../icon-picker/icon-picker-popup";
+import { Building, Briefcase, GraduationCap, Home, MapPin, Palette, X, Building2, Bed, Castle, TreePine, Crown, BookOpen } from "lucide-react";
+import IconHousePickerPopup from "../../icon-picker/icon-house-picker-popup";
 import Swal from "sweetalert2";
 import axiosPrivate from "@/apis/clients/private.client";
-
-const iconMap = {
-  home: Home,
-  office: Briefcase,
-  school: GraduationCap,
-  bank: Building,
-  apartment: Building2,
-  hotel: Bed,
-  villa: Castle,
-  wooden: TreePine,
-  castle: Crown,
-  library: BookOpen,
-};
-
-const colorMap = {
-  "#FF5733": "bg-red-500",
-  blue: "bg-blue-500",
-  "#FFF00F": "bg-yellow-500",
-  "#0000FF": "bg-blue-700",
-  "#FF0000": "bg-red-600",
-};
+import { HOUSE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
 
 export default function EditHousePopup({ open, onOpenChange, onSave, house, groupId }) {
   const [houseData, setHouseData] = useState({
     name: "",
     address: "",
-    icon: { icon: Home, color: "bg-blue-500", name: "home", id: "home", colorId: "blue" },
+    icon: {
+      iconId: "HOUSE",
+      component: HOUSE_ICON_MAP.HOUSE,
+      color: COLOR_MAP.BLUE,
+      colorId: "BLUE",
+      name: "Nhà",
+    },
   });
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const accessToken = localStorage.getItem("authToken");
 
   useEffect(() => {
     if (house && open) {
-      const iconKey = house.icon_name?.toLowerCase() || "home";
-      const iconComponent = iconMap[iconKey] || Home;
-      const colorClass = colorMap[house.icon_color] || "bg-blue-500";
+      const iconKey = house.icon_name?.toUpperCase() || "HOUSE";
+      const iconComponent = HOUSE_ICON_MAP[iconKey] || HOUSE_ICON_MAP.HOUSE;
+      const colorId = house.icon_color_id || "BLUE";
       setHouseData({
         name: house.name || house.house_name || "",
         address: house.address || "",
         icon: {
-          icon: iconComponent,
-          color: colorClass,
-          name: iconKey,
-          id: iconKey,
-          colorId: house.icon_color || "blue",
+          iconId: iconKey,
+          component: iconComponent,
+          color: house.icon_color || COLOR_MAP.BLUE,
+          colorId: colorId,
+          name: iconKey.charAt(0).toUpperCase() + iconKey.slice(1).toLowerCase(),
         },
       });
     }
@@ -65,8 +53,8 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
       const requestBody = {
         house_name: houseData.name.trim(),
         address: houseData.address.trim(),
-        icon_name: houseData.icon.id,
-        icon_color: houseData.icon.colorId,
+        icon_name: houseData.icon.iconId,
+        icon_color: houseData.icon.color,
       };
 
       // Validate required fields
@@ -97,10 +85,17 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
         confirmButtonColor: "#28a745",
       });
 
+      // Reset form after save
       setHouseData({
         name: "",
         address: "",
-        icon: { icon: Home, color: "bg-blue-500", name: "home", id: "home", colorId: "blue" },
+        icon: {
+          iconId: "HOUSE",
+          component: HOUSE_ICON_MAP.HOUSE,
+          color: COLOR_MAP.BLUE,
+          colorId: "BLUE",
+          name: "Nhà",
+        },
       });
     } catch (error) {
       console.error("Lỗi khi chỉnh sửa nhà:", error);
@@ -116,18 +111,29 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
 
   const handleIconSelect = (selectedIcon) => {
     setHouseData((prev) => ({ ...prev, icon: selectedIcon }));
+    setShowIconPicker(false);
   };
 
   const handleCancel = () => {
+    // Restore original house data instead of resetting
+    const iconKey = house?.icon_name?.toUpperCase() || "HOUSE";
+    const iconComponent = HOUSE_ICON_MAP[iconKey] || HOUSE_ICON_MAP.HOUSE;
+    const colorId = house?.icon_color_id || "BLUE";
     setHouseData({
-      name: "",
-      address: "",
-      icon: { icon: Home, color: "bg-blue-500", name: "home", id: "home", colorId: "blue" },
+      name: house?.name || house?.house_name || "",
+      address: house?.address || "",
+      icon: {
+        iconId: iconKey,
+        component: iconComponent,
+        color: house?.icon_color || COLOR_MAP.BLUE,
+        colorId: colorId,
+        name: iconKey.charAt(0).toUpperCase() + iconKey.slice(1).toLowerCase(),
+      },
     });
     onOpenChange(false);
   };
 
-  const IconComponent = houseData.icon.icon || Home;
+  const IconComponent = houseData.icon.component || Home;
 
   return (
     <>
@@ -153,9 +159,12 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
           <div className="px-6 py-6 space-y-6">
             <div className="flex justify-center">
               <div
-                className={`w-20 h-20 rounded-2xl ${houseData.icon.color} flex items-center justify-center shadow-lg`}
+                className="w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: houseData.icon.color }}
               >
-                <IconComponent className="h-10 w-10 text-white" />
+                <IconComponent
+                  className={`h-10 w-10 ${houseData.icon.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                />
               </div>
             </div>
 
@@ -200,8 +209,13 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
                   <Palette className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
                   <span className="text-gray-600 group-hover:text-blue-600">Chọn biểu tượng</span>
                 </div>
-                <div className={`w-8 h-8 rounded-lg ${houseData.icon.color} flex items-center justify-center`}>
-                  <IconComponent className="h-4 w-4 text-white" />
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: houseData.icon.color }}
+                >
+                  <IconComponent
+                    className={`h-4 w-4 ${houseData.icon.color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                  />
                 </div>
               </Button>
             </div>
@@ -217,7 +231,7 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
               <Button
                 onClick={handleSave}
                 className="flex-1 h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all"
-                disabled={!houseData.name.trim() || !houseData.address.trim() || !houseData.icon || !groupId}
+                disabled={!houseData.name.trim() || !houseData.address.trim() || !houseData.icon}
               >
                 Lưu thay đổi
               </Button>
@@ -226,7 +240,7 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
         </DialogContent>
       </Dialog>
 
-      <IconPickerPopup
+      <IconHousePickerPopup
         open={showIconPicker}
         onOpenChange={setShowIconPicker}
         onSelectIcon={handleIconSelect}

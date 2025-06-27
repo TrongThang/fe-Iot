@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Swal from 'sweetalert2'
 import UpdateCustomerForm from '@/components/common/CustomerSearch/UpdateCustomerInfo'
+import axiosPublic from "@/apis/clients/public.client"
 
 export default function SearchCustomerInfo() {
     const [searchFilters, setSearchFilters] = useState({
@@ -54,39 +55,34 @@ export default function SearchCustomerInfo() {
             if (searchFilters.username) params.append('username', searchFilters.username)
             if (searchFilters.customerId) params.append('customerId', searchFilters.customerId)
 
-            const response = await fetch(`http://localhost:7777/api/customer-search?${params.toString()}`)
+            const response = await axiosPublic.get(`customer-search?${params.toString()}`)
 
-            if (!response.ok) {
-                throw new Error('Không tìm thấy khách hàng hoặc có lỗi xảy ra')
-            }
-
-            const data = await response.json()
-
-            if (data.success && data.data?.customer) {
-                const fullName = data.data.customer.full_name || '';
+            if (response.success && response.data?.customer) {
+                const fullName = response.data.customer.full_name || '';
                 const fullNameParts = fullName.split(' ');
                 const surname = fullNameParts[0] || '';
                 const lastname = fullNameParts.slice(1).join(' ') || '';
 
                 const customerData = {
-                    customer_id: data.data.customer.customer_id || '',
+                    customer_id: response.data.customer.customer_id || '',
                     surname: surname,
                     lastname: lastname,
-                    image: data.data.customer.avatar || "/placeholder.svg?height=64&width=64",
-                    phone: data.data.customer.phone || '',
-                    email: data.data.customer.email || '',
-                    email_verified: data.data.customer.email_verified || false,
-                    birthdate: data.data.customer.birthdate || new Date().toISOString(),
-                    gender: data.data.customer.gender === true,
-                    created_at: data.data.customer.created_at || new Date().toISOString(),
-                    updated_at: data.data.customer.updated_at || new Date().toISOString(),
-                    deleted_at: data.data.customer.is_deleted ? data.data.customer.updated_at : null,
+                    image: response.data.customer.avatar || "/placeholder.svg?height=64&width=64",
+                    phone: response.data.customer.phone || '',
+                    email: response.data.customer.email || '',
+                    email_verified: response.data.customer.email_verified || false,
+                    birthdate: response.data.customer.birthdate || new Date().toISOString(),
+                    gender: response.data.customer.gender === true,
+                    created_at: response.data.customer.created_at || new Date().toISOString(),
+                    updated_at: response.data.customer.updated_at || new Date().toISOString(),
+                    deleted_at: response.data.customer.is_deleted ? response.data.customer.updated_at : null,
                     account: {
-                        account_id: data.data.account?.account_id || '',
-                        username: data.data.account?.username || '',
+                        account_id: response.data.account?.account_id || '',
+                        username: response.data.account?.username || '',
                         role_id: 2,
-                        status: data.data.account?.status || 1,
-                        created_at: data.data.account?.created_at || new Date().toISOString()
+                        // status: response.data.account?.status || 1,
+                        is_locked: response.data.account?.is_locked,
+                        created_at: response.data.account?.created_at || new Date().toISOString()
                     }
                 }
 
@@ -129,20 +125,15 @@ export default function SearchCustomerInfo() {
 
         if (result.isConfirmed) {
             try {
-                const response = await fetch(`http://localhost:7777/api/customer-search/lock/${selectedCustomer.customer_id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await axiosPublic.put(`customer-search/lock/${selectedCustomer.customer_id}`);
 
-                const data = await response.json();
-                if (data.success) {
+                // Kiểm tra cả 2 trường hợp
+                if (response.data.success || response.success) {
                     setSelectedCustomer(prev => ({
                         ...prev,
                         account: {
                             ...prev.account,
-                            status: 0
+                            is_locked: true
                         }
                     }));
                     Swal.fire(
@@ -150,12 +141,14 @@ export default function SearchCustomerInfo() {
                         'Tài khoản đã được khóa thành công.',
                         'success'
                     );
+                } else {
+                    throw new Error('Khóa tài khoản thất bại');
                 }
             } catch (error) {
                 console.error('Error locking account:', error);
                 Swal.fire(
                     'Lỗi!',
-                    'Có lỗi xảy ra khi khóa tài khoản.',
+                    error.response?.data?.error?.message || 'Có lỗi xảy ra khi khóa tài khoản.',
                     'error'
                 );
             }
@@ -176,20 +169,15 @@ export default function SearchCustomerInfo() {
 
         if (result.isConfirmed) {
             try {
-                const response = await fetch(`http://localhost:7777/api/customer-search/unlock/${selectedCustomer.customer_id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await axiosPublic.put(`customer-search/unlock/${selectedCustomer.customer_id}`);
 
-                const data = await response.json();
-                if (data.success) {
+                // Kiểm tra cả 2 trường hợp
+                if (response.data.success || response.success) {
                     setSelectedCustomer(prev => ({
                         ...prev,
                         account: {
                             ...prev.account,
-                            status: 1
+                            is_locked: false
                         }
                     }));
                     Swal.fire(
@@ -197,12 +185,14 @@ export default function SearchCustomerInfo() {
                         'Tài khoản đã được mở khóa thành công.',
                         'success'
                     );
+                } else {
+                    throw new Error('Mở khóa tài khoản thất bại');
                 }
             } catch (error) {
                 console.error('Error unlocking account:', error);
                 Swal.fire(
                     'Lỗi!',
-                    'Có lỗi xảy ra khi mở khóa tài khoản.',
+                    error.response?.data?.error?.message || 'Có lỗi xảy ra khi mở khóa tài khoản.',
                     'error'
                 );
             }
@@ -223,19 +213,15 @@ export default function SearchCustomerInfo() {
                 birthdate: updateForm.birthdate ? new Date(updateForm.birthdate).toISOString() : null
             };
 
-            const response = await fetch(`http://localhost:7777/api/customer-search/update/${selectedCustomer.customer_id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(updateData)
-            });
+            const response = await axiosPublic.put(
+                `customer-search/update/${selectedCustomer.customer_id}`,
+                updateData
+            );
 
-            const data = await response.json();
-            if (data.success) {
+            if (response.success) {
                 setSelectedCustomer(prev => ({
                     ...prev,
-                    ...data.data
+                    ...response.data
                 }));
                 setIsUpdateDialogOpen(false);
                 Swal.fire(
@@ -268,15 +254,9 @@ export default function SearchCustomerInfo() {
 
         if (result.isConfirmed) {
             try {
-                const response = await fetch(`http://localhost:7777/api/customer-search/delete/${selectedCustomer.customer_id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await axiosPublic.delete(`customer-search/delete/${selectedCustomer.customer_id}`);
 
-                const data = await response.json();
-                if (data.success) {
+                if (response.success) {
                     setSelectedCustomer(null);
                     handleReset();
                     Swal.fire(
@@ -443,17 +423,17 @@ export default function SearchCustomerInfo() {
                                                 <DropdownMenuContent align="end" className="w-48 bg-white border border-slate-200 shadow-lg rounded-lg">
                                                     <DropdownMenuItem
                                                         className="cursor-pointer hover:bg-slate-100"
-                                                        onClick={() => selectedCustomer.account?.status === 1 ? handleLockAccount() : handleUnlockAccount()}
+                                                        onClick={() => selectedCustomer.account?.is_locked ? handleUnlockAccount() : handleLockAccount()}
                                                     >
-                                                        {selectedCustomer.account?.status === 1 ? (
-                                                            <>
-                                                                <Lock className="h-4 w-4 mr-2" />
-                                                                Khóa tài khoản
-                                                            </>
-                                                        ) : (
+                                                        {selectedCustomer.account?.is_locked ? (
                                                             <>
                                                                 <Unlock className="h-4 w-4 mr-2" />
                                                                 Mở khóa tài khoản
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Lock className="h-4 w-4 mr-2" />
+                                                                Khóa tài khoản
                                                             </>
                                                         )}
                                                     </DropdownMenuItem>
@@ -518,21 +498,21 @@ export default function SearchCustomerInfo() {
                                                         {selectedCustomer.gender ? "Nam" : "Nữ"}
                                                     </Badge>
                                                     <Badge
-                                                        variant={selectedCustomer.account?.status === 1 ? "success" : "destructive"}
-                                                        className={`text-xs px-3 py-1 ${selectedCustomer.account?.status === 1
-                                                            ? "bg-green-100 text-green-700 border border-green-200"
-                                                            : "bg-red-100 text-red-700 border border-red-200"
+                                                        variant={selectedCustomer.account?.is_locked ? "destructive" : "success"}
+                                                        className={`text-xs px-3 py-1 ${selectedCustomer.account?.is_locked
+                                                            ? "bg-red-100 text-red-700 border border-red-200"
+                                                            : "bg-green-100 text-green-700 border border-green-200"
                                                             }`}
                                                     >
-                                                        {selectedCustomer.account?.status === 1 ? (
+                                                        {selectedCustomer.account?.is_locked ? (
                                                             <>
-                                                                <Unlock className="h-3 w-3 mr-1" />
-                                                                Hoạt động
+                                                                <Lock className="h-3 w-3 mr-1" />
+                                                                Bị khóa
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <Lock className="h-3 w-3 mr-1" />
-                                                                Không hoạt động
+                                                                <Unlock className="h-3 w-3 mr-1" />
+                                                                Hoạt động
                                                             </>
                                                         )}
                                                     </Badge>
@@ -603,7 +583,7 @@ export default function SearchCustomerInfo() {
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium text-slate-500">Trạng thái tài khoản</p>
                                                     <p className="text-base font-semibold text-slate-900">
-                                                        {selectedCustomer.account?.status === 1 ? 'Hoạt động' : 'Không hoạt động'}
+                                                        {selectedCustomer.account?.is_locked ? 'Bị khóa' : 'Hoạt động bình thường'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -670,13 +650,13 @@ export default function SearchCustomerInfo() {
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-slate-500">Trạng thái</p>
                                                 <p className="text-base font-semibold text-slate-900">
-                                                    {selectedCustomer.account?.status === 1 ? (
-                                                        <span className="flex items-center gap-1 text-green-600">
-                                                            <Unlock className="h-4 w-4" /> Hoạt động
-                                                        </span>
-                                                    ) : (
+                                                    {selectedCustomer.account?.is_locked ? (
                                                         <span className="flex items-center gap-1 text-red-600">
                                                             <Lock className="h-4 w-4" /> Không hoạt động
+                                                        </span>
+                                                    ) : (
+                                                        <span className="flex items-center gap-1 text-green-600">
+                                                            <Unlock className="h-4 w-4" /> Hoạt động
                                                         </span>
                                                     )}
                                                 </p>

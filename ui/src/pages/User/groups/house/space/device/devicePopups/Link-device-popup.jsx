@@ -8,23 +8,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Smartphone, Home, QrCode, Link, X, User } from "lucide-react"
 import Swal from "sweetalert2"
 import QRScannerDialog from "./QR-scanner"
+import { useParams } from "react-router-dom"
 
-
-export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, houseId }) {
+export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, houseId, spaceId }) {
+    const { id } = useParams();
     const [deviceData, setDeviceData] = useState({
         deviceId: "",
         deviceName: "",
-        room: "",
+        room: spaceId || "", // Initialize with spaceId if provided
     })
-
     const [isConnecting, setIsConnecting] = useState(false)
     const [isQRScannerOpen, setIsQRScannerOpen] = useState(false)
     const [spaces, setSpaces] = useState([])
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
+    const [spaceName, setSpaceName] = useState("") // State for space name
+    const accessToken = localStorage.getItem('authToken');
 
-    const fetchSpaces = async (houseId) => {
+    // Fetch all spaces for a house (used when spaceId is undefined)
+    const fetchSpaces = async (currentHouseId) => {
         try {
-            const res = await fetch(`http://localhost:7777/api/spaces/house/${houseId}`, {
+            const res = await fetch(`http://localhost:7777/api/spaces/house/${currentHouseId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -33,17 +35,43 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
             });
             if (res.ok) {
                 const dataSpace = await res.json();
-                setSpaces(Array.isArray(dataSpace) ? dataSpace : [])
+                setSpaces(dataSpace ? dataSpace : [])
             } else {
+                console.error(`Failed to fetch spaces for house ${currentHouseId}: ${res.status} ${res.statusText}`);
+                setSpaces([]);
                 return [];
             }
         } catch (error) {
-            console.error(`Error fetching spaces for house ${houseId}:`, error);
+            console.error(`Error fetching spaces for house ${currentHouseId}:`, error);
+            setSpaces([]);
             return [];
         }
     }
 
-    const handleConnect = async () => {
+    // Fetch specific space details for spaceId (used when spaceId is defined)
+    const fetchSpace = async (spaceId) => {
+        try {
+            const res = await fetch(`http://localhost:7777/api/spaces/${spaceId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+            if (res.ok) {
+                const dataSpace = await res.json();
+                setSpaceName(dataSpace?.space_name || "Unknown Space");
+            } else {
+                console.error(`Failed to fetch space ${spaceId}: ${res.status} ${res.statusText}`);
+                setSpaceName("Unknown Space");
+            }
+        } catch (error) {
+            console.error(`Error fetching space ${spaceId}:`, error);
+            setSpaceName("Unknown Space");
+        }
+    }
+
+    const handleSubmit = async () => {
         if (!deviceData.deviceId.trim() || !deviceData.deviceName.trim() || !deviceData.room) {
             Swal.fire({
                 icon: "warning",
@@ -58,21 +86,26 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
         setIsConnecting(true)
 
         try {
-            // Simulate API call - replace with your actual API
-            await new Promise((resolve) => setTimeout(resolve, 2000))
+            const res = await fetch("http://localhost:7777/api/devices/link", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({
+                    serial_number: deviceData.deviceId,
+                    name: deviceData.deviceName,
+                    spaceId: parseInt(deviceData.room),
+                    groupId: id
+                })
+            });
 
-            // Mock successful connection
-            const connectedDevice = {
-                id: Date.now(),
-                deviceId: deviceData.deviceId,
-                deviceName: deviceData.deviceName,
-                room: deviceData.room,
-                status: "connected",
-                connectedAt: new Date().toISOString(),
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || 'Failed to link device');
             }
 
-            onConnect?.(connectedDevice)
-            onOpenChange(false)
+            const data = await res.json();
 
             Swal.fire({
                 icon: "success",
@@ -86,14 +119,20 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
             setDeviceData({
                 deviceId: "",
                 deviceName: "",
-                room: "",
+                room: spaceId || "",
             })
+
+            // Close dialog and notify parent
+            onOpenChange(false);
+            if (onConnect) {
+                onConnect(data);
+            }
         } catch (error) {
             console.error("Lỗi khi kết nối thiết bị:", error)
             Swal.fire({
                 icon: "error",
                 title: "Kết nối thất bại",
-                text: "Không thể kết nối thiết bị. Vui lòng kiểm tra lại thông tin và thử lại.",
+                text: error.message || "Không thể kết nối thiết bị. Vui lòng kiểm tra lại thông tin và thử lại.",
                 confirmButtonText: "OK",
                 confirmButtonColor: "#ef4444",
             })
@@ -118,14 +157,22 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
         setDeviceData({
             deviceId: "",
             deviceName: "",
-            room: "",
+            room: spaceId || "",
         })
         onOpenChange(false)
     }
 
     useEffect(() => {
-        fetchSpaces(houseId)
-    }, [])
+        if (spaceId && accessToken) {
+            fetchSpace(spaceId); // Fetch space name for spaceId
+            setDeviceData(prev => ({ ...prev, room: spaceId })); // Set room to spaceId
+        } else if (houseId && accessToken) {
+            fetchSpaces(houseId); // Fetch all spaces if no spaceId
+        } else {
+            setSpaces([]);
+            setSpaceName("");
+        }
+    }, [houseId, spaceId, accessToken]);
 
     return (
         <>
@@ -134,7 +181,7 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
                     {/* Header */}
                     <DialogHeader className="px-6 pt-6 pb-2 border-b border-gray-100">
                         <div className="flex items-center justify-between">
-                            <DialogTitle className="text-xl font-semibold text-gray-900">Liên kế thiết bị</DialogTitle>
+                            <DialogTitle className="text-xl font-semibold text-gray-900">Liên kết thiết bị</DialogTitle>
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -182,26 +229,37 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
 
                         {/* Room Selection */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-gray-700">Chọn phòng</label>
+                            <label className="text-sm font-medium text-gray-700">Phòng</label>
                             <div className="relative">
                                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
                                     <Home className="h-5 w-5 text-gray-400" />
                                 </div>
-                                <Select
-                                    value={deviceData.room}
-                                    onValueChange={(value) => setDeviceData((prev) => ({ ...prev, room: value }))}
-                                >
-                                    <SelectTrigger className="pl-11 h-12 w-full border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-white">
-                                        <SelectValue placeholder="Chọn phòng..." />
-                                    </SelectTrigger>
-                                    <SelectContent className="bg-white">
-                                        {spaces.map((space) => (
-                                            <SelectItem key={space.space_id} value={space.space_id}>
-                                                {space.space_name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                {spaceId ? (
+                                    <Select
+                                        value={deviceData.room}
+                                        disabled
+                                    >
+                                        <SelectTrigger className="pl-11 h-12 w-full border-gray-200 bg-gray-100 text-gray-700 rounded-xl cursor-not-allowed">
+                                            <SelectValue>{spaceName || "Loading..."}</SelectValue>
+                                        </SelectTrigger>
+                                    </Select>
+                                ) : (
+                                    <Select
+                                        value={deviceData.room}
+                                        onValueChange={(value) => setDeviceData((prev) => ({ ...prev, room: value }))}
+                                    >
+                                        <SelectTrigger className="pl-11 h-12 w-full border-gray-200 focus:border-blue-500 focus:ring-blue-500 rounded-xl bg-white">
+                                            <SelectValue placeholder="Chọn phòng..." />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white">
+                                            {spaces.map((space) => (
+                                                <SelectItem key={space.space_id} value={space.space_id}>
+                                                    {space.space_name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
                             </div>
                         </div>
 
@@ -218,7 +276,7 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
 
                             {/* Connect Button */}
                             <Button
-                                onClick={handleConnect}
+                                onClick={handleSubmit}
                                 disabled={
                                     isConnecting || !deviceData.deviceId.trim() || !deviceData.deviceName.trim() || !deviceData.room
                                 }
