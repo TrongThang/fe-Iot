@@ -20,6 +20,7 @@ import {
   TreePine,
   Crown,
   BookOpen,
+  Trash,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useNavigate, useParams } from "react-router-dom"
@@ -27,8 +28,11 @@ import EditGroupPopup from "./groupPopups/Edit-groups-popup"
 import AddMemberPopup from "./groupPopups/Add-member-popup"
 import HouseTab from "./house/houseTab"
 import Swal from "sweetalert2"
+import axiosPrivate from "@/apis/clients/private.client"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function EditGroups() {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState("members")
   const [searchQuery, setSearchQuery] = useState("")
   const [formData, setFormData] = useState({
@@ -42,8 +46,6 @@ export default function EditGroups() {
   const navigate = useNavigate()
   const { id } = useParams() // Matches the route parameter :id
 
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
-
   // State for popups and navigation
   const [isAddMemberPopupOpen, setIsAddMemberPopupOpen] = useState(false)
   const [isEditGroupPopupOpen, setIsEditGroupPopupOpen] = useState(false)
@@ -52,20 +54,14 @@ export default function EditGroups() {
   const [selectedSpace, setSelectedSpace] = useState(null)
   const [showSpaceList, setShowSpaceList] = useState(false)
   const [showDeviceList, setShowDeviceList] = useState(false)
-
+  const [roleUserCurrent, setRoleUserCurrent] = useState(null)
 
   // Fetch lấy nhóm theo ID
   const fetchGroupById = async (id) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/groups/${id}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-      if (res.ok) {
-        const groupData = await res.json()
+      const res = await axiosPrivate.get(`http://localhost:7777/api/groups/${id}`)
+      if (res.success) {
+        const groupData = res.data
         if (groupData) {
           setFormData({
             group_name: groupData.group_name || "",
@@ -90,17 +86,9 @@ export default function EditGroups() {
   // Fetch lấy thành viên nhóm theo ID
   const fetchGroupsUser = async (id) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/groups/${id}/members`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-      if (res.ok) {
-        const membersData = await res.json()
-        console.log("Members data:", membersData); // Debug the response structure
-        setMembers(membersData?.data || [])
+      const res = await axiosPrivate.get(`http://localhost:7777/api/groups/${id}/members`)
+      if (res.success) {
+        setMembers(res.data || [])
       }
     } catch (error) {
       Swal.fire({
@@ -117,6 +105,9 @@ export default function EditGroups() {
     if (id) {
       fetchGroupById(id)
       fetchGroupsUser(id)
+
+      setRoleUserCurrent(members.find((member) => member.account_id === user.account_id)?.role)
+
     } else {
       Swal.fire({
         icon: "error",
@@ -212,20 +203,13 @@ export default function EditGroups() {
   const handleSaveGroup = async (updatedData) => {
     setFormData((prev) => ({ ...prev, ...updatedData }))
     try {
-      const res = await fetch(`http://localhost:7777/api/groups/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
+      const res = await axiosPrivate.put(`http://localhost:7777/api/groups/${id}`, {
           group_name: updatedData.group_name,
           group_description: updatedData.group_description,
           icon_name: updatedData.icon_name,
           icon_color: updatedData.icon_color,
-        }),
-      })
-      if (res.ok) {
+        })
+      if (res.success) {
         Swal.fire({
           icon: "success",
           title: "Thành công",
@@ -235,7 +219,7 @@ export default function EditGroups() {
         })
         setIsEditGroupPopupOpen(false)
       } else {
-        const errorData = await res.json()
+        const errorData = res.data
         throw new Error(errorData.message || "Cập nhật nhóm thất bại")
       }
     } catch (error) {
@@ -309,6 +293,15 @@ export default function EditGroups() {
   const CardIconComponent = getIconComponent(formData.icon_name)
   const cardColorClass = getColorClass(formData.icon_color)
 
+  const getRole = (role) => {
+    if (role === "member") return <span className="text-sm font-medium text-white bg-blue-500 px-2 py-0.5 rounded-lg">Thành viên</span>
+    if (role === "admin") return <span className="text-sm font-medium text-white bg-green-500 px-2 py-0.5 rounded-lg">Quản trị viên</span>
+    if (role === "vice") return <span className="text-sm font-medium text-white bg-yellow-500 px-2 py-0.5 rounded-lg">Phó nhóm</span>
+    if (role === "owner") return <span className="text-sm font-medium text-white bg-red-500 px-2 py-0.5 rounded-lg">Chủ nhóm</span>
+    return "Thành viên"
+}
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -330,6 +323,9 @@ export default function EditGroups() {
                   <h1 className="text-2xl font-bold text-gray-900">{formData.group_name}</h1>
                   <p className="text-sm text-gray-600">Chi tiết nhóm và quản lý thành viên</p>
                 </div>
+                <span className="text-sm text-gray-600">
+                  {getRole(roleUserCurrent)}
+                </span>
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -368,6 +364,7 @@ export default function EditGroups() {
                       placeholder="Tên nhóm"
                       readOnly
                     />
+                  {roleUserCurrent === "owner" && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -376,6 +373,7 @@ export default function EditGroups() {
                     >
                       <Edit className="h-4 w-4 text-blue-500" />
                     </Button>
+                  )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1 line-clamp-2">{formData.group_description}</p>
                   <p className="text-xs text-gray-500 mt-1">Được tạo ngày {new Date().toLocaleDateString("vi-VN")}</p>
@@ -425,10 +423,12 @@ export default function EditGroups() {
                       {members.length}
                     </Badge>
                   </CardTitle>
-                  <Button onClick={handleAddMember} className="bg-blue-500 hover:bg-blue-600">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Thêm thành viên
-                  </Button>
+                  {(roleUserCurrent === "owner" || roleUserCurrent === "vice") && (
+                    <Button onClick={handleAddMember} className="bg-blue-500 hover:bg-blue-600">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Thêm thành viên
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -457,6 +457,7 @@ export default function EditGroups() {
                               <p className="text-sm text-gray-500">{member.email || "No email"}</p>
                             </div>
                           </div>
+                        {(roleUserCurrent === "owner" || roleUserCurrent === "vice") && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -468,15 +469,18 @@ export default function EditGroups() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Chỉnh sửa
                               </DropdownMenuItem>
+                              {roleUserCurrent === "owner" && (
                               <DropdownMenuItem
                                 onClick={() => handleDeleteMember(member.id)}
                                 className="text-red-600 focus:text-red-600"
                               >
-                                <Edit className="h-4 w-4 mr-2" />
+                                <Trash className="h-4 w-4 mr-2" />
                                 Xóa
                               </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
+                              )}
                         </div>
 
                         <div className="space-y-2">
@@ -513,6 +517,7 @@ export default function EditGroups() {
               handleBackToSpaces={handleBackToSpaces}
               handleAddHouse={handleAddHouse}
               handleSaveHouse={handleSaveHouse}
+              roleUserCurrent={roleUserCurrent}
             />
           </TabsContent>
         </Tabs>

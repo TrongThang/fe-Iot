@@ -6,20 +6,20 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User } from "lucide-react"
+import axiosPrivate from "@/apis/clients/private.client"
 
 export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) {
   const [memberData, setMemberData] = useState({
     email: "",
     role: "",
   })
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk2MjU3NiwiZXhwIjoxNzQ5OTY2MTc2fQ.3Vdqi8yV0to-NXeeQ8oKW-OQ97aBchb7zOvdMmJVu_Y"
 
   const roles = [
     { value: "admin", label: "Chủ nhóm" },
     { value: "moderator", label: "Phó nhóm" },
     { value: "member", label: "Thành viên" },
     { value: "viewer", label: "Người xem" },
-  ]
+  ] 
 
   const handleSave = async () => {
     if (!memberData.email.trim() || !memberData.role) {
@@ -35,25 +35,18 @@ export default function AddMemberPopup({ open, onOpenChange, onSave, groupId }) 
     }
 
     try {
-      const res = await fetch(`http://localhost:7777/api/groups/users`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
+      const res = await axiosPrivate.post(`http://localhost:7777/api/groups/users`, {
           group_id: groupId,
           email: memberData.email,
           role: memberData.role,
-        }),
       })
-      if (res.ok) {
-        const newMember = await res.json()
+      if (res.success) {
+        const newMember = res.data
         onSave(newMember.data) // hoặc newMember tuỳ response
         onOpenChange(false)
         setMemberData({ email: "", role: "" })
       } else {
-        const errorData = await res.json()
+        const errorData = res.data
         alert(errorData.message || "Thêm thành viên thất bại!")
       }
     } catch (error) {

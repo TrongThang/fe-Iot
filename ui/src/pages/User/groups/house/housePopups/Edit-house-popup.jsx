@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Home, MapPin, Palette, X, Briefcase, GraduationCap, Building, Building2, Bed, Castle, TreePine, Crown, BookOpen } from "lucide-react";
 import IconPickerPopup from "../../icon-picker/icon-picker-popup";
 import Swal from "sweetalert2";
+import axiosPrivate from "@/apis/clients/private.client";
 
 const iconMap = {
   home: Home,
@@ -36,7 +37,6 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
     icon: { icon: Home, color: "bg-blue-500", name: "home", id: "home", colorId: "blue" },
   });
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
 
   useEffect(() => {
     if (house && open) {
@@ -78,21 +78,14 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
       }
 
       const houseId = house?.id || house?.house_id;
-      const response = await fetch(`http://localhost:7777/api/houses/${houseId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
+      const response = await axiosPrivate.put(`http://localhost:7777/api/houses/${houseId}`, requestBody)
 
-      if (!response.ok) {
-        const errorData = await response.json();
+      if (!response.success) {
+        const errorData = response.data;
         throw new Error(errorData.message || "Chỉnh sửa nhà thất bại");
       }
 
-      const updatedHouse = await response.json();
+      const updatedHouse = response.data;
       onSave(updatedHouse);
       onOpenChange(false);
 

@@ -6,9 +6,10 @@ const axiosPrivate = axios.create({
     baseURL: process.env.SMART_NET_API_URL || "http://localhost:7777/api/",
     timeout: 1000000,
     headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        // "ngrok-skip-browser-warning": "true",
+        'Accept': 'application/json',
+        'Content-Type': 'application/json; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Bearer ${localStorage.getItem("authToken")}`,
     },
 });
 

@@ -16,8 +16,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import AddHousePopup from "./housePopups/Add-house-popup";
 import EditHousePopup from "./housePopups/Edit-house-popup";
+import axiosPrivate from "@/apis/clients/private.client";
 
-export default function HouseTab() {
+export default function HouseTab({ roleUserCurrent }) {
     const { id } = useParams();
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedHouse, setSelectedHouse] = useState(null);
@@ -28,7 +29,6 @@ export default function HouseTab() {
     const [isLoading, setIsLoading] = useState(false);
     const [isAddingHouse, setIsAddingHouse] = useState(false);
     const navigate = useNavigate();
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
     const [houses, setHouses] = useState([]);
 
     const iconMap = {
@@ -55,16 +55,9 @@ export default function HouseTab() {
     const fetchHouses = async (groupId) => {
         setIsLoading(true);
         try {
-            const res = await fetch(`http://localhost:7777/api/houses/group/${groupId}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-            if (res.ok) {
-                const dataHouse = await res.json();
-                console.log("Fetched houses:", dataHouse);
+            const res = await axiosPrivate.get(`http://localhost:7777/api/houses/group/${groupId}`)
+                const dataHouse = res;
+                
                 const normalizedHouses = Array.isArray(dataHouse)
                     ? dataHouse.map((group) => ({
                         id: group.house_id ?? Date.now(),
@@ -82,11 +75,8 @@ export default function HouseTab() {
                         return { ...house, space: spaces.length };
                     })
                 );
-                setHouses(housesWithSpaces);
-            } else {
-                setHouses([]);
 
-            }
+                setHouses(housesWithSpaces || []);            
         } catch (error) {
             console.error("Error fetching houses:", error);
             setHouses([]);
@@ -98,16 +88,9 @@ export default function HouseTab() {
 
     const fetchSpaces = async (houseId) => {
         try {
-            const res = await fetch(`http://localhost:7777/api/spaces/house/${houseId}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-            if (res.ok) {
-                const dataSpace = await res.json();
-                console.log(`Fetched spaces for house ${houseId}:`, dataSpace);
+            const res = await axiosPrivate.get(`http://localhost:7777/api/spaces/house/${houseId}`)
+            if (res.success) {
+                const dataSpace = res.data;
                 return Array.isArray(dataSpace) ? dataSpace : [];
             } else {
                 console.error(`Failed to fetch spaces for house ${houseId}: ${res.status} ${res.statusText}`);
@@ -127,13 +110,8 @@ export default function HouseTab() {
 
     const handleDeleteHouse = async (houseId) => {
         try {
-            const res = await fetch(`http://localhost:7777/api/houses/${houseId}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            });
-            if (res.ok) {
+            const res = await axiosPrivate.delete(`http://localhost:7777/api/houses/${houseId}`)
+            if (res.success) {
                 setHouses(houses.filter((h) => h.id !== houseId));
                 Swal.fire({
                     icon: "success",
@@ -264,6 +242,7 @@ export default function HouseTab() {
                                     {houses.length}
                                 </Badge>
                             </CardTitle>
+                            {(roleUserCurrent === "owner" || roleUserCurrent === "vice") && (
                             <Button
                                 onClick={handleAddHouse}
                                 className="bg-blue-500 hover:bg-blue-600"
@@ -278,6 +257,7 @@ export default function HouseTab() {
                                     </>
                                 )}
                             </Button>
+                            )}
                         </div>
                     </CardHeader>
                     <CardContent>
@@ -382,6 +362,7 @@ export default function HouseTab() {
                                                             <Edit className="h-4 w-4 mr-3" />
                                                             Xem không gian
                                                         </DropdownMenuItem>
+                                                        {(roleUserCurrent === "owner" || roleUserCurrent === "vice") && (
                                                         <DropdownMenuItem
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -404,7 +385,9 @@ export default function HouseTab() {
                                                             </svg>
                                                             Chỉnh sửa nhà
                                                         </DropdownMenuItem>
+                                                        )}
                                                         <div className="border-t my-1" />
+                                                        {roleUserCurrent === "owner" && (
                                                         <DropdownMenuItem
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
@@ -415,6 +398,7 @@ export default function HouseTab() {
                                                             <Trash2 className="h-4 w-4 mr-3" />
                                                             Xóa nhà
                                                         </DropdownMenuItem>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </div>

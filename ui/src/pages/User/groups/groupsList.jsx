@@ -8,6 +8,7 @@ import {
     TreePine,
     Crown,
     BookOpen,
+    Eye,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,6 +21,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import Swal from "sweetalert2"
 import AddGroups from "./groupPopups/Add-group-popup"
+import axiosPrivate from "@/apis/clients/private.client"
 
 export default function GroupsManagement() {
     const [viewMode, setViewMode] = useState("grid")
@@ -27,7 +29,6 @@ export default function GroupsManagement() {
     const [groups, setGroups] = useState([])
     const [groupMembers, setGroupMembers] = useState({}) // Object to map group_id to member count
     const navigate = useNavigate()
-    const accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJBQ0NUMTBKVU4yNTAxSlhCV1k5UlBGR1Q0NEU0WUNCUSIsInVzZXJuYW1lIjoidGhhbmhzYW5nMDkxMjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0OTk4OTMwNCwiZXhwIjoxNzQ5OTkyOTA0fQ.j6DCx4JInPkd7xXBPaL3XoBgEadKenacoQAlOj3lNrE";
 
     const iconMap = {
         home: Home,
@@ -52,19 +53,16 @@ export default function GroupsManagement() {
 
     const fetchGroups = async () => {
         try {
-            const res = await fetch(`http://localhost:7777/api/groups/my-groups`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            })
-            if (res.ok) {
-                const dataGroups = await res.json()
-                if (Array.isArray(dataGroups?.data)) {
-                    setGroups(dataGroups?.data)
-                } else if (dataGroups?.data && typeof dataGroups?.data === "object") {
-                    setGroups([dataGroups?.data])
+            const res = await axiosPrivate.get(`http://localhost:7777/api/groups/my-groups`)
+            
+            if (res.success) {
+                const dataGroups = res.data
+                console.log(dataGroups)
+                console.log(typeof dataGroups)
+                if (Array.isArray(dataGroups)) {
+                    setGroups(dataGroups)
+                } else if (dataGroups && typeof dataGroups === "object") {
+                    setGroups([dataGroups])
                 } else {
                     setGroups([])
                 }
@@ -76,19 +74,13 @@ export default function GroupsManagement() {
 
     const fetchGroupsUser = async (groupId) => {
         try {
-            const res = await fetch(`http://localhost:7777/api/groups/${groupId}/members`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            })
-            if (res.ok) {
-                const membersData = await res.json()
+            const res = await axiosPrivate.get(`http://localhost:7777/api/groups/${groupId}/members`)
+            if (res.status === 200) {
+                const membersData = res.data
                 console.log(`Fetched members for group ${groupId}:`, membersData)
                 setGroupMembers((prev) => ({
                     ...prev,
-                    [groupId]: membersData?.data?.length || 0
+                    [groupId]: membersData?.length || 0
                 }))
             }
         } catch (error) {
@@ -111,7 +103,7 @@ export default function GroupsManagement() {
             }
         }
         fetchAllGroupsData()
-    }, [groups]) // Re-run when groups changes
+    }, []) // Re-run when groups changes
 
     const handleSaveGroup = (newGroup) => {
         setGroups((prev) => [...prev, newGroup])
@@ -137,15 +129,9 @@ export default function GroupsManagement() {
 
         if (result.isConfirmed) {
             try {
-                const res = await fetch(`http://localhost:7777/api/groups/${group.group_id}`, {
-                    method: "DELETE",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${accessToken}`,
-                    },
-                })
+                const res = await axiosPrivate.delete(`http://localhost:7777/api/groups/${group.group_id}`)
 
-                if (res.ok) {
+                if (res.status === 200) {
                     setGroups((prev) => prev.filter((g) => g.group_id !== group.group_id))
                     setGroupMembers((prev) => {
                         const newMembers = { ...prev }
@@ -161,7 +147,7 @@ export default function GroupsManagement() {
                     })
                     console.log("Group deleted successfully")
                 } else {
-                    const errorData = await res.json()
+                    const errorData = res.data
                     throw new Error(errorData.message || "Xóa nhóm thất bại")
                 }
             } catch (error) {
@@ -187,6 +173,14 @@ export default function GroupsManagement() {
         if (color.startsWith("bg-")) return color // Trường hợp là class Tailwind
         if (color.startsWith("#")) return ""      // Trường hợp là mã hex, sẽ dùng style
         return colorMap[color] || "bg-gray-500"   // Trường hợp là tên màu
+    }
+
+    const getRole = (role) => {
+        if (role === "member") return <span className="text-sm font-medium text-white bg-blue-500 px-2 py-0.5 rounded-lg">Thành viên</span>
+        if (role === "admin") return <span className="text-sm font-medium text-white bg-green-500 px-2 py-0.5 rounded-lg">Quản trị viên</span>
+        if (role === "vice") return <span className="text-sm font-medium text-white bg-yellow-500 px-2 py-0.5 rounded-lg">Phó nhóm</span>
+        if (role === "owner") return <span className="text-sm font-medium text-white bg-red-500 px-2 py-0.5 rounded-lg">Chủ nhóm</span>
+        return "Thành viên"
     }
 
     return (
@@ -297,7 +291,9 @@ export default function GroupsManagement() {
                                         {/* Members Section */}
                                         <div className="px-6 pb-4">
                                             <div className="flex items-center justify-between mb-3">
-                                                <span className="text-sm font-medium text-gray-700">Thành viên</span>
+                                                <span className="text-sm font-medium text-gray-700">
+                                                    {getRole(group.role)}
+                                                </span>
                                                 <span className="text-sm text-white bg-gray-500 px-2 py-0.5 rounded-lg">
                                                     {groupMembers[group.group_id] || 0} người
                                                 </span>
@@ -321,8 +317,8 @@ export default function GroupsManagement() {
                                                     className="flex-1 h-9 hover:opacity-50"
                                                     onClick={() => handleEdit(group)}
                                                 >
-                                                    <Edit className="h-3 w-3 mr-2" />
-                                                    Chỉnh sửa
+                                                    <Eye className="h-3 w-3 mr-2" />
+                                                    Xem
                                                 </Button>
                                                 <Button
                                                     variant="outline"
@@ -348,7 +344,7 @@ export default function GroupsManagement() {
                                 <TableRow className="bg-gray-50">
                                     <TableHead className="w-[50px] font-semibold">STT</TableHead>
                                     <TableHead className="font-semibold">Tên nhóm</TableHead>
-                                    <TableHead className="font-semibold">Thành viên</TableHead>
+                                    <TableHead className="font-semibold">Vai trò</TableHead>
                                     <TableHead className="w-[150px] font-semibold">Ngày tạo</TableHead>
                                     <TableHead className="w-[120px] font-semibold text-center">Hành động</TableHead>
                                 </TableRow>
@@ -375,18 +371,7 @@ export default function GroupsManagement() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center space-x-2">
-                                                        <div className="flex -space-x-1">
-                                                            {[...Array(Math.min(groupMembers[group.group_id] || 0, 3))].map((_, i) => (
-                                                                <Avatar key={i} className="w-6 h-6 border-2 border-white">
-                                                                    <AvatarFallback className="text-xs bg-gray-200">
-                                                                        {String.fromCharCode(65 + i)}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                            ))}
-                                                        </div>
-                                                        <span className="text-sm text-gray-600">
-                                                            {groupMembers[group.group_id] || 0} người
-                                                        </span>
+                                                        {getRole(group.role)}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
@@ -398,7 +383,7 @@ export default function GroupsManagement() {
                                                 <TableCell>
                                                     <div className="flex items-center space-x-1">
                                                         <Button variant="ghost" size="sm" onClick={() => handleEdit(group)}>
-                                                            <Edit className="h-4 w-4" />
+                                                            <Eye className="h-4 w-4 text-green -500" />
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
