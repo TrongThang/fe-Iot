@@ -56,9 +56,9 @@ export default function DeviceGrid({
                                     <div className="flex items-center gap-2 mt-1">
                                         <Badge
                                             variant="outline"
-                                            className={cn("text-xs px-2 py-1", getDeviceStatusColor(device.status, device.isOn))}
+                                            className={cn("text-xs px-2 py-1", getDeviceStatusColor(device.status, device?.power_status))}
                                         >
-                                            {device.isOn ? "Hoạt động" : "Tắt"}
+                                            {device?.power_status ? "Hoạt động" : "Tắt"}
                                         </Badge>
                                         <span className="text-xs text-slate-400">{device.lastActivity}</span>
                                     </div>
@@ -68,7 +68,7 @@ export default function DeviceGrid({
                             <div className="flex items-center gap-3">
                                 {device.type === "camera" && (
                                     <div className="flex items-center gap-1">
-                                        {device.isOn ? (
+                                        {device?.power_status ? (
                                             <Wifi className="w-4 h-4 text-green-500" />
                                         ) : (
                                             <WifiOff className="w-4 h-4 text-gray-400" />
@@ -76,8 +76,8 @@ export default function DeviceGrid({
                                     </div>
                                 )}
                                 <Switch
-                                    checked={device.isOn}
-                                    onCheckedChange={() => onToggle(device.id)}
+                                    checked={device?.power_status}
+                                    onCheckedChange={(checked) => onToggle(device.id)}
                                     onClick={(e) => e.stopPropagation()}
                                     className="data-[state=checked]:bg-green-500"
                                 />
@@ -101,7 +101,7 @@ export default function DeviceGrid({
                                 <div className="flex items-center gap-2">
                                     {device.type === "camera" && (
                                         <div className="flex items-center gap-1">
-                                            {device.isOn ? (
+                                            {device?.power_status ? (
                                                 <Wifi className="w-3 h-3 text-green-500" />
                                             ) : (
                                                 <WifiOff className="w-3 h-3 text-gray-400" />
@@ -109,7 +109,7 @@ export default function DeviceGrid({
                                         </div>
                                     )}
                                     <Switch
-                                        checked={device.isOn}
+                                        checked={device?.power_status}
                                         onCheckedChange={() => onToggle(device.id)}
                                         onClick={(e) => e.stopPropagation()}
                                         className="data-[state=checked]:bg-green-500"
@@ -121,9 +121,9 @@ export default function DeviceGrid({
                             <div className="flex items-center justify-between mb-3">
                                 <Badge
                                     variant="outline"
-                                    className={cn("text-xs px-2 py-1", getDeviceStatusColor(device.status, device.isOn))}
+                                    className={cn("text-xs px-2 py-1", getDeviceStatusColor(device.status, device?.power_status))}
                                 >
-                                    {device.isOn ? "Đang hoạt động" : "Đã tắt"}
+                                    {device?.power_status ? "Đang hoạt động" : "Đã tắt"}
                                 </Badge>
                                 <span className="text-xs text-slate-500">{device.lastActivity}</span>
                             </div>
@@ -144,7 +144,7 @@ export default function DeviceGrid({
                                             <div className="w-16 bg-slate-200 rounded-full h-1.5 mr-2">
                                                 <div
                                                     className="bg-amber-500 h-1.5 rounded-full"
-                                                    style={{ width: `${device.brightness}%`, opacity: device.isOn ? 1 : 0.5 }}
+                                                    style={{ width: `${device.brightness}%`, opacity: device?.power_status ? 1 : 0.5 }}
                                                 />
                                             </div>
                                             <span className="text-sm font-medium">{device.brightness}%</span>

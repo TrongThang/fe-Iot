@@ -6,6 +6,7 @@ const axiosPublic = axios.create({
         // 'ngrok-skip-browser-warning': 'true',
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
     },
     // Cho phép xử lý các status code từ 200-499
     validateStatus: function (status) {
