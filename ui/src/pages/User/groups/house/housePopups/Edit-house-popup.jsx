@@ -24,7 +24,6 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
     },
   });
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const accessToken = localStorage.getItem("authToken");
 
   useEffect(() => {
     if (house && open) {

@@ -14,112 +14,60 @@ import {
     Eye,
     Clock,
     MapPin,
+    ChevronDown,
+    ChevronUp,
+    Maximize2,
+    Minimize2,
+    BarChart3,
+    Settings,
+    Bell,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
+import axiosPrivate from "@/apis/clients/private.client"
 
 
 export default function IoTDashboard() {
     const [currentTime, setCurrentTime] = useState(new Date())
+    const [systemStats, setSystemStats] = useState({
+        totalDevices: 0,
+        onlineDevices: 0,
+        activeSpaces: 0,
+        energyUsage: 0,
+    })
+    const [spaceEnvironmentalData, setSpaceEnvironmentalData] = useState([])
+    const [isEnvironmentalExpanded, setIsEnvironmentalExpanded] = useState(true)
+    const [expandedSpaces, setExpandedSpaces] = useState({})
 
     useEffect(() => {
-        const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-        return () => clearInterval(timer)
+        const fetchData = async () => {
+            try {
+                const [cardResponse, statisticResponse] = await Promise.all([
+                    axiosPrivate.get('statistic/card'),
+                    axiosPrivate.get('statistic')
+                ])
+                
+                if(cardResponse.success) {
+                    setSystemStats(cardResponse.data)
+                }
+                if(statisticResponse.success) {
+                    setSpaceEnvironmentalData(statisticResponse.data)
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error)
+            }
+        }
+        fetchData()
+
+        // Update time every minute
+        const timeInterval = setInterval(() => {
+            setCurrentTime(new Date())
+        }, 60000)
+
+        return () => clearInterval(timeInterval)
     }, [])
-
-    // Mock data for IoT devices and sensors
-    const systemStats = {
-        totalDevices: 27,
-        onlineDevices: 24,
-        offlineDevices: 3,
-        activeSpaces: 8,
-        energyUsage: 1.2,
-        uptime: 99.9,
-    }
-
-    // Space-specific environmental data
-    const spaceEnvironmentalData = [
-        {
-            id: 1,
-            name: "Phòng khách",
-            icon: Home,
-            color: "bg-blue-500",
-            temperature: 24.5,
-            humidity: 45,
-            airQuality: 85,
-            lightLevel: 750,
-            status: "normal",
-            devices: 8,
-            active: 6,
-        },
-        {
-            id: 2,
-            name: "Phòng ngủ",
-            icon: Home,
-            color: "bg-purple-500",
-            temperature: 22.0,
-            humidity: 50,
-            airQuality: 90,
-            lightLevel: 200,
-            status: "normal",
-            devices: 5,
-            active: 4,
-        },
-        {
-            id: 3,
-            name: "Nhà bếp",
-            icon: Home,
-            color: "bg-orange-500",
-            temperature: 26.8,
-            humidity: 60,
-            airQuality: 75,
-            lightLevel: 900,
-            status: "warning",
-            devices: 6,
-            active: 5,
-        },
-        {
-            id: 4,
-            name: "Phòng tắm",
-            icon: Home,
-            color: "bg-cyan-500",
-            temperature: 25.2,
-            humidity: 70,
-            airQuality: 80,
-            lightLevel: 400,
-            status: "normal",
-            devices: 3,
-            active: 2,
-        },
-        {
-            id: 5,
-            name: "Phòng làm việc",
-            icon: Home,
-            color: "bg-green-500",
-            temperature: 23.5,
-            humidity: 42,
-            airQuality: 88,
-            lightLevel: 850,
-            status: "normal",
-            devices: 4,
-            active: 4,
-        },
-        {
-            id: 6,
-            name: "Garage",
-            icon: Home,
-            color: "bg-gray-500",
-            temperature: 18.2,
-            humidity: 35,
-            airQuality: 70,
-            lightLevel: 300,
-            status: "normal",
-            devices: 2,
-            active: 1,
-        },
-    ]
 
     const quickActions = [
         { id: 1, name: "Tắt tất cả đèn", icon: Lightbulb, action: "lights_off", color: "bg-yellow-500" },
@@ -128,274 +76,297 @@ export default function IoTDashboard() {
         { id: 4, name: "Chế độ nghỉ ngơi", icon: Home, action: "sleep_mode", color: "bg-purple-500" },
     ]
 
-    const recentDevices = [
-        {
-            id: 1,
-            name: "Đèn phòng khách",
-            type: "light",
-            status: "on",
-            location: "Phòng khách",
-            lastUpdate: "2 phút trước",
-            value: "75%",
-        },
-        {
-            id: 2,
-            name: "Máy lạnh phòng ngủ",
-            type: "ac",
-            status: "on",
-            location: "Phòng ngủ",
-            lastUpdate: "5 phút trước",
-            value: "22°C",
-        },
-        {
-            id: 3,
-            name: "Camera an ninh",
-            type: "camera",
-            status: "on",
-            location: "Cửa chính",
-            lastUpdate: "1 phút trước",
-            value: "HD",
-        },
-        {
-            id: 4,
-            name: "Cảm biến chuyển động",
-            type: "sensor",
-            status: "on",
-            location: "Hành lang",
-            lastUpdate: "3 phút trước",
-            value: "Không phát hiện",
-        },
-    ]
-
-
-    const getDeviceIcon = (type) => {
-        switch (type) {
-            case "light":
-                return Lightbulb
-            case "ac":
-                return Thermometer
-            case "camera":
-                return Eye
-            case "sensor":
-                return Activity
-            default:
-                return Power
-        }
-    }
-
     const getStatusColor = (status) => {
         switch (status) {
             case "warning":
-                return "text-yellow-600 bg-yellow-100"
+                return "text-amber-600 bg-amber-50 border-amber-200"
             case "error":
-                return "text-red-600 bg-red-100"
+                return "text-red-600 bg-red-50 border-red-200"
             case "normal":
-                return "text-green-600 bg-green-100"
+                return "text-emerald-600 bg-emerald-50 border-emerald-200"
             default:
-                return "text-gray-600 bg-gray-100"
+                return "text-slate-600 bg-slate-50 border-slate-200"
         }
     }
+
+    const getSpaceIcon = (spaceName) => {
+        const name = spaceName?.toLowerCase() || ''
+        if (name.includes('phòng ngủ') || name.includes('bedroom')) return Home
+        if (name.includes('nhà bếp') || name.includes('kitchen')) return Home
+        if (name.includes('phòng tắm') || name.includes('bathroom')) return Home
+        if (name.includes('phòng khách') || name.includes('living')) return Home
+        if (name.includes('garage') || name.includes('ga-ra')) return Home
+        return Home
+    }
+
+    const getSpaceColor = (index) => {
+        const colors = [
+            'bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 
+            'bg-orange-500', 'bg-cyan-500', 'bg-pink-500',
+            'bg-indigo-500', 'bg-teal-500', 'bg-red-500'
+        ]
+        return colors[index % colors.length]
+    }
+
+    const calculateStatus = (space) => {
+        const temp = space.avg_temperature || 0
+        const humidity = space.avg_humidity || 0
+        const gas = space.avg_gas || 0
+
+        if (temp > 30 || humidity > 80 || gas > 100) return "warning"
+        if (temp > 35 || humidity > 90 || gas > 200) return "error"
+        return "normal"
+    }
+
+    const toggleSpaceExpansion = (spaceId) => {
+        setExpandedSpaces(prev => ({
+            ...prev,
+            [spaceId]: !prev[spaceId]
+        }))
+    }
+
+    const formatTime = (date) => {
+        return date.toLocaleTimeString('vi-VN', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+        })
+    }
+
     return (
-        <div className="min-h-screen bg-gray-50 px-5 space-y-6 py-5">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
             {/* Header Section */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900">IoT Control Dashboard</h1>
-                    <p className="text-gray-600 text-sm">
-                        Hệ thống giám sát môi trường theo không gian
-                    </p>
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+                <div className="px-6 py-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">IoT Control Center</h1>
+                        <p className="text-slate-600 text-sm">
+                            Hệ thống giám sát và điều khiển thông minh • {formatTime(currentTime)}
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            {/* System Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                    <CardContent className="p-6">
+            <div className="px-6 py-6 space-y-6">
+                {/* System Overview Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white border-0 shadow-lg">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-blue-100 text-sm font-medium">Tổng thiết bị</p>
+                                    <p className="text-3xl font-bold">{systemStats.total_devices || 0}</p>
+                                </div>
+                                <div className="bg-blue-400/30 rounded-xl p-3">
+                                    <Power className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-0 shadow-lg">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-emerald-100 text-sm font-medium">Thiết bị online</p>
+                                    <p className="text-3xl font-bold">{systemStats.online_devices || 0}</p>
+                                    <p className="text-emerald-100 text-xs">
+                                        {systemStats.total_devices > 0 
+                                            ? Math.round((systemStats.online_devices / systemStats.total_devices) * 100)
+                                            : 0}% hoạt động
+                                    </p>
+                                </div>
+                                <div className="bg-emerald-400/30 rounded-xl p-3">
+                                    <Wifi className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white border-0 shadow-lg">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-purple-100 text-sm font-medium">Không gian</p>
+                                    <p className="text-3xl font-bold">{spaceEnvironmentalData.length || 0}</p>
+                                    <p className="text-purple-100 text-xs">Đang giám sát</p>
+                                </div>
+                                <div className="bg-purple-400/30 rounded-xl p-3">
+                                    <Home className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white border-0 shadow-lg">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-orange-100 text-sm font-medium">Năng lượng</p>
+                                    <p className="text-3xl font-bold">{systemStats.energy_usage || 0}kW</p>
+                                    <p className="text-orange-100 text-xs flex items-center">
+                                        <TrendingDown className="h-3 w-3 mr-1" />
+                                        -15% hôm nay
+                                    </p>
+                                </div>
+                                <div className="bg-orange-400/30 rounded-xl p-3">
+                                    <Zap className="h-6 w-6" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Space-based Environmental Monitoring */}
+                <Card className="border-0 shadow-sm">
+                    <CardHeader className="bg-slate-50/50">
                         <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-blue-100 text-sm font-medium">Tổng thiết bị</p>
-                                <p className="text-3xl font-bold">{systemStats.totalDevices}</p>
-                                <p className="text-blue-100 text-xs">+2 từ tháng trước</p>
-                            </div>
-                            <div className="bg-blue-400 rounded-full p-3">
-                                <Power className="h-6 w-6" />
-                            </div>
+                            <CardTitle className="flex items-center space-x-2">
+                                <MapPin className="h-5 w-5 text-blue-500" />
+                                <span>Giám sát môi trường theo không gian</span>
+                                <Badge variant="secondary" className="ml-2">
+                                    {spaceEnvironmentalData.length} không gian
+                                </Badge>
+                            </CardTitle>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setIsEnvironmentalExpanded(!isEnvironmentalExpanded)}
+                                className="hover:bg-slate-100"
+                            >
+                                {isEnvironmentalExpanded ? (
+                                    <>
+                                        <Minimize2 className="h-4 w-4 mr-2" />
+                                        Thu gọn
+                                    </>
+                                ) : (
+                                    <>
+                                        <Maximize2 className="h-4 w-4 mr-2" />
+                                        Mở rộng
+                                    </>
+                                )}
+                            </Button>
                         </div>
-                    </CardContent>
-                </Card>
+                    </CardHeader>
+                    
+                    <div className={`transition-all duration-300 ease-in-out ${
+                        isEnvironmentalExpanded ? 'max-h-none opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+                    }`}>
+                        <CardContent className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {spaceEnvironmentalData.map((space, index) => {
+                                    const SpaceIcon = getSpaceIcon(space.space_name)
+                                    const spaceColor = getSpaceColor(index)
+                                    const status = calculateStatus(space)
+                                    
+                                    return (
+                                        <Card key={space.space_id} className="hover:shadow-md transition-shadow shadow-sm border-slate-300 border-2">
+                                            <CardContent className="p-4">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className={`w-10 h-10 rounded-xl ${spaceColor} flex items-center justify-center shadow-sm`}>
+                                                            <SpaceIcon className="h-5 w-5 text-white" />
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold text-slate-900">{space.space_name}</span>
+                                                            <p className="text-xs text-slate-500">
+                                                                {space.total_devices !== 0 ? `${space.active_devices}/${space.total_devices} thiết bị` : "Không có thiết bị"}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge className={`${getStatusColor(status)} text-xs`}>
+                                                            {status === "normal" ? "Bình thường" : 
+                                                             status === "warning" ? "Cảnh báo" : "Nguy hiểm"}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
 
-                <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-green-100 text-sm font-medium">Thiết bị online</p>
-                                <p className="text-3xl font-bold">{systemStats.onlineDevices}</p>
-                                <p className="text-green-100 text-xs">
-                                    {Math.round((systemStats.onlineDevices / systemStats.totalDevices) * 100)}% hoạt động
-                                </p>
-                            </div>
-                            <div className="bg-green-400 rounded-full p-3">
-                                <Wifi className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                                                <div className="grid grid-cols-2 gap-3 text-sm">
+                                                    <div className="flex items-center space-x-2 p-2 bg-red-50 rounded-lg">
+                                                        <Thermometer className="h-4 w-4 text-red-500" />
+                                                        <span className="font-medium">{space.avg_temperature || 0}°C</span>
+                                                    </div>
+                                                    <div className="flex items-center space-x-2 p-2 bg-blue-50 rounded-lg">
+                                                        <Droplets className="h-4 w-4 text-blue-500" />
+                                                        <span className="font-medium">{space.avg_humidity || 0}%</span>
+                                                    </div>
+                                                </div>
 
-                <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-purple-100 text-sm font-medium">Không gian hoạt động</p>
-                                <p className="text-3xl font-bold">{systemStats.activeSpaces}</p>
-                                <p className="text-purple-100 text-xs">Tất cả đang hoạt động</p>
+                                                <div className={`transition-all duration-300 ease-in-out max-h-40 opacity-100 mt-3`}>
+                                                    <div className="grid grid-cols-2 gap-3 text-sm pt-3 border-t border-slate-100">
+                                                        <div className="flex items-center space-x-2 p-2 bg-emerald-50 rounded-lg">
+                                                            <Shield className="h-4 w-4 text-emerald-500" />
+                                                            <div>
+                                                                <p className="text-xs text-slate-500">Chất lượng không khí</p>
+                                                                <span className="font-medium">AQI {space.avg_gas || 0}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2 p-2 bg-amber-50 rounded-lg">
+                                                            <Lightbulb className="h-4 w-4 text-amber-500" />
+                                                            <div>
+                                                                <p className="text-xs text-slate-500">Năng lượng</p>
+                                                                <span className="font-medium">{space.avg_power || 0}kW</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="mt-3 pt-3 border-t border-slate-100">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-xs text-slate-500">Trạng thái thiết bị</span>
+                                                            <div className="flex items-center gap-1">
+                                                                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                                                                <span className="text-xs text-slate-600">
+                                                                    {space.active_devices} hoạt động
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="mt-2 bg-slate-100 rounded-full h-2">
+                                                            <div 
+                                                                className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
+                                                                style={{ 
+                                                                    width: `${space.total_devices > 0 ? (space.active_devices / space.total_devices) * 100 : 0}%` 
+                                                                }}
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    )
+                                })}
                             </div>
-                            <div className="bg-purple-400 rounded-full p-3">
-                                <Home className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-                    <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-orange-100 text-sm font-medium">Năng lượng</p>
-                                <p className="text-3xl font-bold">{systemStats.energyUsage}kW</p>
-                                <p className="text-orange-100 text-xs flex items-center">
-                                    <TrendingDown className="h-3 w-3 mr-1" />
-                                    -15% hôm nay
-                                </p>
-                            </div>
-                            <div className="bg-orange-400 rounded-full p-3">
-                                <Zap className="h-6 w-6" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Space-based Environmental Monitoring */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                        <MapPin className="h-5 w-5 text-blue-500" />
-                        <span>Giám sát môi trường theo không gian</span>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {spaceEnvironmentalData.map((space) => (
-                            <Card key={space.id} className="relative">
-                                <CardContent className="p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center space-x-2">
-                                            <div className={`w-8 h-8 rounded-lg ${space.color} flex items-center justify-center`}>
-                                                <space.icon className="h-4 w-4 text-white" />
-                                            </div>
-                                            <span className="font-semibold">{space.name}</span>
-                                        </div>
-                                        <Badge className={getStatusColor(space.status)}>
-                                            {space.status === "normal" ? "Bình thường" : "Cảnh báo"}
-                                        </Badge>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div className="flex items-center space-x-2">
-                                            <Thermometer className="h-4 w-4 text-red-500" />
-                                            <span>{space.temperature}°C</span>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Droplets className="h-4 w-4 text-blue-500" />
-                                            <span>{space.humidity}%</span>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Shield className="h-4 w-4 text-green-500" />
-                                            <span>AQI {space.airQuality}</span>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                            <Lightbulb className="h-4 w-4 text-yellow-500" />
-                                            <span>{space.lightLevel} lux</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3 pt-3 border-t text-xs text-gray-500">
-                                        {space.active}/{space.devices} thiết bị hoạt động
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
+                        </CardContent>
                     </div>
-                </CardContent>
-            </Card>
+                </Card>
 
-            {/* Quick Actions & Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Quick Actions */}
-                <Card>
-                    <CardHeader>
+                {/* <Card className="border-0 shadow-sm">
+                    <CardHeader className="bg-slate-50/50">
                         <CardTitle className="flex items-center space-x-2">
                             <Zap className="h-5 w-5 text-purple-500" />
                             <span>Thao tác nhanh</span>
                         </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <div className="space-y-3">
+                    <CardContent className="p-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                             {quickActions.map((action) => (
                                 <Button
                                     key={action.id}
                                     variant="outline"
-                                    className="w-full justify-start h-12 hover:bg-slate-50"
+                                    className="h-16 justify-start hover:shadow-md transition-all border-0 bg-white hover:bg-slate-50"
                                     onClick={() => alert(`Thực hiện: ${action.name}`)}
                                 >
-                                    <div className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center mr-3`}>
-                                        <action.icon className="h-4 w-4 text-white" />
+                                    <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center mr-3 shadow-sm`}>
+                                        <action.icon className="h-5 w-5 text-white" />
                                     </div>
-                                    <span className="font-medium">{action.name}</span>
+                                    <span className="font-medium text-slate-700">{action.name}</span>
                                 </Button>
                             ))}
                         </div>
                     </CardContent>
-                </Card>
-
-                {/* Recent Device Activity */}
-                <Card className="lg:col-span-2">
-                    <CardHeader>
-                        <CardTitle className="flex items-center space-x-2">
-                            <Clock className="h-5 w-5 text-blue-500" />
-                            <span>Hoạt động gần đây</span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            {recentDevices.map((device) => {
-                                const DeviceIcon = getDeviceIcon(device.type)
-                                return (
-                                    <div key={device.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                <DeviceIcon className="h-4 w-4 text-blue-600" />
-                                            </div>
-                                            <div>
-                                                <div className="font-medium text-slate-900">{device.name}</div>
-                                                <div className="text-sm text-slate-600">{device.location}</div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="flex items-center space-x-2">
-                                                <Switch checked={device.status === "on"} />
-                                                <span className="text-sm font-medium">{device.value}</span>
-                                            </div>
-                                            <div className="text-xs text-slate-500">{device.lastUpdate}</div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </CardContent>
-                </Card>
+                </Card> */}
             </div>
-
         </div>
     )
 }

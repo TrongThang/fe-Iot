@@ -113,6 +113,7 @@ export default function EditGroups() {
       if (res.ok) {
         const membersData = await res.json();
         setMembers(membersData?.data || []);
+        setRoleUserCurrent(membersData?.data[0]?.role || null)
       }
     } catch (error) {
       Swal.fire({
@@ -318,7 +319,10 @@ export default function EditGroups() {
           icon_color: updatedData.icon_color,
           icon_color_id: updatedData.icon_color_id,
       })
-      if (res.ok) {
+
+      console.log('res', res)
+
+      if (res) {
         Swal.fire({
           icon: "success",
           title: "Thành công",
