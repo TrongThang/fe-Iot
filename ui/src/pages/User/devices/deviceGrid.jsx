@@ -3,6 +3,9 @@ import { cn } from "@/lib/utils"
 import {
     Edit,
     Trash2,
+    Loader2,
+    Plus,
+    Smartphone,
     Wifi,
     WifiOff,
 } from "lucide-react"
@@ -12,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 
 export default function DeviceGrid({
     devices,
+    isLoading,
     selectedDevice,
     onDeviceClick,
     onToggle,
@@ -22,6 +26,29 @@ export default function DeviceGrid({
     getDeviceStatusColor,
     isCompact = false,
 }) {
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-10 w-10 text-blue-500 animate-spin mb-4" />
+                <p className="text-slate-500">Đang tải danh sách thiết bị...</p>
+            </div>
+        )
+    }
+
+    if (!devices.length) {
+        return (
+            <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                <Smartphone className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500 mb-2">Không tìm thấy thiết bị nào</p>
+                <p className="text-slate-400 text-sm mb-4">Thử thay đổi bộ lọc hoặc thêm thiết bị mới</p>
+                <Button onClick={() => { }} variant="outline" className="border-slate-200 bg-transparent">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Thêm thiết bị
+                </Button>
+            </div>
+        )
+    }
+
     return (
         <div
             className={cn(
@@ -42,7 +69,6 @@ export default function DeviceGrid({
                     )}
                 >
                     {isCompact ? (
-                        // Compact horizontal layout
                         <>
                             <div className="flex items-center space-x-3 flex-1">
                                 <div
@@ -52,23 +78,13 @@ export default function DeviceGrid({
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="font-medium text-slate-900">{device.name}</h3>
-                                    <p className="text-sm text-slate-500">{device.room}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <Badge
-                                            variant="outline"
-                                            className={cn("text-xs px-2 py-1", getDeviceStatusColor(device.status, device?.power_status))}
-                                        >
-                                            {device?.power_status ? "Hoạt động" : "Tắt"}
-                                        </Badge>
-                                        <span className="text-xs text-slate-400">{device.lastActivity}</span>
-                                    </div>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-3">
                                 {device.type === "camera" && (
                                     <div className="flex items-center gap-1">
-                                        {device?.power_status ? (
+                                        {device.power_status ? (
                                             <Wifi className="w-4 h-4 text-green-500" />
                                         ) : (
                                             <WifiOff className="w-4 h-4 text-gray-400" />
@@ -76,15 +92,15 @@ export default function DeviceGrid({
                                     </div>
                                 )}
                                 <Switch
-                                    checked={device?.power_status}
-                                    onCheckedChange={(checked) => onToggle(device.id)}
+                                    checked={device.power_status}
+                                    onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
                                     onClick={(e) => e.stopPropagation()}
                                     className="data-[state=checked]:bg-green-500"
                                 />
                             </div>
                         </>
                     ) : (
-                        // Normal card layout (giữ nguyên code cũ)
+                        // ... (giữ nguyên phần layout normal như code cũ của bạn)
                         <>
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center space-x-3">
@@ -95,13 +111,12 @@ export default function DeviceGrid({
                                     </div>
                                     <div>
                                         <h3 className="font-medium text-slate-900">{device.name}</h3>
-                                        <p className="text-xs text-slate-500">{device.room}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {device.type === "camera" && (
                                         <div className="flex items-center gap-1">
-                                            {device?.power_status ? (
+                                            {device.power_status ? (
                                                 <Wifi className="w-3 h-3 text-green-500" />
                                             ) : (
                                                 <WifiOff className="w-3 h-3 text-gray-400" />
@@ -109,71 +124,23 @@ export default function DeviceGrid({
                                         </div>
                                     )}
                                     <Switch
-                                        checked={device?.power_status}
-                                        onCheckedChange={() => onToggle(device.id)}
+                                        checked={device.power_status}
+                                        onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
                                         onClick={(e) => e.stopPropagation()}
                                         className="data-[state=checked]:bg-green-500"
                                     />
                                 </div>
                             </div>
 
-                            {/* Device Status */}
-                            <div className="flex items-center justify-between mb-3">
-                                <Badge
-                                    variant="outline"
-                                    className={cn("text-xs px-2 py-1", getDeviceStatusColor(device.status, device?.power_status))}
-                                >
-                                    {device?.power_status ? "Đang hoạt động" : "Đã tắt"}
-                                </Badge>
-                                <span className="text-xs text-slate-500">{device.lastActivity}</span>
-                            </div>
-
-                            {/* Device Type Specific Info */}
-                            <div className="bg-slate-50 rounded-lg p-3 mb-3">
-                                {device.type === "camera" && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-slate-600">Độ phân giải</span>
-                                        <span className="text-sm font-medium">{device.resolution}</span>
-                                    </div>
-                                )}
-
-                                {device.type === "light" && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-slate-600">Độ sáng</span>
-                                        <div className="flex items-center">
-                                            <div className="w-16 bg-slate-200 rounded-full h-1.5 mr-2">
-                                                <div
-                                                    className="bg-amber-500 h-1.5 rounded-full"
-                                                    style={{ width: `${device.brightness}%`, opacity: device?.power_status ? 1 : 0.5 }}
-                                                />
-                                            </div>
-                                            <span className="text-sm font-medium">{device.brightness}%</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {device.type === "smoke" && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-slate-600">PPM</span>
-                                        <span className={`text-sm font-medium ${device.ppm > 1000 ? "text-red-600" : "text-slate-700"}`}>
-                                            {device.ppm}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {device.type === "temperature" && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-slate-600">Nhiệt độ</span>
-                                        <span className={`text-sm font-medium ${device.temp > 30 ? "text-red-600" : "text-slate-700"}`}>
-                                            {device.temp}°C
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Actions */}
                             <div className="flex justify-between items-center">
-                                <div className="text-xs text-slate-500">{device.group_name}</div>
+                                <div className="flex items-center gap-2">
+                                    <div className="text-xs text-slate-500">{device.group_name}</div>
+                                    {device.ownership === "shared" && (
+                                        <Badge variant="outline" className="text-xs px-1 py-0.5 bg-blue-50 text-blue-600 border-blue-200">
+                                            {device.owner}
+                                        </Badge>
+                                    )}
+                                </div>
                                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Button
                                         variant="ghost"
