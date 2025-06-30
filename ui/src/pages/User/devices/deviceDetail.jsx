@@ -14,10 +14,10 @@ export function LightDetail({ device }) {
           <div className="text-center">
             <div
               className={`w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center ${
-                device.isOn ? "bg-amber-100" : "bg-gray-100"
+                device.power_status ? "bg-amber-100" : "bg-gray-100"
               }`}
             >
-              <Lightbulb className={`w-12 h-12 ${device.isOn ? "text-amber-500" : "text-gray-400"}`} />
+              <Lightbulb className={`w-12 h-12 ${device.power_status ? "text-amber-500" : "text-gray-400"}`} />
             </div>
             <h3 className="text-2xl font-bold mb-2">{device.brightness}%</h3>
             <p className="text-slate-600">Độ sáng hiện tại</p>
@@ -37,7 +37,7 @@ export function LightDetail({ device }) {
                 <span className="text-sm font-medium">Độ sáng</span>
                 <span className="text-sm text-slate-500">{device.brightness}%</span>
               </div>
-              <Slider value={[device.brightness]} max={100} step={1} className="w-full" disabled={!device.isOn} />
+              <Slider value={[device.brightness]} max={100} step={1} className="w-full" disabled={!device.power_status} />
             </div>
 
             {/* Color Control */}
@@ -53,7 +53,7 @@ export function LightDetail({ device }) {
                   variant={device.color === "white" ? "default" : "outline"}
                   size="sm"
                   className="flex-1"
-                  disabled={!device.isOn}
+                  disabled={!device.power_status}
                 >
                   Trắng
                 </Button>
@@ -61,7 +61,7 @@ export function LightDetail({ device }) {
                   variant={device.color === "warm" ? "default" : "outline"}
                   size="sm"
                   className="flex-1"
-                  disabled={!device.isOn}
+                  disabled={!device.power_status}
                 >
                   Ấm
                 </Button>
@@ -69,7 +69,7 @@ export function LightDetail({ device }) {
                   variant={device.color === "cool" ? "default" : "outline"}
                   size="sm"
                   className="flex-1"
-                  disabled={!device.isOn}
+                  disabled={!device.power_status}
                 >
                   Lạnh
                 </Button>
@@ -113,11 +113,11 @@ export function SmokeDetectorDetail({ device }) {
           <div className="text-center">
             <div
               className={`w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center ${
-                isWarning ? "bg-red-100" : device.isOn ? "bg-green-100" : "bg-gray-100"
+                isWarning ? "bg-red-100" : device.power_status ? "bg-green-100" : "bg-gray-100"
               }`}
             >
               <Flame
-                className={`w-12 h-12 ${isWarning ? "text-red-500" : device.isOn ? "text-green-500" : "text-gray-400"}`}
+                className={`w-12 h-12 ${isWarning ? "text-red-500" : device.power_status ? "text-green-500" : "text-gray-400"}`}
               />
             </div>
             <h3 className="text-2xl font-bold mb-2">{device.ppm} PPM</h3>
@@ -156,27 +156,6 @@ export function SmokeDetectorDetail({ device }) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Safety Information */}
-      <Card>
-        <CardContent className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Thông tin an toàn</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">Ngưỡng cảnh báo</span>
-              <span className="font-medium">1000 PPM</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">Kiểm tra cuối</span>
-              <span className="font-medium">15 ngày trước</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">Thời hạn pin</span>
-              <span className="font-medium">8 tháng</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
