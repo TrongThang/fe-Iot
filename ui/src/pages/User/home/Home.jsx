@@ -27,6 +27,8 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import axiosPrivate from "@/apis/clients/private.client"
+import StatisticsChart from "@/components/common/StatisticsChart"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 
 export default function IoTDashboard() {
@@ -38,22 +40,37 @@ export default function IoTDashboard() {
         energyUsage: 0,
     })
     const [spaceEnvironmentalData, setSpaceEnvironmentalData] = useState([])
+    const [devices, setDevices] = useState([])
     const [isEnvironmentalExpanded, setIsEnvironmentalExpanded] = useState(true)
     const [expandedSpaces, setExpandedSpaces] = useState({})
+    const [selectedSpaceForStats, setSelectedSpaceForStats] = useState('')
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [cardResponse, statisticResponse] = await Promise.all([
+                console.log('Fetching data...')
+                const [cardResponse, statisticResponse, devicesResponse] = await Promise.all([
                     axiosPrivate.get('statistic/card'),
-                    axiosPrivate.get('statistic')
+                    axiosPrivate.get('statistic'),
+                    axiosPrivate.get('devices/account')
                 ])
+                
+                console.log('Card response:', cardResponse)
+                console.log('Statistic response:', statisticResponse) 
+                console.log('Devices response:', devicesResponse)
                 
                 if(cardResponse.success) {
                     setSystemStats(cardResponse.data)
                 }
                 if(statisticResponse.success) {
                     setSpaceEnvironmentalData(statisticResponse.data)
+                    if (statisticResponse.data.length > 0) {
+                        setSelectedSpaceForStats(statisticResponse.data[0].space_id.toString())
+                    }
+                }
+                if(devicesResponse.success) {
+                    setDevices(devicesResponse.data)
+                    console.log('Devices set:', devicesResponse.data)
                 }
             } catch (error) {
                 console.error('Error fetching data:', error)
@@ -68,14 +85,7 @@ export default function IoTDashboard() {
 
         return () => clearInterval(timeInterval)
     }, [])
-
-    const quickActions = [
-        { id: 1, name: "Tắt tất cả đèn", icon: Lightbulb, action: "lights_off", color: "bg-yellow-500" },
-        { id: 2, name: "Kích hoạt bảo mật", icon: Shield, action: "security_on", color: "bg-red-500" },
-        { id: 3, name: "Chế độ tiết kiệm", icon: Zap, action: "eco_mode", color: "bg-green-500" },
-        { id: 4, name: "Chế độ nghỉ ngơi", icon: Home, action: "sleep_mode", color: "bg-purple-500" },
-    ]
-
+    
     const getStatusColor = (status) => {
         switch (status) {
             case "warning":
@@ -131,6 +141,10 @@ export default function IoTDashboard() {
             minute: '2-digit',
             hour12: false 
         })
+    }
+
+    const getSelectedSpace = () => {
+        return spaceEnvironmentalData.find(space => space.space_id.toString() === selectedSpaceForStats)
     }
 
     return (
@@ -215,6 +229,50 @@ export default function IoTDashboard() {
                             </div>
                         </CardContent>
                     </Card>
+                </div>
+
+                {/* Statistics Chart Section */}
+                <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-xl font-semibold text-slate-900">Biểu đồ thống kê</h2>
+                            <p className="text-sm text-slate-600">Thống kê dữ liệu cảm biến theo không gian và thiết bị</p>
+                        </div>
+                        {spaceEnvironmentalData.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-slate-600 whitespace-nowrap">Chọn không gian:</span>
+                                <Select value={selectedSpaceForStats} onValueChange={setSelectedSpaceForStats}>
+                                    <SelectTrigger className="w-64">
+                                        <SelectValue placeholder="Chọn không gian để xem thống kê" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {spaceEnvironmentalData.map(space => (
+                                            <SelectItem 
+                                                key={space.space_id} 
+                                                value={space.space_id.toString()}
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`w-3 h-3 rounded-full ${getSpaceColor(spaceEnvironmentalData.indexOf(space))}`}></div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium">{space.space_name}</span>
+                                                        <span className="text-xs text-slate-500">
+                                                            {space.total_devices} thiết bị • {space.active_devices} hoạt động
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <StatisticsChart 
+                        spaceId={selectedSpaceForStats}
+                        spaceData={getSelectedSpace()}
+                        devices={devices}
+                    />
                 </div>
 
                 {/* Space-based Environmental Monitoring */}
@@ -339,33 +397,6 @@ export default function IoTDashboard() {
                         </CardContent>
                     </div>
                 </Card>
-
-                {/* Quick Actions */}
-                {/* <Card className="border-0 shadow-sm">
-                    <CardHeader className="bg-slate-50/50">
-                        <CardTitle className="flex items-center space-x-2">
-                            <Zap className="h-5 w-5 text-purple-500" />
-                            <span>Thao tác nhanh</span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                            {quickActions.map((action) => (
-                                <Button
-                                    key={action.id}
-                                    variant="outline"
-                                    className="h-16 justify-start hover:shadow-md transition-all border-0 bg-white hover:bg-slate-50"
-                                    onClick={() => alert(`Thực hiện: ${action.name}`)}
-                                >
-                                    <div className={`w-10 h-10 rounded-xl ${action.color} flex items-center justify-center mr-3 shadow-sm`}>
-                                        <action.icon className="h-5 w-5 text-white" />
-                                    </div>
-                                    <span className="font-medium text-slate-700">{action.name}</span>
-                                </Button>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card> */}
             </div>
         </div>
     )
