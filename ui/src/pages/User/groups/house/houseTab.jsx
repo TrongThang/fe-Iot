@@ -5,30 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Home, 
-  Search, 
-  Plus, 
-  Trash2, 
-  Edit, 
+import {
+  Home,
+  Search,
+  Plus,
+  Trash2,
+  Edit,
   MoreHorizontal,
-  Briefcase,
-  GraduationCap,
-  Building,
-  Building2,
-  Bed,
-  Castle,
-  TreePine,
-  Crown,
-  BookOpen
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import SpaceTab from "./space/spaceTab";
-import { useNavigate, useParams } from "react-router-dom";
-import Swal from "sweetalert2";
+import { useParams } from "react-router-dom";
+import { toast } from "sonner";
 import AddHousePopup from "./housePopups/Add-house-popup";
 import EditHousePopup from "./housePopups/Edit-house-popup";
 import axiosPrivate from "@/apis/clients/private.client";
+import { HOUSE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
+import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
 
 export default function HouseTab({ roleUserCurrent }) {
   const { id } = useParams();
@@ -40,38 +33,19 @@ export default function HouseTab({ roleUserCurrent }) {
   const [houseToEdit, setHouseToEdit] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAddingHouse, setIsAddingHouse] = useState(false);
-  const navigate = useNavigate();
   const [houses, setHouses] = useState([]);
-
-  const HOUSE_ICON_MAP = {
-    HOME: Home,
-    OFFICE: Briefcase,
-    SCHOOL: GraduationCap,
-    BANK: Building,
-    APARTMENT: Building2,
-    HOTEL: Bed,
-    VILLA: Castle,
-    WOODEN: TreePine,
-    CASTLE: Crown,
-    LIBRARY: BookOpen,
-  };
-
-  const COLOR_MAP = {
-    WHITE: "#FFFFFF",
-    BLUE: "#3B82F6",
-    RED: "#EF4444",
-    GREEN: "#10B981",
-    YELLOW: "#F59E0B",
-    PURPLE: "#8B5CF6",
-    PINK: "#EC4899",
-    GRAY: "#6B7280",
-  };
 
   const fetchSpaces = async (houseId) => {
     try {
-      const res = await axiosPrivate.get(`http://localhost:7777/api/spaces/house/${houseId}`);
-      if (res.success) {
-        const dataSpace = res.data;
+      const res = await fetch(`http://localhost:7777/api/spaces/house/${houseId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+      if (res.ok) {
+        const dataSpace = await res.json();
         return Array.isArray(dataSpace) ? dataSpace : [];
       } else {
         console.error(`Failed to fetch spaces for house ${houseId}: ${res.status} ${res.statusText}`);
@@ -79,6 +53,7 @@ export default function HouseTab({ roleUserCurrent }) {
       }
     } catch (error) {
       console.error(`Error fetching spaces for house ${houseId}:`, error);
+      toast.error(error.message || "Đã xảy ra lỗi khi lấy danh sách không gian. Vui lòng thử lại.");
       return [];
     }
   };
@@ -87,20 +62,20 @@ export default function HouseTab({ roleUserCurrent }) {
     setIsLoading(true);
     try {
       const res = await axiosPrivate.get(`http://localhost:7777/api/houses/group/${groupId}`);
-      const dataHouse = res;
-                
+      const dataHouse = res ? res : []; // Fixed: Access res.data
       const normalizedHouses = Array.isArray(dataHouse)
-        ? dataHouse.map((group) => ({
-          id: group.house_id ?? Date.now(),
-          group_id: group.group_id ?? "",
-          name: group.house_name ?? "Unnamed House",
-          address: group.address ?? "",
-          icon_name: group.icon_name ?? "",
-          icon_color: group.icon_color ?? "",
+        ? dataHouse.map((house) => ({
+          id: house.house_id ?? Date.now(),
+          group_id: house.group_id ?? "",
+          name: house.house_name ?? "Unnamed House",
+          address: house.address ?? "",
+          icon_name: house.icon_name ?? "HOUSE",
+          icon_color: house.icon_color ?? COLOR_MAP.BLUE,
+          icon_color_id: house.icon_color_id ?? "BLUE",
           space: 0,
         }))
         : [];
-      
+
       const housesWithSpaces = await Promise.all(
         normalizedHouses.map(async (house) => {
           const spaces = await fetchSpaces(house.id);
@@ -111,6 +86,7 @@ export default function HouseTab({ roleUserCurrent }) {
       setHouses(housesWithSpaces || []);
     } catch (error) {
       console.error("Error fetching houses:", error);
+      toast.error(error.message || "Đã xảy ra lỗi khi lấy danh sách nhà. Vui lòng thử lại.");
       setHouses([]);
     } finally {
       setIsLoading(false);
@@ -124,34 +100,41 @@ export default function HouseTab({ roleUserCurrent }) {
   }, [id]);
 
   const handleDeleteHouse = async (houseId) => {
-    try {
-      const res = await axiosPrivate.delete(`http://localhost:7777/api/houses/${houseId}`);
-      if (res.success) {
-        setHouses(houses.filter((h) => h.id !== houseId));
-        Swal.fire({
-          icon: "success",
-          title: "Thành công",
-          text: "Xóa nhà thành công!",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#28a745",
+    const confirmed = await new Promise((resolve) => {
+      toast.warning(
+        "Bạn có chắc muốn xóa ngôi nhà này? Hành động này không thể hoàn tác!",
+        {
+          action: {
+            label: "Xóa",
+            onClick: () => resolve(true),
+          },
+          cancel: {
+            label: "Hủy",
+            onClick: () => resolve(false),
+          },
+          duration: 10000,
+        }
+      );
+    });
+
+    if (confirmed) {
+      try {
+        const res = await fetch(`http://localhost:7777/api/houses/${houseId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
         });
-      } else {
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: `Xóa nhà thất bại: ${res.status} ${res.statusText}`,
-          confirmButtonText: "OK",
-          confirmButtonColor: "#dc3545",
-        });
+        if (res.ok) {
+          setHouses(houses.filter((h) => h.id !== houseId));
+          toast.success("Xóa nhà thành công!");
+        } else {
+          throw new Error(`Xóa nhà thất bại: ${res.status} ${res.statusText}`);
+        }
+      } catch (error) {
+        toast.error(error.message || "Đã xảy ra lỗi khi xóa nhà. Vui lòng thử lại.");
       }
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: "Xóa nhà thất bại: " + error.message,
-        confirmButtonText: "OK",
-        confirmButtonColor: "#dc3545",
-      });
     }
   };
 
@@ -195,9 +178,11 @@ export default function HouseTab({ roleUserCurrent }) {
       };
       setHouses((prevHouses) => [...prevHouses, normalizedHouse]);
       setIsAddingHouse(false);
+      toast.success("Thêm nhà thành công!");
     } catch (error) {
       console.error("Error adding house to state:", error);
       setIsAddingHouse(false);
+      toast.error(error.message || "Đã xảy ra lỗi khi thêm nhà. Vui lòng thử lại.");
     }
   };
 
@@ -206,17 +191,21 @@ export default function HouseTab({ roleUserCurrent }) {
       prevHouses.map((h) =>
         h.id === updatedHouse.house_id
           ? {
-              ...h,
-              name: updatedHouse.house_name,
-              address: updatedHouse.address,
-              icon_name: updatedHouse.icon_name?.toUpperCase(),
-              icon_color: updatedHouse.icon_color,
-              icon_color_id: updatedHouse.icon_color_id,
-              group_id: updatedHouse.group_id,
-            }
+            ...h,
+            name: updatedHouse.house_name,
+            address: updatedHouse.address,
+            icon_name: updatedHouse.icon_name?.toUpperCase(),
+            icon_color: updatedHouse.icon_color,
+            icon_color_id: updatedHouse.icon_color_id,
+            group_id: updatedHouse.group_id,
+          }
           : h
       )
     );
+    toast.success("Thành công!", {
+      description: "Chỉnh sửa nhà thành công!",
+      duration: 3000,
+    });
   };
 
   const filteredHouses = houses.filter(
@@ -249,20 +238,22 @@ export default function HouseTab({ roleUserCurrent }) {
                   {houses.length}
                 </Badge>
               </CardTitle>
-              <Button
-                onClick={handleAddHouse}
-                className="bg-blue-500 hover:bg-blue-600"
-                disabled={isAddingHouse}
-              >
-                {isAddingHouse ? (
-                  "Đang thêm..."
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Thêm nhà
-                  </>
-                )}
-              </Button>
+              {roleUserCurrent === "owner" && (
+                <Button
+                  onClick={handleAddHouse}
+                  className="bg-blue-500 hover:bg-blue-600"
+                  disabled={isAddingHouse}
+                >
+                  {isAddingHouse ? (
+                    "Đang thêm..."
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Thêm nhà
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -289,7 +280,7 @@ export default function HouseTab({ roleUserCurrent }) {
                       <div className="relative">
                         <div
                           className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-200"
-                          style={{ backgroundColor: house.icon_color }}
+                          style={{ backgroundColor: house.icon_color || COLOR_MAP.BLUE }}
                         >
                           <IconComponent
                             className={`h-7 w-7 ${house.icon_color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
@@ -345,67 +336,69 @@ export default function HouseTab({ roleUserCurrent }) {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3 relative z-10">
-                      <div className="flex items-center space-x-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-9 w-9 p-0 hover:bg-slate-100 rounded-lg transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreHorizontal className="h-5 w-5 text-slate-600" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48 bg-white">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditHouse(house.id);
-                              }}
-                              className="flex items-center"
-                            >
-                              <Edit className="h-4 w-4 mr-3" />
-                              Xem không gian
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditHouseDetails(house.id);
-                              }}
-                              className="flex items-center"
-                            >
-                              <svg
-                                className="h-4 w-4 mr-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                    {roleUserCurrent === "owner" && (
+                      <div className="flex items-center space-x-3 relative z-10">
+                        <div className="flex items-center space-x-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-9 w-9 p-0 hover:bg-slate-100 rounded-lg transition-colors"
+                                onClick={(e) => e.stopPropagation()}
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                                />
-                              </svg>
-                              Chỉnh sửa nhà
-                            </DropdownMenuItem>
-                            <div className="border-t my-1" />
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteHouse(house.id);
-                              }}
-                              className="text-red-600 focus:text-red-600 flex items-center"
-                            >
-                              <Trash2 className="h-4 w-4 mr-3" />
-                              Xóa nhà
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                <MoreHorizontal className="h-5 w-5 text-slate-600" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 bg-white">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditHouse(house.id);
+                                }}
+                                className="flex items-center"
+                              >
+                                <Edit className="h-4 w-4 mr-3" />
+                                Xem không gian
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditHouseDetails(house.id);
+                                }}
+                                className="flex items-center"
+                              >
+                                <svg
+                                  className="h-4 w-4 mr-3"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                  />
+                                </svg>
+                                Chỉnh sửa nhà
+                              </DropdownMenuItem>
+                              <div className="border-t my-1" />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteHouse(house.id);
+                                }}
+                                className="text-red-600 focus:text-red-600 flex items-center"
+                              >
+                                <Trash2 className="h-4 w-4 mr-3" />
+                                Xóa nhà
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 );
               })}
@@ -436,4 +429,3 @@ export default function HouseTab({ roleUserCurrent }) {
     </div>
   );
 }
-

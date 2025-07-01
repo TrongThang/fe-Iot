@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Home, MapPin, Palette, X } from "lucide-react";
 import IconHousePickerPopup from "../../icon-picker/icon-house-picker-popup";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 import { HOUSE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
 import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
 
@@ -23,7 +23,6 @@ export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
     },
   });
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const accessToken = localStorage.getItem("authToken");
 
   const handleSave = async () => {
     try {
@@ -43,7 +42,7 @@ export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
         body: JSON.stringify(requestBody),
       });
@@ -57,13 +56,6 @@ export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
       onSave(newHouse);
       onOpenChange(false);
 
-      Swal.fire({
-        icon: "success",
-        title: "Thành công",
-        text: "Thêm nhà thành công!",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#28a745",
-      });
 
       setHouseData({
         name: "",
@@ -78,13 +70,7 @@ export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
       });
     } catch (error) {
       console.error("Lỗi khi thêm nhà:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Đã xảy ra lỗi khi thêm nhà. Vui lòng thử lại.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      toast.error(error.message || "Đã xảy ra lỗi khi thêm nhà. Vui lòng thử lại.");
     }
   };
 
@@ -106,6 +92,7 @@ export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
       },
     });
     onOpenChange(false);
+    toast.info("Đã hủy thêm nhà.");
   };
 
   const IconComponent = houseData.icon.component || Home;
@@ -221,4 +208,3 @@ export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
     </>
   );
 }
-

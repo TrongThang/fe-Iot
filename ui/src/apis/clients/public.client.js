@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZUlkIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MSwiaWF0IjoxNzUwMzAwMjY3LCJleHAiOjE3NTAzMjkwNjd9.iPCsl6cd2P__z4mWFX3vgr5dNI2vKhzjL-y-0tjry7g"
+const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZUlkIjoiYWRtaW4xMjMiLCJ1c2VybmFtZSI6ImFkbWluMTIzIiwicm9sZSI6MywiaWF0IjoxNzUxMTI0MjA2LCJleHAiOjE3NTExNTMwMDZ9.DG45Wgni1WFgsIWodi3AJW-jhcHPVw1v69T9QQmOZz4"
 
 const axiosPublic = axios.create({
     baseURL: process.env.SMART_NET_API_URL || "http://localhost:7777/api/", // Địa chỉ API public

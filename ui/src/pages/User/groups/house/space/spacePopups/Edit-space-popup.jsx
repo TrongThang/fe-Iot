@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Home, X } from "lucide-react";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 import IconSpacePickerPopup from "../../../icon-picker/icon-space-picker-popup";
 import { Textarea } from "@/components/ui/textarea";
 import { SPACE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
@@ -95,21 +95,15 @@ export default function EditSpacePopup({ open, onOpenChange, onSave, space }) {
             onSave(updatedSpace);
             onOpenChange(false);
 
-            Swal.fire({
-                icon: "success",
-                title: "Thành công",
-                text: "Chỉnh sửa không gian thành công!",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#28a745",
+            toast.success("Thành công", {
+                description: "Chỉnh sửa không gian thành công!",
+                duration: 3000,
             });
         } catch (error) {
             console.error("Lỗi khi chỉnh sửa không gian:", error);
-            Swal.fire({
-                icon: "error",
-                title: "Lỗi",
-                text: error.message || "Đã xảy ra lỗi khi chỉnh sửa không gian. Vui lòng thử lại.",
-                confirmButtonText: "OK",
-                confirmButtonColor: "#d33",
+            toast.error("Lỗi", {
+                description: error.message || "Đã xảy ra lỗi khi chỉnh sửa không gian. Vui lòng thử lại.",
+                duration: 3000,
             });
         }
     };

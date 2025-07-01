@@ -20,7 +20,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import EditGroupPopup from "./groupPopups/Edit-groups-popup";
 import AddMemberPopup from "./groupPopups/Add-member-popup";
 import HouseTab from "./house/houseTab";
-import Swal from "sweetalert2";
+import { toast } from "sonner"; // Import toast từ sonner
 import EditMemberPopup from "./groupPopups/Edit-member-popup";
 import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
 import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
@@ -44,7 +44,6 @@ export default function EditGroups() {
   const [houses, setHouses] = useState([]);
   const navigate = useNavigate();
   const { id } = useParams();
-  const accessToken = localStorage.getItem("authToken");
 
   // State for popups and navigation
   const [isAddMemberPopupOpen, setIsAddMemberPopupOpen] = useState(false);
@@ -56,7 +55,7 @@ export default function EditGroups() {
   const [selectedSpace, setSelectedSpace] = useState(null);
   const [showSpaceList, setShowSpaceList] = useState(false);
   const [showDeviceList, setShowDeviceList] = useState(false);
-  const [roleUserCurrent, setRoleUserCurrent] = useState(null)
+  const [roleUserCurrent, setRoleUserCurrent] = useState(null);
 
   // Fetch lấy nhóm theo ID
   const fetchGroupById = async (id) => {
@@ -65,7 +64,7 @@ export default function EditGroups() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
       if (res.ok) {
@@ -87,15 +86,11 @@ export default function EditGroups() {
           });
         }
         return groupData;
+      } else {
+        throw new Error("Lấy thông tin nhóm thất bại");
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Đã xảy ra lỗi khi lấy thông tin nhóm. Vui lòng thử lại.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      toast.error(error.message || "Đã xảy ra lỗi khi lấy thông tin nhóm. Vui lòng thử lại.");
       return null;
     }
   };
@@ -107,21 +102,19 @@ export default function EditGroups() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
       if (res.ok) {
         const membersData = await res.json();
+        console.log("Members Data:", membersData);
         setMembers(membersData?.data || []);
+        setRoleUserCurrent(membersData?.data[0]?.role || []);
+      } else {
+        throw new Error("Lấy thông tin thành viên nhóm thất bại");
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Đã xảy ra lỗi khi lấy thông tin thành viên nhóm. Vui lòng thử lại.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      toast.error(error.message || "Đã xảy ra lỗi khi lấy thông tin thành viên nhóm. Vui lòng thử lại.");
     }
   };
 
@@ -130,59 +123,47 @@ export default function EditGroups() {
       fetchGroupById(id);
       fetchGroupsUser(id);
     } else {
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: "Không tìm thấy ID nhóm trong URL. Vui lòng kiểm tra lại.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      })
-      navigate("/groups")
+      toast.error("Không tìm thấy ID nhóm trong URL. Vui lòng kiểm tra lại.");
+      navigate("/groups");
     }
-  }, [id, navigate])
+  }, [id, navigate]);
 
   const handleDeleteMember = async (memberId) => {
-    const result = await Swal.fire({
-      title: "Xác nhận xóa",
-      text: "Bạn có chắc muốn xóa thành viên này? Hành động này không thể hoàn tác!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
+    const confirmed = await new Promise((resolve) => {
+      toast.warning(
+        "Bạn có chắc muốn xóa thành viên này? Hành động này không thể hoàn tác!",
+        {
+          action: {
+            label: "Xóa",
+            onClick: () => resolve(true),
+          },
+          cancel: {
+            label: "Hủy",
+            onClick: () => resolve(false),
+          },
+          duration: 10000, // Giữ toast hiển thị trong 10 giây
+        }
+      );
     });
 
-    if (result.isConfirmed) {
+    if (confirmed) {
       try {
         const res = await fetch(`http://localhost:7777/api/groups/${id}/members/${memberId}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
         });
         if (res.ok) {
           setMembers(members.filter((m) => m.id !== memberId));
-          Swal.fire({
-            icon: "success",
-            title: "Thành công",
-            text: "Xóa thành viên thành công!",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#28a745",
-          });
+          toast.success("Xóa thành viên thành công!");
         } else {
           const errorData = await res.json();
           throw new Error(errorData.message || "Xóa thành viên thất bại");
         }
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: error.message || "Đã xảy ra lỗi khi xóa thành viên. Vui lòng thử lại.",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#d33",
-        });
+        toast.error(error.message || "Đã xảy ra lỗi khi xóa thành viên. Vui lòng thử lại.");
       }
     }
   };
@@ -199,6 +180,7 @@ export default function EditGroups() {
     setMembers(members.map((m) => (m.id === updatedMember.id ? updatedMember : m)));
     setIsEditMemberPopupOpen(false);
     setSelectedMember(null);
+    toast.success("Cập nhật thành viên thành công!"); // Thêm thông báo thành công
   };
 
   const handleDeleteHouse = (houseId) => {
@@ -233,47 +215,41 @@ export default function EditGroups() {
   };
 
   const handleLeaveGroup = async () => {
-    const result = await Swal.fire({
-      title: "Xác nhận rời nhóm",
-      text: "Bạn có chắc muốn rời nhóm? Hành động này không thể hoàn tác!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Rời",
-      cancelButtonText: "Hủy",
+    const confirmed = await new Promise((resolve) => {
+      toast.warning(
+        "Bạn có chắc muốn rời nhóm? Hành động này không thể hoàn tác!",
+        {
+          action: {
+            label: "Rời",
+            onClick: () => resolve(true),
+          },
+          cancel: {
+            label: "Hủy",
+            onClick: () => resolve(false),
+          },
+          duration: 10000, // Giữ toast hiển thị trong 10 giây
+        }
+      );
     });
 
-    if (result.isConfirmed) {
+    if (confirmed) {
       try {
         const res = await fetch(`http://localhost:7777/api/groups/${id}/leave`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
         });
         if (res.ok) {
-          Swal.fire({
-            icon: "success",
-            title: "Thành công",
-            text: "Đã rời khỏi nhóm!",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#28a745",
-          });
+          toast.success("Đã rời khỏi nhóm!");
           navigate("/groups");
         } else {
           const errorData = await res.json();
           throw new Error(errorData.message || "Rời nhóm thất bại");
         }
       } catch (error) {
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: error.message || "Đã xảy ra lỗi khi rời nhóm. Vui lòng thử lại.",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#d33",
-        });
+        toast.error(error.message || "Đã xảy ra lỗi khi rời nhóm. Vui lòng thử lại.");
       }
     }
   };
@@ -293,6 +269,7 @@ export default function EditGroups() {
   const handleSaveHouse = (newHouse) => {
     setHouses([...houses, newHouse]);
     setIsAddHousePopupOpen(false);
+    toast.success("Thêm nhà thành công!"); // Thêm thông báo thành công
   };
 
   const handleSaveGroup = async (updatedData) => {
@@ -312,34 +289,21 @@ export default function EditGroups() {
 
     try {
       const res = await axiosPrivate.put(`http://localhost:7777/api/groups/${id}`, {
-          group_name: updatedData.group_name,
-          group_description: updatedData.group_description,
-          icon_name: updatedData.icon_name,
-          icon_color: updatedData.icon_color,
-          icon_color_id: updatedData.icon_color_id,
-      })
-      if (res.ok) {
-        Swal.fire({
-          icon: "success",
-          title: "Thành công",
-          text: "Cập nhật nhóm thành công!",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#28a745",
-        });
+        group_name: updatedData.group_name,
+        group_description: updatedData.group_description,
+        icon_name: updatedData.icon_name,
+        icon_color: updatedData.icon_color,
+        icon_color_id: updatedData.icon_color_id,
+      });
+      if (res) { // Sửa: Kiểm tra res.data thay vì res
+        toast.success("Cập nhật nhóm thành công!");
         setIsEditGroupPopupOpen(false);
       } else {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Cập nhật nhóm thất bại");
+        throw new Error("Cập nhật nhóm thất bại");
       }
     } catch (error) {
       console.error("Error updating group:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Đã xảy ra lỗi khi cập nhật nhóm. Vui lòng thử lại.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      toast.error(error.message || "Đã xảy ra lỗi khi cập nhật nhóm. Vui lòng thử lại.");
     }
   };
 
@@ -361,13 +325,12 @@ export default function EditGroups() {
   };
 
   const getRole = (role) => {
-    if (role === "member") return <span className="text-sm font-medium text-white bg-blue-500 px-2 py-0.5 rounded-lg">Thành viên</span>
-    if (role === "admin") return <span className="text-sm font-medium text-white bg-green-500 px-2 py-0.5 rounded-lg">Quản trị viên</span>
-    if (role === "vice") return <span className="text-sm font-medium text-white bg-yellow-500 px-2 py-0.5 rounded-lg">Phó nhóm</span>
-    if (role === "owner") return <span className="text-sm font-medium text-white bg-red-500 px-2 py-0.5 rounded-lg">Chủ nhóm</span>
-    return "Thành viên"
-}
-
+    if (role === "member") return <span className="text-sm font-medium text-white bg-blue-500 px-2 py-0.5 rounded-lg">Thành viên</span>;
+    if (role === "admin") return <span className="text-sm font-medium text-white bg-green-500 px-2 py-0.5 rounded-lg">Quản trị viên</span>;
+    if (role === "vice") return <span className="text-sm font-medium text-white bg-yellow-500 px-2 py-0.5 rounded-lg">Phó nhóm</span>;
+    if (role === "owner") return <span className="text-sm font-medium text-white bg-red-500 px-2 py-0.5 rounded-lg">Chủ nhóm</span>;
+    return "Thành viên";
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -431,16 +394,16 @@ export default function EditGroups() {
                       className="text-xl font-semibold border-0 p-0 h-auto focus-visible:ring-0 bg-transparent"
                       placeholder="Tên nhóm"
                     />
-                  {roleUserCurrent === "owner" && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleEditGroup}
-                      className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                    >
-                      <Edit className="h-4 w-4 text-blue-500" />
-                    </Button>
-                  )}
+                    {roleUserCurrent === "owner" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleEditGroup}
+                        className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <Edit className="h-4 w-4 text-blue-500" />
+                      </Button>
+                    )}
                   </div>
                   <p className="text-sm text-gray-600 mt-1 line-clamp-2">{formData.group_description}</p>
                   <p className="text-xs text-gray-500 mt-1">Được tạo ngày {new Date().toLocaleDateString("vi-VN")}</p>
@@ -507,30 +470,30 @@ export default function EditGroups() {
                               <p className="text-sm text-gray-500">{member.email || "No email"}</p>
                             </div>
                           </div>
-                        {(roleUserCurrent === "owner" || roleUserCurrent === "vice") && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-white">
-                              <DropdownMenuItem onClick={() => handleEditMember(member.id)}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Chỉnh sửa
-                              </DropdownMenuItem>
-                              {roleUserCurrent === "owner" && (
-                              <DropdownMenuItem
-                                onClick={() => handleDeleteMember(member.id)}
-                                className="text-red-600 focus:text-red-600"
-                              >
-                                <Trash className="h-4 w-4 mr-2" />
-                                Xóa
-                              </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                              )}
+                          {(roleUserCurrent === "owner" || roleUserCurrent === "vice") && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="bg-white">
+                                <DropdownMenuItem onClick={() => handleEditMember(member.id)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Chỉnh sửa
+                                </DropdownMenuItem>
+                                {roleUserCurrent === "owner" && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteMember(member.id)}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    <Trash className="h-4 w-4 mr-2" />
+                                    Xóa
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -590,4 +553,3 @@ export default function EditGroups() {
     </div>
   );
 }
-

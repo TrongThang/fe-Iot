@@ -7,7 +7,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User } from "lucide-react"
 import { useParams } from "react-router-dom"
-import Swal from "sweetalert2"
+import { toast } from "sonner"
 import { debounce } from "lodash"
 
 // Define roles matching the backend GroupRole enum
@@ -21,7 +21,6 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
   const { id: groupId } = useParams()
   const [memberData, setMemberData] = useState({ role: "" })
   const [isLoading, setIsLoading] = useState(false)
-  const accessToken = localStorage.getItem("authToken")
 
   // Set initial member data when the component mounts or member prop changes
   useEffect(() => {
@@ -34,27 +33,13 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
   const handleSave = useCallback(
     debounce(async () => {
       if (!memberData.role) {
-        Swal.fire({
-          icon: "warning",
-          title: "Cảnh báo!",
-          text: "Vui lòng chọn vai trò!",
-          confirmButtonText: "OK",
-          customClass: { confirmButton: "bg-blue-500 text-white hover:bg-blue-600" },
-          didOpen: () => Swal.getConfirmButton()?.focus(),
-        })
+        toast.warning("Vui lòng chọn vai trò!")
         return
       }
 
       const parsedGroupId = Number(groupId)
       if (!groupId || isNaN(parsedGroupId) || parsedGroupId <= 0) {
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: "ID nhóm không hợp lệ hoặc không được cung cấp trong URL!",
-          confirmButtonText: "OK",
-          customClass: { confirmButton: "bg-red-500 text-white hover:bg-red-600" },
-          didOpen: () => Swal.getConfirmButton()?.focus(),
-        })
+        toast.error("ID nhóm không hợp lệ hoặc không được cung cấp trong URL!")
         console.error("Invalid groupId:", groupId, "Parsed:", parsedGroupId)
         return
       }
@@ -65,7 +50,7 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
           body: JSON.stringify({
             accountId: member.id,
@@ -77,21 +62,9 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
 
         if (res.ok) {
           onOpenChange(false)
-          setTimeout(() => {
-            Swal.fire({
-              icon: "success",
-              title: "Thành công!",
-              text: `Cập nhật vai trò thành viên ${member.username} thành công!`,
-              confirmButtonText: "OK",
-              customClass: { confirmButton: "bg-green-500 text-white hover:bg-green-600" },
-              didOpen: () => Swal.getConfirmButton()?.focus(),
-            }).then((result) => {
-              if (result.isConfirmed) {
-                onSave({ ...member, role: memberData.role, updated_at: new Date().toISOString() })
-                setMemberData({ role: "" })
-              }
-            })
-          }, 200)
+          toast.success(`Cập nhật vai trò thành viên ${member.username} thành công!`)
+          onSave({ ...member, role: memberData.role, updated_at: new Date().toISOString() })
+          setMemberData({ role: "" })
         } else {
           let errorMessage = data.message || "Cập nhật vai trò thành viên thất bại!"
           if (data.code === "FORBIDDEN") {
@@ -101,51 +74,22 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
           } else if (data.code === "NOT_FOUND") {
             errorMessage = "Thành viên không thuộc nhóm này!"
           }
-          Swal.fire({
-            icon: "error",
-            title: "Lỗi!",
-            text: errorMessage,
-            confirmButtonText: "OK",
-            customClass: { confirmButton: "bg-red-500 text-white hover:bg-red-600" },
-            didOpen: () => Swal.getConfirmButton()?.focus(),
-          })
+          toast.error(errorMessage)
         }
       } catch (error) {
         console.error("API Error:", error)
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: "Lỗi khi cập nhật thành viên do kết nối mạng!",
-          confirmButtonText: "OK",
-          customClass: { confirmButton: "bg-red-500 text-white hover:bg-red-600" },
-          didOpen: () => Swal.getConfirmButton()?.focus(),
-        })
+        toast.error("Lỗi khi cập nhật thành viên do kết nối mạng!")
       } finally {
         setIsLoading(false)
       }
     }, 300),
-    [groupId, member, memberData.role, accessToken, onSave, onOpenChange]
+    [groupId, member, memberData.role, onSave, onOpenChange]
   )
 
   const handleCancel = () => {
-    Swal.fire({
-      icon: "info",
-      title: "Hủy bỏ",
-      text: "Bạn có chắc muốn hủy chỉnh sửa vai trò?",
-      showCancelButton: true,
-      confirmButtonText: "Có",
-      cancelButtonText: "Không",
-      customClass: {
-        confirmButton: "bg-blue-500 text-white hover:bg-blue-600",
-        cancelButton: "bg-gray-300 text-gray-700 hover:bg-gray-400",
-      },
-      didOpen: () => Swal.getConfirmButton()?.focus(),
-    }).then((result) => {
-      if (result.isConfirmed) {
-        onOpenChange(false)
-        setMemberData({ role: "" })
-      }
-    })
+    toast.info("Đã hủy chỉnh sửa vai trò.")
+    onOpenChange(false)
+    setMemberData({ role: "" })
   }
 
   return (
