@@ -17,13 +17,11 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
     role: "",
   })
   const [isLoading, setIsLoading] = useState(false)
-  const accessToken = localStorage.getItem("authToken")
 
   // Define roles matching the GroupRole enum based on API response
   const roles = [
-    { value: "moderator", label: "Phó nhóm" },
+    { value: "vice", label: "Phó nhóm" },
     { value: "member", label: "Thành viên" },
-    { value: "viewer", label: "Người xem" },
   ]
 
   const handleSave = async () => {
@@ -50,25 +48,24 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
 
     setIsLoading(true)
     try {
-      const res = await axiosPrivate.post(`http://localhost:7777/api/groups/users`, {
-        group_id: parsedGroupId,
-        email: memberData.username, // Giả định username là email dựa trên requestBody
+      const res = await axiosPrivate.post(`http://localhost:7777/api/groups/members`, {
+        groupId: parsedGroupId,
+        username: memberData.username,
         role: memberData.role,
       })
 
-      if (res.data.success) {
-        onOpenChange(false)
+      if (res) {
+        onSave(res.data || res) // Notify parent component
+        setMemberData({ username: "", role: "" }) // Reset form
+        onOpenChange(false) // Close dialog
         toast.success(`Thành viên ${memberData.username} đã được thêm với vai trò ${memberData.role}!`)
-        onSave(res.data.data || res.data)
-        setMemberData({ username: "", role: "" })
-      } else {
-        // Handle specific API errors based on message
-        const errorMessage = res.data.message || "Thêm thành viên thất bại!"
-        toast.error(errorMessage)
+       
       }
     } catch (error) {
       console.error("API Error:", error)
-      toast.error(error.message || "Lỗi khi thêm thành viên do kết nối mạng!")
+      // Extract error message from API response, fallback to generic message
+      const errorMessage = error?.data?.message || error?.response?.data?.message || "Lỗi khi thêm thành viên!"
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -157,4 +154,4 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
       </DialogContent>
     </Dialog>
   )
-}
+} 
