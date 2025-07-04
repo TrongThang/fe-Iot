@@ -29,6 +29,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import DeviceDetail from "./deviceDetails"
+import DeviceLockStatus from "@/components/common/devices/DeviceLockStatus"
+import deviceApi from "@/apis/modules/deviceApi"
 
 import EditDeviceDialog from "./devicePopups/Edit-device-popup"
 import { useParams } from "react-router-dom"
@@ -115,25 +117,63 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
     }
   }
 
-  const handleLockToggle = (deviceId) => {
-    setDevices(
-      devices.map((device) =>
-        device.device_id === deviceId
-          ? {
-            ...device,
-            lock_status: device.lock_status === "locked" ? "unlocked" : "locked",
-            locked_at: device.lock_status === "unlocked" ? new Date().toISOString() : null,
-            updated_at: new Date().toISOString(),
-          }
-          : device
-      )
-    )
-    if (selectedDevice?.device_id === deviceId) {
-      setSelectedDevice({
-        ...selectedDevice,
-        lock_status: selectedDevice.lock_status === "locked" ? "unlocked" : "locked",
-        locked_at: selectedDevice.lock_status === "unlocked" ? new Date().toISOString() : null,
-      })
+  const handleLockToggle = async (deviceId) => {
+    const device = devices.find(d => d.device_id === deviceId);
+    if (!device) return;
+
+    const isLocked = device.lock_status === "locked";
+    const newLockStatus = isLocked ? "unlocked" : "locked";
+
+    try {
+      // Call real API
+      if (isLocked) {
+        await deviceApi.unlockDevice(deviceId, device.serial_number);
+      } else {
+        await deviceApi.lockDevice(deviceId, device.serial_number);
+      }
+
+      // Update local state after successful API call
+      setDevices(
+        devices.map((dev) =>
+          dev.device_id === deviceId
+            ? {
+              ...dev,
+              lock_status: newLockStatus,
+              locked_at: !isLocked ? new Date().toISOString() : null,
+              updated_at: new Date().toISOString(),
+            }
+            : dev
+        )
+      );
+
+      if (selectedDevice?.device_id === deviceId) {
+        setSelectedDevice({
+          ...selectedDevice,
+          lock_status: newLockStatus,
+          locked_at: !isLocked ? new Date().toISOString() : null,
+        });
+      }
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: isLocked ? "Mở khóa thành công" : "Khóa thành công",
+        text: `Thiết bị đã được ${isLocked ? 'mở khóa' : 'khóa'} thành công!`,
+        confirmButtonText: "OK",
+        confirmButtonColor: "#10b981",
+        timer: 2000,
+        timerProgressBar: true
+      });
+
+    } catch (error) {
+      console.error('Failed to toggle device lock:', error);
+      Swal.fire({
+        icon: "error",
+        title: "Thao tác thất bại",
+        text: error.response?.data?.message || `Không thể ${isLocked ? 'mở khóa' : 'khóa'} thiết bị. Vui lòng thử lại.`,
+        confirmButtonText: "OK",
+        confirmButtonColor: "#ef4444",
+      });
     }
   }
 
@@ -251,19 +291,7 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
     }
   }
 
-  const getStatusColor = (linkStatus, powerStatus, lockStatus) => {
-    if (lockStatus === "locked") return "bg-red-50 text-red-700 border-red-200"
-    if (linkStatus === "unlinked") return "bg-gray-50 text-gray-600 border-gray-200"
-    if (!powerStatus) return "bg-gray-100 text-gray-600 border-gray-200"
-    return "bg-emerald-50 text-emerald-700 border-emerald-200"
-  }
 
-  const getStatusText = (linkStatus, powerStatus, lockStatus) => {
-    if (lockStatus === "locked") return "Đã khóa"
-    if (linkStatus === "unlinked") return "Chưa liên kết"
-    if (!powerStatus) return "Đã tắt"
-    return "Hoạt động"
-  }
 
   const getSpaceIcon = (type) => {
     const iconProps = { className: "h-5 w-5 text-white" }
@@ -502,8 +530,6 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
                       onDelete={handleDeleteDevice}
                       getDeviceIcon={getDeviceIcon}
                       getDeviceColor={getDeviceColor}
-                      getStatusColor={getStatusColor}
-                      getStatusText={getStatusText}
                       viewMode={viewMode}
                     />
                   </TabsContent>
@@ -520,8 +546,6 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
                         onDelete={handleDeleteDevice}
                         getDeviceIcon={getDeviceIcon}
                         getDeviceColor={getDeviceColor}
-                        getStatusColor={getStatusColor}
-                        getStatusText={getStatusText}
                         viewMode={viewMode}
                       />
                     </TabsContent>
@@ -601,8 +625,6 @@ function DeviceGrid({
   onDelete,
   getDeviceIcon,
   getDeviceColor,
-  getStatusColor,
-  getStatusText,
   viewMode = "grid",
 }) {
   if (viewMode === "list") {
@@ -627,15 +649,12 @@ function DeviceGrid({
                 <div>
                   <h3 className="font-semibold text-slate-900">{device.name}</h3>
                   <div className="flex items-center space-x-2 mt-1">
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "text-xs px-2 py-1",
-                        getStatusColor(device.link_status, device.power_status, device.lock_status)
-                      )}
-                    >
-                      {getStatusText(device.link_status, device.power_status, device.lock_status)}
-                    </Badge>
+                    <DeviceLockStatus device={device} size="xs" />
+                    {device.link_status === "unlinked" && (
+                      <Badge variant="outline" className="text-xs px-2 py-1 bg-amber-50 text-amber-700 border-amber-200">
+                        Chưa liên kết
+                      </Badge>
+                    )}
                     <span className="text-xs text-slate-500 font-mono">{device.serial_number}</span>
                   </div>
                 </div>
@@ -734,15 +753,14 @@ function DeviceGrid({
             </div>
 
             <div className="flex items-center justify-between mb-4">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "text-xs px-3 py-1",
-                  getStatusColor(device.link_status, device.power_status, device.lock_status)
+              <div className="flex items-center space-x-2">
+                <DeviceLockStatus device={device} size="sm" />
+                {device.link_status === "unlinked" && (
+                  <Badge variant="outline" className="text-xs px-2 py-1 bg-amber-50 text-amber-700 border-amber-200">
+                    Chưa liên kết
+                  </Badge>
                 )}
-              >
-                {getStatusText(device.link_status, device.power_status, device.lock_status)}
-              </Badge>
+              </div>
               <span className="text-xs text-slate-500">{device.lastActivity}</span>
             </div>
 

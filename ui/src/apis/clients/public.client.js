@@ -1,15 +1,14 @@
 import axios from 'axios'
-
-const authToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbXBsb3llZUlkIjoiYWRtaW4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MSwiaWF0IjoxNzUwMzAwMjY3LCJleHAiOjE3NTAzMjkwNjd9.iPCsl6cd2P__z4mWFX3vgr5dNI2vKhzjL-y-0tjry7g"
+console.log(process.env.REACT_APP_SMART_NET_IOT_API_URL)
 
 const axiosPublic = axios.create({
-    baseURL: process.env.SMART_NET_API_URL || "http://localhost:7777/api/", // Địa chỉ API public
+    baseURL: process.env.REACT_APP_SMART_NET_IOT_API_URL || "http://localhost:7777/api/", // Địa chỉ API public
     headers: {
         // 'ngrok-skip-browser-warning': 'true',
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`,
+        'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`,
     },
     // Cho phép xử lý các status code từ 200-499
     validateStatus: function (status) {

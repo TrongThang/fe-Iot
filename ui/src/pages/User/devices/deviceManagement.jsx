@@ -21,6 +21,7 @@ import {
 	ArrowUpRight,
 	Power,
 	Settings,
+	AlertTriangle,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -34,7 +35,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import CameraControl from "./cameraControl"
 import { Card, CardContent } from "@/components/ui/card"
 import DeviceGrid from "./deviceGrid"
-import { LightDetail, SmokeDetectorDetail, TemperatureDetail } from "./deviceDetail"
+import DynamicDeviceDetail from "@/components/common/devices/DynamicDeviceDetail"
+import RealTimeDeviceControl from "@/components/common/devices/RealTimeDeviceControl"
+import { useSocketContext } from "@/contexts/SocketContext"
 import axiosPublic from "@/apis/clients/public.client"
 
 export default function DeviceManagement({
@@ -46,6 +49,7 @@ export default function DeviceManagement({
 	const [selectedDevice, setSelectedDevice] = useState(null)
 	const [searchQuery, setSearchQuery] = useState("")
 	const [isLoading, setIsLoading] = useState(true)
+	const [enableRealTime, setEnableRealTime] = useState(false)
 	const [filterOptions, setFilterOptions] = useState({
 		group: 0,
 		house: 0,
@@ -53,42 +57,30 @@ export default function DeviceManagement({
 	})
 
 	const [devices, setDevices] = useState([])
+	
+	// Socket context for real-time device communication
+	const { 
+		user, 
+		isConnected, 
+		connectSocket, 
+		connectToDevice,
+		disconnectFromDevice,
+		deviceNotifications,
+		emergencyAlerts,
+		dismissNotification,
+		dismissEmergencyAlert
+	} = useSocketContext()
 
 	const fetchDevice = async () => {
-		const response = await axiosPublic.get("devices/space/4")
-		console.log("response:", response)
-		if (response.status_code === 200) {
-			setDevices(response.data)
+		const response = await axiosPublic.get(`devices/account`)
+		if (response) {
+			setDevices(response)
 		}
 	}
 
 	useEffect(() => {
 		fetchDevice()
 	}, [])
-
-	// const [devices, setDevices] = useState([
-	// 	{
-	// 		id: 1,
-	// 		name: "Camera cổng chính",
-	// 		room: spaceName,
-	// 		type: "camera",
-	// 		power_status: true,
-	// 		status: "active",
-	// 		group: 1,
-	// 		group_name: "Nhóm 1",
-	// 		house: 1,
-	// 		house_name: "Nhà 1",
-	// 		ownership: "mine",
-	// 		owner: "Tôi"
-	// 	},
-	// 	{ id: 2, name: "Camera sảnh lớn", room: spaceName, type: "camera", power_status: true, resolution: "4K", lastActivity: "Đang hoạt động", status: "active", group: 1, group_name: "Nhóm 1", house: 1, house_name: "Nhà 1", ownership: "shared", owner: "Nguyễn Văn A" },
-	// 	{ id: 3, name: "Camera hành lang", room: spaceName, type: "camera", power_status: false, resolution: "720p", lastActivity: "15 phút trước", status: "inactive", group: 2, group_name: "Nhóm 2", house: 1, house_name: "Nhà 1", ownership: "mine", owner: "Tôi" },
-	// 	{ id: 4, name: "Máy báo khói", room: spaceName, type: "smoke", power_status: true, ppm: 1024, temp: 34, battery: 85, lastActivity: "2 phút trước", status: "active", group: 1, group_name: "Nhóm 1", house: 1, house_name: "Nhà 1", ownership: "mine", owner: "Tôi" },
-	// 	{ id: 5, name: "Máy báo khói phụ", room: spaceName, type: "smoke", power_status: false, ppm: 980, temp: 32, battery: 65, lastActivity: "15 phút trước", status: "inactive", group: 1, group_name: "Nhóm 1", house: 1, house_name: "Nhà 1", ownership: "shared", owner: "Trần Thị B" },
-	// 	{ id: 6, name: "Đèn bàn", room: spaceName, type: "light", power_status: true, brightness: 50, color: "red", lastActivity: "5 phút trước", status: "active", group: 1, group_name: "Nhóm 1", house: 1, house_name: "Nhà 1", ownership: "mine", owner: "Tôi" },
-	// 	{ id: 7, name: "Đèn trần", room: spaceName, type: "light", power_status: true, brightness: 80, color: "white", lastActivity: "1 phút trước", status: "active", group: 2, group_name: "Nhóm 2", house: 1, house_name: "Nhà 1", ownership: "shared", owner: "Lê Văn C" },
-	// 	{ id: 8, name: "Cảm biến nhiệt độ", room: spaceName, type: "temperature", power_status: true, temp: 28, humidity: 65, lastActivity: "3 phút trước", status: "active", group: 2, group_name: "Nhóm 2", house: 1, house_name: "Nhà 1", ownership: "mine", owner: "Tôi" },
-	// ])
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -97,7 +89,46 @@ export default function DeviceManagement({
 		return () => clearTimeout(timer)
 	}, [])
 
+	// Initialize socket connection when user is available
+	useEffect(() => {
+		if (user && !isConnected) {
+			console.log('🔌 Initializing socket connection for user:', user.id || user.account_id);
+			connectSocket(user.id || user.account_id);
+		}
+	}, [user, isConnected, connectSocket])
+
+	// Handle emergency alerts
+	useEffect(() => {
+		if (emergencyAlerts.length > 0) {
+			emergencyAlerts.forEach(alert => {
+				// Show emergency notification (could use toast, modal, etc.)
+				console.log('🚨 EMERGENCY ALERT:', alert);
+				
+				// Auto-dismiss after some time if needed
+				setTimeout(() => {
+					dismissEmergencyAlert(alert.id);
+				}, 30000); // 30 seconds
+			});
+		}
+	}, [emergencyAlerts, dismissEmergencyAlert])
+
+	// Enable real-time monitoring for selected device
+	useEffect(() => {
+		if (selectedDevice && user && isConnected && enableRealTime) {
+			console.log('🔴 Starting real-time monitoring for:', selectedDevice.serial_number);
+			connectToDevice(selectedDevice.serial_number, user.id || user.account_id);
+		}
+
+		return () => {
+			if (selectedDevice && enableRealTime) {
+				console.log('🔵 Stopping real-time monitoring for:', selectedDevice.serial_number);
+				disconnectFromDevice(selectedDevice.serial_number);
+			}
+		};
+	}, [selectedDevice, user, isConnected, enableRealTime, connectToDevice, disconnectFromDevice])
+
 	const handleDeviceClick = (device) => {
+		console.log("handleDeviceClick called with:", device);
 		setSelectedDevice(device)
 	}
 
@@ -269,12 +300,53 @@ export default function DeviceManagement({
 										<Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
 											{activeDevices} đang hoạt động
 										</Badge>
+										{/* Socket Connection Status */}
+										{isConnected ? (
+											<Badge className="bg-blue-100 text-blue-700 border-blue-200">
+												<Wifi className="w-3 h-3 mr-1" />
+												Socket kết nối
+											</Badge>
+										) : (
+											<Badge className="bg-red-100 text-red-700 border-red-200">
+												<WifiOff className="w-3 h-3 mr-1" />
+												Socket mất kết nối
+											</Badge>
+										)}
+										{/* Emergency Alert Indicator */}
+										{emergencyAlerts.length > 0 && (
+											<Badge className="bg-red-100 text-red-700 border-red-200 animate-pulse">
+												<AlertTriangle className="w-3 h-3 mr-1" />
+												{emergencyAlerts.length} cảnh báo
+											</Badge>
+										)}
 									</div>
 								</div>
 							</div>
 						</div>
 
 						<div className="flex items-center space-x-2">
+							{selectedDevice && (
+								<>
+									<Button 
+										onClick={() => setEnableRealTime(!enableRealTime)}
+										variant={enableRealTime ? "default" : "outline"}
+										className={enableRealTime ? "bg-green-600 hover:bg-green-700" : "border-slate-200"}
+									>
+										{enableRealTime ? "Tắt Real-time" : "Bật Real-time"}
+									</Button>
+									<Button 
+										onClick={() => {
+											console.log("Clearing selected device");
+											setSelectedDevice(null);
+											setEnableRealTime(false);
+										}} 
+										variant="outline"
+										className="border-slate-200"
+									>
+										Đóng chi tiết
+									</Button>
+								</>
+							)}
 							<Button onClick={handleAddDevice} className="bg-blue-600 hover:bg-blue-700 text-white">
 								<Plus className="h-4 w-4 mr-2" />
 								<span>Thêm thiết bị</span>
@@ -450,7 +522,7 @@ export default function DeviceManagement({
 													onCheckedChange={(checked) => {
 														setDevices(
 															devices.map((device) =>
-																device.id === selectedDevice.id
+																device.device_id === selectedDevice.device_id
 																	? { ...device, power_status: checked, status: checked ? "active" : "inactive" }
 																	: device,
 															),
@@ -482,34 +554,20 @@ export default function DeviceManagement({
 											</div>
 										</div>
 
-										<Separator className="mb-6" />
+																			<Separator className="mb-6" />
 
-										{selectedDevice.type === "light" && <LightDetail device={selectedDevice} />}
-										{selectedDevice.type === "smoke" && <SmokeDetectorDetail device={selectedDevice} />}
-										{selectedDevice.type === "temperature" && <TemperatureDetail device={selectedDevice} />}
-
-										<Card className="mt-6">
-											<CardContent className="p-6">
-												<h3 className="text-lg font-semibold mb-4">Thông tin thiết bị</h3>
-												<div className="space-y-4">
-													<div className="flex justify-between items-center">
-														<span className="text-slate-600">ID thiết bị</span>
-														<span className="font-medium">{selectedDevice.id}</span>
-													</div>
-													<div className="flex justify-between items-center">
-														<span className="text-slate-600">Chủ sở hữu</span>
-														<div className="flex items-center gap-2">
-															<span className="font-medium">{selectedDevice.owner}</span>
-															{selectedDevice.ownership === "shared" && (
-																<Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-																	Được chia sẻ
-																</Badge>
-															)}
-														</div>
-													</div>
-												</div>
-											</CardContent>
-										</Card>
+									{enableRealTime ? (
+										<RealTimeDeviceControl 
+											key={selectedDevice.id}
+											device={selectedDevice}
+											accountId={user?.id || user?.account_id}
+										/>
+									) : (
+										<DynamicDeviceDetail 
+											key={selectedDevice.id} // Force re-render when device changes
+											device={selectedDevice}
+										/>
+									)}
 									</div>
 								</ScrollArea>
 							</div>

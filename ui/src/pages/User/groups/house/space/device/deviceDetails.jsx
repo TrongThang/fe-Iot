@@ -33,9 +33,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import LedControlDialog from "@/pages/User/device-dialogs/led-control-dialog";
 import AlarmControlDialog from "@/pages/User/device-dialogs/alarm-control-dialog";
+import DynamicDeviceDetail from "@/components/common/devices/DynamicDeviceDetail";
 import { useNavigate } from "react-router-dom";
 import DeviceSharingDialog from "@/pages/User/share/shareDeviceDialog";
 import Swal from "sweetalert2";
+import axiosPublic from "@/apis/clients/public.client";
 
 export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete, onLockToggle }) {
   const [isControlDialogOpen, setIsControlDialogOpen] = useState(false);
@@ -52,22 +54,8 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
 
   const fetchDeviceDetail = async () => {
     try {
-      const response = await fetch(
-        `https://iothomeconnectapiv2-production.up.railway.app/api/devices/${device.serial_number}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setDeviceDetail(data || null);
-      } else {
-        throw new Error("Failed to fetch device details");
-      }
+      const response = await axiosPublic.get(`/devices/${device.serial_number}`);
+      setDeviceDetail(response.data || null);
     } catch (error) {
       console.error("Error fetching device detail:", error);
       Swal.fire({
@@ -323,10 +311,11 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
             </div>
           </div>
 
-          {/* Device Type Specific Controls */}
-          {mergedDevice.template_type === "smoke" && <SmokeDetectorDetail device={mergedDevice} />}
-          {mergedDevice.template_type === "temperature" && <TemperatureDetail device={mergedDevice} />}
-          {mergedDevice.template_type === "alarm" && <AlarmDetail device={mergedDevice} />}
+          {/* Replace the static device type components with dynamic component */}
+          <DynamicDeviceDetail 
+            device={mergedDevice} 
+            onDeviceUpdate={onDeviceUpdate}
+          />
 
           {/* Enhanced Device Info */}
           <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">

@@ -61,10 +61,13 @@ export default function DeviceGrid({
             {devices.map((device) => (
                 <div
                     key={device.id}
-                    onClick={() => onDeviceClick(device)}
+                    onClick={() => {
+                        console.log("Device clicked:", device);
+                        onDeviceClick(device);
+                    }}
                     className={cn(
                         "bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200 relative group",
-                        selectedDevice?.id === device.id && "ring-2 ring-blue-500 shadow-md",
+                        selectedDevice?.id === device.id && "ring-2 ring-blue-500 shadow-md border-blue-300",
                         isCompact && "flex items-center space-x-4", // Horizontal layout khi compact
                     )}
                 >
