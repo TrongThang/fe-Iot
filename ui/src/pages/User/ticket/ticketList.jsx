@@ -193,26 +193,28 @@ export default function TicketList() {
 
   // Filter and sort tickets
   const filteredTickets = tickets
-    .filter((ticket) => {
-      const matchesSearch =
-        ticket.ticket_id.toString().toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.device_serial.toLowerCase().includes(searchQuery.toLowerCase());
+  .filter((ticket) => {
+    const matchesSearch =
+      (ticket.ticket_id?.toString().toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
+      (ticket.description?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
+      (ticket.device_serial?.toLowerCase() ?? "").includes(searchQuery.toLowerCase());
 
-      const matchesStatus = filterOptions.status === "all" || ticket.status === filterOptions.status;
+    const matchesStatus =
+      filterOptions.status === "all" || ticket.status === filterOptions.status;
 
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      const key = sortBy === "priority" ? "priority" : sortBy;
-      const valueA = sortBy === "priority" ? (a.priority || 0) : a[sortBy];
-      const valueB = sortBy === "priority" ? (b.priority || 0) : b[sortBy];
-      if (sortOrder === "asc") {
-        return valueA > valueB ? 1 : -1;
-      } else {
-        return valueA < valueB ? 1 : -1;
-      }
-    });
+    return matchesSearch && matchesStatus;
+  })
+  .sort((a, b) => {
+    const key = sortBy === "priority" ? "priority" : sortBy;
+    const valueA = sortBy === "priority" ? (a.priority || 0) : a[sortBy] || "";
+    const valueB = sortBy === "priority" ? (b.priority || 0) : b[sortBy] || "";
+    if (sortOrder === "asc") {
+      return valueA > valueB ? 1 : -1;
+    } else {
+      return valueA < valueB ? 1 : -1;
+    }
+  });
+
 
   // Group tickets by status
   const ticketsByStatus = filteredTickets.reduce((acc, ticket) => {

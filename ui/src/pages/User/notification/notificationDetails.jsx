@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState, useEffect } from "react";
 import {
   X,
   Eye,
@@ -15,13 +15,18 @@ import {
   Copy,
   ExternalLink,
   MoreHorizontal,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { cn } from "@/lib/utils"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export default function NotificationDetail({
   notification,
@@ -35,51 +40,56 @@ export default function NotificationDetail({
   getCategoryColor,
   getTimeAgo,
 }) {
-  const [isExpanded, setIsExpanded] = useState(false)
-
   const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text)
-    // You could add a toast notification here
-  }
+    navigator.clipboard.writeText(text);
+  };
 
   const getTypeDescription = (type) => {
     switch (type) {
       case "device_alert":
-        return "Cảnh báo nghiêm trọng từ thiết bị yêu cầu xử lý ngay lập tức"
+        return "Cảnh báo nghiêm trọng từ thiết bị yêu cầu xử lý ngay lập tức";
       case "device_warning":
-        return "Cảnh báo từ thiết bị cần được chú ý"
+        return "Cảnh báo từ thiết bị cần được chú ý";
       case "device_status":
-        return "Thông báo trạng thái hoạt động của thiết bị"
+        return "Thông báo trạng thái hoạt động của thiết bị";
       case "device_offline":
-        return "Thiết bị mất kết nối với hệ thống"
+        return "Thiết bị mất kết nối với hệ thống";
       case "device_maintenance":
-        return "Thông báo bảo trì và bảo dưỡng thiết bị"
+        return "Thông báo bảo trì và bảo dưỡng thiết bị";
       case "system_update":
-        return "Cập nhật hệ thống và firmware"
+        return "Cập nhật hệ thống và firmware";
       case "system_info":
-        return "Thông tin chung về hệ thống"
+        return "Thông tin chung về hệ thống";
       case "security_alert":
-        return "Cảnh báo bảo mật hệ thống"
+        return "Cảnh báo bảo mật hệ thống";
       default:
-        return "Thông báo chung"
+        return "Thông báo chung";
     }
-  }
+  };
 
   const getActionSuggestions = (type, deviceInfo) => {
     switch (type) {
       case "device_alert":
-        return ["Kiểm tra thiết bị ngay lập tức", "Liên hệ kỹ thuật viên nếu cần", "Tạm thời tắt thiết bị nếu an toàn"]
+        return ["Kiểm tra thiết bị ngay lập tức", "Liên hệ kỹ thuật viên nếu cần", "Tạm thời tắt thiết bị nếu an toàn"];
       case "device_warning":
-        return ["Theo dõi thiết bị trong 24h tới", "Kiểm tra cài đặt thiết bị", "Lên lịch bảo trì định kỳ"]
+        return ["Theo dõi thiết bị trong 24h tới", "Kiểm tra cài đặt thiết bị", "Lên lịch bảo trì định kỳ"];
       case "device_offline":
-        return ["Kiểm tra kết nối WiFi", "Khởi động lại thiết bị", "Kiểm tra router và modem"]
+        return ["Kiểm tra kết nối WiFi", "Khởi động lại thiết bị", "Kiểm tra router và modem"];
       case "device_maintenance":
-        return ["Thay pin nếu cần", "Vệ sinh thiết bị", "Cập nhật firmware"]
+        return ["Thay pin nếu cần", "Vệ sinh thiết bị", "Cập nhật firmware"];
       case "security_alert":
-        return ["Thay đổi mật khẩu ngay", "Kiểm tra log đăng nhập", "Bật xác thực 2 yếu tố"]
+        return ["Thay đổi mật khẩu ngay", "Kiểm tra log đăng nhập", "Bật xác thực 2 yếu tố"];
       default:
-        return ["Xem chi tiết thông báo", "Đánh dấu đã xử lý"]
+        return ["Xem chi tiết thông báo", "Đánh dấu đã xử lý"];
     }
+  };
+
+  if (!notification) {
+    return (
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-lg h-full flex items-center justify-center">
+        <p className="text-red-400">Không tìm thấy thông báo.</p>
+      </div>
+    );
   }
 
   return (
@@ -95,7 +105,6 @@ export default function NotificationDetail({
                 <p className="text-blue-200 text-sm">ID: {notification.id}</p>
               </div>
             </div>
-
             <div className="flex items-center space-x-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -145,7 +154,6 @@ export default function NotificationDetail({
                 </Badge>
               </div>
             </div>
-
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
               <div className="flex items-center justify-between">
                 <span className="text-blue-200 text-sm">Danh mục</span>
@@ -204,7 +212,7 @@ export default function NotificationDetail({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-blue-200 text-sm">Device ID</span>
-                    <p className="font-mono text-sm">{notification.device_info.device_id}</p>
+                    <p className="font-mono text-sm">{notification.device_info.device_id || "N/A"}</p>
                   </div>
                   <div>
                     <span className="text-blue-200 text-sm">Loại thiết bị</span>
@@ -260,8 +268,7 @@ export default function NotificationDetail({
                   </p>
                 </div>
               </div>
-
-              {notification.updated_at !== notification.created_at && (
+              {notification.updated_at && notification.updated_at !== notification.created_at && (
                 <div className="flex items-start space-x-4">
                   <div className="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center mt-1">
                     <CheckCircle className="h-4 w-4 text-emerald-400" />
@@ -269,8 +276,7 @@ export default function NotificationDetail({
                   <div>
                     <p className="font-medium">Cập nhật lần cuối</p>
                     <p className="text-sm text-blue-200">
-                      {new Date(notification.updated_at).toLocaleString("vi-VN")} ({getTimeAgo(notification.updated_at)}
-                      )
+                      {new Date(notification.updated_at).toLocaleString("vi-VN")} ({getTimeAgo(notification.updated_at)})
                     </p>
                   </div>
                 </div>
@@ -301,5 +307,5 @@ export default function NotificationDetail({
         </div>
       </ScrollArea>
     </div>
-  )
+  );
 }

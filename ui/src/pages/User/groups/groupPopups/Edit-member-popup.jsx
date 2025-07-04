@@ -7,26 +7,28 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { User } from "lucide-react"
 import { useParams } from "react-router-dom"
-import Swal from "sweetalert2"
+import { toast } from "sonner"
 import { debounce } from "lodash"
 
 // Define roles matching the backend GroupRole enum
 const roles = [
-  { value: "MODERATOR", label: "Phó nhóm" },
-  { value: "MEMBER", label: "Thành viên" },
-  { value: "VIEWER", label: "Người xem" },
+  { value: "vice", label: "Phó nhóm" },
+  { value: "member", label: "Thành viên" },
 ]
 
 export default function EditMemberPopup({ open, onOpenChange, onSave, member }) {
   const { id: groupId } = useParams()
-  const [memberData, setMemberData] = useState({ role: "" })
+  const [memberData, setMemberData] = useState({ role: "", username: "" })
   const [isLoading, setIsLoading] = useState(false)
-  const accessToken = localStorage.getItem("authToken")
 
   // Set initial member data when the component mounts or member prop changes
   useEffect(() => {
     if (member) {
-      setMemberData({ role: member.role || "" })
+      console.log("Editing member:", member.username, "Role:", member.role)
+      setMemberData({
+        role: member.role || "",
+        username: member.username || "",
+      })
     }
   }, [member])
 
@@ -34,41 +36,38 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
   const handleSave = useCallback(
     debounce(async () => {
       if (!memberData.role) {
-        Swal.fire({
-          icon: "warning",
-          title: "Cảnh báo!",
-          text: "Vui lòng chọn vai trò!",
-          confirmButtonText: "OK",
-          customClass: { confirmButton: "bg-blue-500 text-white hover:bg-blue-600" },
-          didOpen: () => Swal.getConfirmButton()?.focus(),
-        })
+        toast.warning("Vui lòng chọn vai trò!")
         return
       }
 
       const parsedGroupId = Number(groupId)
       if (!groupId || isNaN(parsedGroupId) || parsedGroupId <= 0) {
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: "ID nhóm không hợp lệ hoặc không được cung cấp trong URL!",
-          confirmButtonText: "OK",
-          customClass: { confirmButton: "bg-red-500 text-white hover:bg-red-600" },
-          didOpen: () => Swal.getConfirmButton()?.focus(),
-        })
+        toast.error("ID nhóm không hợp lệ hoặc không được cung cấp trong URL!")
         console.error("Invalid groupId:", groupId, "Parsed:", parsedGroupId)
+        return
+      }
+
+      // Kiểm tra nếu vai trò là "owner"
+      if (member.role === "owner") {
+        toast.error("Không thể thay đổi vai trò của chủ nhóm!")
         return
       }
 
       setIsLoading(true)
       try {
+        const authToken = localStorage.getItem('authToken')
+        if (!authToken) {
+          throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.")
+        }
+
         const res = await fetch(`http://localhost:7777/api/groups/${parsedGroupId}/members/role`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
-            accountId: member.id,
+            accountId: member.account_id,
             role: memberData.role,
           }),
         })
@@ -76,22 +75,10 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
         const data = await res.json()
 
         if (res.ok) {
+          onSave({ ...member, role: memberData.role, updated_at: new Date().toISOString() })
+          toast.success(`Cập nhật vai trò thành viên ${member.username} thành công!`)
           onOpenChange(false)
-          setTimeout(() => {
-            Swal.fire({
-              icon: "success",
-              title: "Thành công!",
-              text: `Cập nhật vai trò thành viên ${member.username} thành công!`,
-              confirmButtonText: "OK",
-              customClass: { confirmButton: "bg-green-500 text-white hover:bg-green-600" },
-              didOpen: () => Swal.getConfirmButton()?.focus(),
-            }).then((result) => {
-              if (result.isConfirmed) {
-                onSave({ ...member, role: memberData.role, updated_at: new Date().toISOString() })
-                setMemberData({ role: "" })
-              }
-            })
-          }, 200)
+          window.location.reload()
         } else {
           let errorMessage = data.message || "Cập nhật vai trò thành viên thất bại!"
           if (data.code === "FORBIDDEN") {
@@ -101,51 +88,21 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
           } else if (data.code === "NOT_FOUND") {
             errorMessage = "Thành viên không thuộc nhóm này!"
           }
-          Swal.fire({
-            icon: "error",
-            title: "Lỗi!",
-            text: errorMessage,
-            confirmButtonText: "OK",
-            customClass: { confirmButton: "bg-red-500 text-white hover:bg-red-600" },
-            didOpen: () => Swal.getConfirmButton()?.focus(),
-          })
+          toast.error(errorMessage)
         }
       } catch (error) {
         console.error("API Error:", error)
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: "Lỗi khi cập nhật thành viên do kết nối mạng!",
-          confirmButtonText: "OK",
-          customClass: { confirmButton: "bg-red-500 text-white hover:bg-red-600" },
-          didOpen: () => Swal.getConfirmButton()?.focus(),
-        })
+        toast.error(error.message || "Lỗi khi cập nhật thành viên do kết nối mạng!")
       } finally {
         setIsLoading(false)
       }
     }, 300),
-    [groupId, member, memberData.role, accessToken, onSave, onOpenChange]
+    [groupId, member, memberData.role, onSave, onOpenChange]
   )
 
   const handleCancel = () => {
-    Swal.fire({
-      icon: "info",
-      title: "Hủy bỏ",
-      text: "Bạn có chắc muốn hủy chỉnh sửa vai trò?",
-      showCancelButton: true,
-      confirmButtonText: "Có",
-      cancelButtonText: "Không",
-      customClass: {
-        confirmButton: "bg-blue-500 text-white hover:bg-blue-600",
-        cancelButton: "bg-gray-300 text-gray-700 hover:bg-gray-400",
-      },
-      didOpen: () => Swal.getConfirmButton()?.focus(),
-    }).then((result) => {
-      if (result.isConfirmed) {
-        onOpenChange(false)
-        setMemberData({ role: "" })
-      }
-    })
+    toast.info("Đã hủy chỉnh sửa vai trò.")
+    onOpenChange(false)
   }
 
   return (
@@ -156,7 +113,7 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
             <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
               <User className="h-8 w-8 text-white" aria-hidden="true" />
             </div>
-            <h2 id="edit-member-dialog" className="text-2xl font-bold text-gray-900 mb-2">Chỉnh sửa thành viên</h2>
+            <h2 id="edit-member-dialog" className="text-2xl font-bold text-gray-900">Chỉnh sửa thành viên</h2>
             <p className="text-gray-600">Cập nhật vai trò thành viên trong nhóm</p>
           </div>
 
@@ -169,7 +126,7 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
                 </div>
                 <Input
                   placeholder="Nhập tên người dùng"
-                  value={member?.username || ""}
+                  value={memberData.username || ""}
                   className="pl-11 h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-gray-700 bg-white shadow-sm transition-all duration-200"
                   disabled={true}
                 />
@@ -181,7 +138,7 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
               <Select
                 value={memberData.role}
                 onValueChange={(value) => setMemberData((prev) => ({ ...prev, role: value }))}
-                disabled={isLoading}
+                disabled={isLoading || member?.role === "owner"}
               >
                 <SelectTrigger className="w-full h-12 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl bg-white shadow-sm transition-all duration-200">
                   <SelectValue placeholder="Chọn vai trò cho thành viên" className="text-gray-700" />
@@ -212,7 +169,7 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
               <Button
                 onClick={handleSave}
                 className="flex-1 h-12 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-                disabled={!memberData.role || isLoading}
+                disabled={!memberData.role || isLoading || member?.role === "owner"}
               >
                 {isLoading ? "Đang cập nhật..." : "Lưu thay đổi"}
               </Button>

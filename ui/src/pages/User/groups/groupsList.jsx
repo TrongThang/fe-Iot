@@ -14,16 +14,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
 import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
-import Swal from "sweetalert2";
-import AddGroups from "./groupPopups/Add-group-popup";
+import { toast } from "sonner";
+import AddGroupPopup from "./groupPopups/Add-group-popup";
 
 export default function GroupsManagement() {
-    const [viewMode, setViewMode] = useState("grid")
-    const [showAddDialog, setShowAddDialog] = useState(false)
-    const [groups, setGroups] = useState([])
-    const [groupMembers, setGroupMembers] = useState({}) // Object to map group_id to member count
-    const navigate = useNavigate()
-    const accessToken = localStorage.getItem('authToken');
+  const [viewMode, setViewMode] = useState("grid");
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [groupMembers, setGroupMembers] = useState({});
+  const [searchQuery, setSearchQuery] = useState(""); // New state for search query
+  const navigate = useNavigate();
 
   const iconMap = { ...GROUP_ICON_MAP };
 
@@ -44,7 +44,7 @@ export default function GroupsManagement() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
       if (res.ok) {
@@ -53,15 +53,11 @@ export default function GroupsManagement() {
           ...prev,
           [groupId]: membersData?.data?.length || 0,
         }));
+      } else {
+        throw new Error("Lấy thông tin thành viên nhóm thất bại");
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Đã xảy ra lỗi khi lấy thông tin thành viên nhóm.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      toast.error(error.message || "Đã xảy ra lỗi khi lấy thông tin thành viên nhóm.");
     }
   };
 
@@ -71,7 +67,7 @@ export default function GroupsManagement() {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
       });
       if (res.ok) {
@@ -87,19 +83,23 @@ export default function GroupsManagement() {
           const fetchPromises = groupsData.map((group) => fetchGroupsUser(group.group_id));
           await Promise.all(fetchPromises);
         }
+      } else {
+        throw new Error("Lấy danh sách nhóm thất bại");
       }
     } catch (error) {
       console.error("Error refreshing data:", error);
+      toast.error(error.message || "Đã xảy ra lỗi khi lấy danh sách nhóm.");
     }
   };
 
   const handleSaveGroup = (newGroup) => {
     setGroups((prev) => [...prev, {
       ...newGroup,
-      icon_name: newGroup.icon_name.toUpperCase(), // Chuẩn hóa icon_name
+      icon_name: newGroup.icon_name.toUpperCase(),
       icon_color: newGroup.icon_color,
     }]);
     fetchGroupsUser(newGroup.group_id);
+    toast.success("Thêm nhóm thành công!");
   };
 
   const handleEdit = (group) => {
@@ -107,24 +107,30 @@ export default function GroupsManagement() {
   };
 
   const handleDelete = async (group) => {
-    const result = await Swal.fire({
-      title: "Xác nhận xóa",
-      text: `Bạn có chắc muốn xóa nhóm "${group.group_name}"? Hành động này không thể hoàn tác!`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
+    const confirmed = await new Promise((resolve) => {
+      toast.warning(
+        `Bạn có chắc muốn xóa nhóm "${group.group_name}"? Hành động này không thể hoàn tác!`,
+        {
+          action: {
+            label: "Xóa",
+            onClick: () => resolve(true),
+          },
+          cancel: {
+            label: "Hủy",
+            onClick: () => resolve(false),
+          },
+          duration: 10000,
+        }
+      );
     });
 
-    if (result.isConfirmed) {
+    if (confirmed) {
       try {
         const res = await fetch(`http://localhost:7777/api/groups/${group.group_id}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
         });
         if (res.ok) {
@@ -134,26 +140,14 @@ export default function GroupsManagement() {
             delete newMembers[group.group_id];
             return newMembers;
           });
-          Swal.fire({
-            icon: "success",
-            title: "Thành công",
-            text: "Xóa nhóm thành công!",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#28a745",
-          });
+          toast.success("Xóa nhóm thành công!");
         } else {
           const errorData = await res.json();
           throw new Error(errorData.message || "Xóa nhóm thất bại");
         }
       } catch (error) {
         console.error("Error deleting group:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: error.message || "Đã xảy ra lỗi khi xóa nhóm.",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#d33",
-        });
+        toast.error(error.message || "Đã xảy ra lỗi khi xóa nhóm.");
       }
     }
   };
@@ -161,6 +155,12 @@ export default function GroupsManagement() {
   useEffect(() => {
     fetchAllGroupsData();
   }, []);
+
+  // Filter groups based on search query
+  const filteredGroups = groups.filter(
+    (group) =>
+      (group.group_name ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -173,7 +173,7 @@ export default function GroupsManagement() {
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="outline" className="px-3 py-1">
-                Tổng cộng: {groups.length} nhóm
+                Tổng cộng: {filteredGroups.length} nhóm
               </Badge>
               <Button
                 onClick={() => setShowAddDialog(true)}
@@ -194,7 +194,9 @@ export default function GroupsManagement() {
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
-                  placeholder="Tìm kiếm theo tên nhóm, thành viên..."
+                  placeholder="Tìm kiếm theo tên nhóm hoặc mô tả..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-12 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
@@ -222,9 +224,14 @@ export default function GroupsManagement() {
           </div>
         </div>
 
-        {viewMode === "grid" ? (
+        {filteredGroups.length === 0 ? (
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">Không tìm thấy nhóm nào phù hợp với từ khóa</p>
+          </div>
+        ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {groups.map((group) => {
+            {filteredGroups.map((group) => {
               const IconComponent = getIconComponent(group.icon_name);
               return (
                 <Card
@@ -261,6 +268,7 @@ export default function GroupsManagement() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-semibold text-gray-900 truncate">{group.group_name}</h3>
+                          <p className="text-sm text-gray-600 truncate">{group.description || "Không có mô tả"}</p>
                         </div>
                       </div>
                     </div>
@@ -312,86 +320,82 @@ export default function GroupsManagement() {
                 <TableRow className="bg-gray-50">
                   <TableHead className="w-[50px] font-semibold">STT</TableHead>
                   <TableHead className="font-semibold">Tên nhóm</TableHead>
+                  <TableHead className="font-semibold">Mô tả</TableHead>
                   <TableHead className="font-semibold">Thành viên</TableHead>
                   <TableHead className="w-[150px] font-semibold">Ngày tạo</TableHead>
                   <TableHead className="w-[120px] font-semibold text-center">Hành động</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {Array.isArray(groups) && groups.length > 0 ? (
-                  groups.map((group) => {
-                    const IconComponent = getIconComponent(group.icon_name);
-                    return (
-                      <TableRow key={group.group_id} className="hover:bg-gray-50">
-                        <TableCell className="font-medium text-center">{group.group_id}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <div
-                              className="w-10 h-10 rounded-lg flex items-center justify-center"
-                              style={{ backgroundColor: getColorClass(group.icon_color) }}
-                            >
-                              <IconComponent
-                                className={`h-5 w-5 ${group.icon_color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
-                              />
-                            </div>
-                            <div>
-                              <div className="font-medium text-gray-900 text-left">{group.group_name}</div>
-                            </div>
+                {filteredGroups.map((group) => {
+                  const IconComponent = getIconComponent(group.icon_name);
+                  return (
+                    <TableRow key={group.group_id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium text-center">{group.group_id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            style={{ backgroundColor: getColorClass(group.icon_color) }}
+                          >
+                            <IconComponent
+                              className={`h-5 w-5 ${group.icon_color === COLOR_MAP.WHITE ? "text-black" : "text-white"}`}
+                            />
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <div className="flex -space-x-1">
-                              {[...Array(Math.min(groupMembers[group.group_id] || 0, 3))].map((_, i) => (
-                                <Avatar key={i} className="w-6 h-6 border-2 border-white">
-                                  <AvatarFallback className="text-xs bg-gray-200">
-                                    {String.fromCharCode(65 + i)}
-                                  </AvatarFallback>
-                                </Avatar>
-                              ))}
-                            </div>
-                            <span className="text-sm text-gray-600">
-                              {groupMembers[group.group_id] || 0} người
-                            </span>
+                          <div>
+                            <div className="font-medium text-gray-900 text-left">{group.group_name}</div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            {group.created_at ? new Date(group.created_at).toLocaleDateString("vi-VN") : "Không rõ"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-gray-600">{group.description || "Không có mô tả"}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex -space-x-1">
+                            {[...Array(Math.min(groupMembers[group.group_id] || 0, 3))].map((_, i) => (
+                              <Avatar key={i} className="w-6 h-6 border-2 border-white">
+                                <AvatarFallback className="text-xs bg-gray-200">
+                                  {String.fromCharCode(65 + i)}
+                                </AvatarFallback>
+                              </Avatar>
+                            ))}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-1">
-                            <Button variant="ghost" size="sm" onClick={() => handleEdit(group)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                              onClick={() => handleDelete(group)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan="5" className="text-center text-gray-500 py-4">
-                      Không có nhóm nào
-                    </TableCell>
-                  </TableRow>
-                )}
+                          <span className="text-sm text-gray-600">
+                            {groupMembers[group.group_id] || 0} người
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="h-4 w-4 mr-1" />
+                          {group.created_at ? new Date(group.created_at).toLocaleDateString("vi-VN") : "Không rõ"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-1">
+                          <Button variant="ghost" size="sm" onClick={() => handleEdit(group)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDelete(group)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
         )}
       </div>
-      <AddGroups
+      <AddGroupPopup
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onSave={handleSaveGroup}
@@ -399,4 +403,3 @@ export default function GroupsManagement() {
     </div>
   );
 }
-

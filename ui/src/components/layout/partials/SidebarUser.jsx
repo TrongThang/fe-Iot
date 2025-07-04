@@ -33,8 +33,6 @@ const SidebarUser = () => {
     if (path === "/notifications") return "notifications"
     if (path === "/ticket") return "ticket"
     if (path === "/groups") return "groups"
-    if (path === "/spaces") return "spaces"
-    if (path === "/house") return "house"
     if (path === "/schedules") return "schedules"
     if (path === "/scenes") return "scenes"
     if (path === "/alerts") return "alerts"
@@ -73,9 +71,8 @@ const SidebarUser = () => {
             <Link
               to="/"
               onClick={() => handleItemClick("dashboard")}
-              className={`flex items-center gap-3 transition-colors ${
-                activeItem === "dashboard" ? " text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-              } ${!isOpen && "justify-center"}`}
+              className={`flex items-center gap-3 transition-colors ${activeItem === "dashboard" ? " text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
               title={!isOpen ? "Dashboard" : ""}
             >
               <img src={logo || "/placeholder.svg"} alt="" className="rounded-lg" height={50} width={150} />
@@ -116,11 +113,10 @@ const SidebarUser = () => {
               <Link
                 to="/"
                 onClick={() => handleItemClick("dashboard")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "dashboard"
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "dashboard"
                     ? "bg-blue-600 text-white font-medium"
                     : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+                  } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Dashboard" : ""}
               >
                 <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
@@ -129,9 +125,8 @@ const SidebarUser = () => {
               <Link
                 to="/stats"
                 onClick={() => handleItemClick("stats")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "stats" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "stats" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Thống kê" : ""}
               >
                 <Gauge className="w-4 h-4 flex-shrink-0" />
@@ -172,44 +167,20 @@ const SidebarUser = () => {
               <Link
                 to="/groups"
                 onClick={() => handleItemClick("groups")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "groups" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "groups" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Nhóm" : ""}
               >
                 <Users className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Nhóm</span>}
               </Link>
               <Link
-                to="/house"
-                onClick={() => handleItemClick("house")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "house" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Nhà" : ""}
-              >
-                <House className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Nhà</span>}
-              </Link>
-              <Link
-                to="/spaces"
-                onClick={() => handleItemClick("spaces")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "spaces" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Không gian" : ""}
-              >
-                <LayoutGrid className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Không gian</span>}
-              </Link>
-              <Link
                 to="/notifications"
                 onClick={() => handleItemClick("notifications")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "notifications"
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "notifications"
                     ? "bg-blue-600 text-white font-medium"
                     : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+                  } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Thông báo" : ""}
               >
                 <Package className="w-4 h-4 flex-shrink-0" />
@@ -218,9 +189,8 @@ const SidebarUser = () => {
               <Link
                 to="/ticket"
                 onClick={() => handleItemClick("ticket")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "ticket" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "ticket" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Yêu Cầu" : ""}
               >
                 <Lightbulb className="w-4 h-4 flex-shrink-0" />
@@ -251,11 +221,10 @@ const SidebarUser = () => {
               <Link
                 to="/schedules"
                 onClick={() => handleItemClick("schedules")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "schedules"
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "schedules"
                     ? "bg-blue-600 text-white font-medium"
                     : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+                  } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Lịch trình" : ""}
               >
                 <Clock className="w-4 h-4 flex-shrink-0" />
@@ -264,9 +233,8 @@ const SidebarUser = () => {
               <Link
                 to="/scenes"
                 onClick={() => handleItemClick("scenes")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "scenes" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "scenes" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Cảnh" : ""}
               >
                 <Thermometer className="w-4 h-4 flex-shrink-0" />
@@ -301,7 +269,7 @@ const SidebarUser = () => {
         </div>
       </div>
 
-      
+
     </aside>
   )
 }

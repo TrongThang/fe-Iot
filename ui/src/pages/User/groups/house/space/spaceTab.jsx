@@ -10,24 +10,26 @@ import {
   Lightbulb, Thermometer, Wifi, AlertTriangle, Activity, Clock, TrendingUp, Database
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import AddSpacePopup from "./spacePopups/Add-space-popup"
 import EditSpacePopup from "./spacePopups/Edit-space-popup"
 import DeviceList from "./device/deviceList"
-import Swal from "sweetalert2"
+import { toast } from "sonner"
 import { SPACE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap"
 import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap"
 
-export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
+export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick, roleUserCurrent }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
-  const [isAddSpacePopupOpen, setIsAddSpacePopupOpen] = useState(false);
-  const [isEditSpacePopupOpen, setIsEditSpacePopupOpen] = useState(false);
-  const [spaceToEdit, setSpaceToEdit] = useState(null);
-  const [devices, setDevices] = useState([]);
-  const [selectedSpace, setSelectedSpace] = useState(null);
-  const [showDeviceList, setShowDeviceList] = useState(false);
+  const [isAddSpacePopupOpen, setIsAddSpacePopupOpen] = useState(false)
+  const [isEditSpacePopupOpen, setIsEditSpacePopupOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [spaceIdToDelete, setSpaceIdToDelete] = useState(null)
+  const [spaceToEdit, setSpaceToEdit] = useState(null)
+  const [devices, setDevices] = useState([])
+  const [selectedSpace, setSelectedSpace] = useState(null)
+  const [showDeviceList, setShowDeviceList] = useState(false)
   const [spaces, setSpaces] = useState([])
-  const accessToken = localStorage.getItem('authToken');
 
   const fetchSpaces = async (id) => {
     try {
@@ -35,7 +37,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
       })
       if (res.ok) {
@@ -57,7 +59,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
       })
       if (res.ok) {
@@ -74,6 +76,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   }
 
   useEffect(() => {
+    console.log("Fetching spaces for houseId:", roleUserCurrent)
     const loadSpaces = async () => {
       setIsLoading(true)
       await fetchSpaces(houseId)
@@ -119,55 +122,45 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   }
 
   const handleDeleteSpace = async (spaceId) => {
-    const result = await Swal.fire({
-      title: "Xác nhận xóa",
-      text: "Bạn có chắc muốn xóa không gian này? Hành động này không thể hoàn tác!",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
+    const confirmed = await new Promise((resolve) => {
+      toast.warning(
+        "Bạn có chắc muốn xóa không gian này? Hành động này không thể hoàn tác!",
+        {
+          action: {
+            label: "Xóa",
+            onClick: () => resolve(true),
+          },
+          cancel: {
+            label: "Hủy",
+            onClick: () => resolve(false),
+          },
+          duration: 10000,
+        }
+      )
     })
 
-    if (result.isConfirmed) {
+    if (confirmed) {
       try {
         const res = await fetch(`http://localhost:7777/api/spaces/${spaceId}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
           },
         })
-
         if (res.ok) {
-          Swal.fire({
-            icon: "success",
-            title: "Thành công",
-            text: "Xóa không gian thành công!",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#28a745",
-          });
-          refreshData(); // Refresh data after deletion
+          setSpaces((prev) => prev.filter((s) => s.space_id !== spaceId))
+          toast.success("Xóa không gian thành công!")
+          refreshData()
         } else {
-          const errorData = await res.json();
-          Swal.fire({
-            icon: "error",
-            title: "Lỗi",
-            text: errorData.message || "Có lỗi xảy ra khi xóa không gian",
-            confirmButtonText: "OK",
-            confirmButtonColor: "#dc3545",
-          })
+          const errorData = await res.json()
+          const errorMessage = errorData?.message || "Xóa không gian thất bại!"
+          toast.error(errorMessage)
         }
       } catch (error) {
         console.error("Error deleting space:", error)
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: "Có lỗi xảy ra khi xóa không gian",
-          confirmButtonText: "OK",
-          confirmButtonColor: "#dc3545",
-        })
+        const errorMessage = error?.response?.data?.message || "Đã xảy ra lỗi khi xóa không gian. Vui lòng thử lại."
+        toast.error(errorMessage)
       }
     }
   }
@@ -207,21 +200,21 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
   )
 
   // Statistics - Calculate from real device data
-  const totalDevices = devices.length;
-  const totalActiveDevices = devices.filter(device => device.power_status && device.link_status === "linked").length;
-  const totalAlerts = devices.filter(device => device.alert_status === "active").length;
+  const totalDevices = devices.length
+  const totalActiveDevices = devices.filter(device => device.power_status && device.link_status === "linked").length
+  const totalAlerts = devices.filter(device => device.alert_status === "active").length
 
   const refreshData = async () => {
     try {
-      setIsLoading(true);
-      await fetchSpaces(houseId);
-      await fetchDevices();
+      setIsLoading(true)
+      await fetchSpaces(houseId)
+      await fetchDevices()
     } catch (error) {
-      console.error("Error refreshing data:", error);
+      console.error("Error refreshing data:", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   if (isLoading) {
     return (
@@ -269,10 +262,12 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                 </Badge>
               </CardTitle>
             </div>
-            <Button onClick={handleAddSpace} className="bg-blue-500 hover:bg-blue-600">
-              <Plus className="h-4 w-4 mr-2" />
-              Thêm không gian
-            </Button>
+            {(roleUserCurrent === "owner" || roleUserCurrent === "vice") && (
+              <Button onClick={handleAddSpace} className="bg-blue-500 hover:bg-blue-600">
+                <Plus className="h-4 w-4 mr-2" />
+                Thêm không gian
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -374,49 +369,55 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
                         </div>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className="h-4 w-4 text-slate-600" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-white">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleEditSpace(space.space_id)
-                          }}
-                        >
-                          <Edit className="h-4 w-4 mr-3" />
-                          Chỉnh sửa
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleManageDevices(space)
-                          }}
-                        >
-                          <Lightbulb className="h-4 w-4 mr-3" />
-                          Quản lý thiết bị
-                        </DropdownMenuItem>
-                        <div className="border-t my-1" />
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteSpace(space.space_id)
-                          }}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-3" />
-                          Xóa không gian
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {(roleUserCurrent === "owner" || roleUserCurrent === "vice") && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className="h-4 w-4 text-slate-600" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-white">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleEditSpace(space.space_id)
+                            }}
+                          >
+                            <Edit className="h-4 w-4 mr-3" />
+                            Chỉnh sửa
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleManageDevices(space)
+                            }}
+                          >
+                            <Lightbulb className="h-4 w-4 mr-3" />
+                            Quản lý thiết bị
+                          </DropdownMenuItem>
+                          {roleUserCurrent === "owner" && (
+                            <>
+                              <div className="border-t my-1" />
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDeleteSpace(space.space_id)
+                                }}
+                                className="text-red-600 focus:text-red-600"
+                              >
+                                <Trash2 className="h-4 w-4 mr-3" />
+                                Xóa không gian
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                   <div className="grid grid-cols-3 gap-4 mb-6">
                     {(() => {
@@ -599,6 +600,35 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick }) {
         }}
         space={spaceToEdit}
       />
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Xác nhận xóa</DialogTitle>
+            <DialogDescription>
+              Bạn có chắc muốn xóa không gian này? Hành động này không thể hoàn tác!
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              style={{ backgroundColor: "#3085d6", color: "white" }}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                handleDeleteSpace(spaceIdToDelete)
+                setIsDeleteDialogOpen(false)
+              }}
+              style={{ backgroundColor: "#d33", color: "white" }}
+            >
+              Xóa
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

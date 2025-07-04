@@ -7,9 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Users, FileText, Palette, X } from "lucide-react";
 import IconPickerPopup from "../icon-picker/icon-picker-popup";
+import { toast } from "sonner";
 import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
 import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
-import Swal from "sweetalert2";
 
 export default function AddGroupPopup({ open, onOpenChange, onSave }) {
   const [groupData, setGroupData] = useState({
@@ -24,7 +24,7 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
     },
   });
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const accessToken = localStorage.getItem("authToken");
+
 
   const handleSave = async () => {
     try {
@@ -32,7 +32,7 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
         },
         body: JSON.stringify({
           group_name: groupData.name,
@@ -52,14 +52,6 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
       onSave(newGroup);
       onOpenChange(false);
 
-      // Show success message
-      Swal.fire({
-        icon: "success",
-        title: "Thành công",
-        text: "Tạo nhóm thành công!",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#28a745",
-      });
 
       // Reset form
       setGroupData({
@@ -75,13 +67,7 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
       });
     } catch (error) {
       console.error("Lỗi khi tạo nhóm:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Đã xảy ra lỗi khi tạo nhóm. Vui lòng thử lại.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      toast.error(error.message || "Đã xảy ra lỗi khi tạo nhóm. Vui lòng thử lại.");
     }
   };
 
@@ -103,6 +89,7 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
       },
     });
     onOpenChange(false);
+    toast.info("Đã hủy tạo nhóm.");
   };
 
   const IconComponent = groupData.icon.component || Users;
@@ -226,4 +213,3 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
     </>
   );
 }
-

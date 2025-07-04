@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User } from "lucide-react"
 import axiosPrivate from "@/apis/clients/private.client"
 import { useParams } from "react-router-dom"
-import Swal from "sweetalert2" // Import SweetAlert2
+import { toast } from "sonner"
 
 export default function AddMemberPopup({ open, onOpenChange, onSave }) {
   const { id } = useParams()
@@ -16,180 +16,67 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
     username: "",
     role: "",
   })
-  const [isLoading, setIsLoading] = useState(false) // Add loading state
-  const accessToken = localStorage.getItem("authToken")
+  const [isLoading, setIsLoading] = useState(false)
 
   // Define roles matching the GroupRole enum based on API response
   const roles = [
-    { value: "moderator", label: "Phó nhóm" },
+    { value: "vice", label: "Phó nhóm" },
     { value: "member", label: "Thành viên" },
-    { value: "viewer", label: "Người xem" },
-  ] // Adjusted to match API response
+  ]
 
   const handleSave = async () => {
     if (!memberData.username.trim() || !memberData.role) {
-      Swal.fire({
-        icon: "warning",
-        title: "Cảnh báo!",
-        text: "Vui lòng nhập đầy đủ thông tin!",
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton: "bg-blue-500 text-white hover:bg-blue-600",
-        },
-        didOpen: () => {
-          Swal.getConfirmButton().focus() // Ensure the OK button is focused
-        },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // No action needed on dismissal, just return
-        }
-      })
+      toast.warning("Vui lòng nhập đầy đủ thông tin!")
       return
     }
 
     // Basic username validation
     const usernameRegex = /^[a-zA-Z0-9_]{3,}$/
     if (!usernameRegex.test(memberData.username)) {
-      Swal.fire({
-        icon: "warning",
-        title: "Cảnh báo!",
-        text: "Vui lòng nhập username hợp lệ (ít nhất 3 ký tự, chỉ chữ cái, số và dấu gạch dưới).",
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton: "bg-blue-500 text-white hover:bg-blue-600",
-        },
-        didOpen: () => {
-          Swal.getConfirmButton().focus() // Ensure the OK button is focused
-        },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // No action needed on dismissal, just return
-        }
-      })
+      toast.warning("Vui lòng nhập username hợp lệ (ít nhất 3 ký tự, chỉ chữ cái, số và dấu gạch dưới).")
       return
     }
 
     // Validate groupId from useParams
-    console.log("Raw id from useParams:", id) // Debug the raw id value
+    console.log("Raw id from useParams:", id)
     const parsedGroupId = Number(id)
     if (!id || isNaN(parsedGroupId) || parsedGroupId <= 0) {
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi!",
-        text: "ID nhóm không hợp lệ hoặc không được cung cấp trong URL!",
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton: "bg-red-500 text-white hover:bg-red-600",
-        },
-        didOpen: () => {
-          Swal.getConfirmButton().focus() // Ensure the OK button is focused
-        },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // No action needed on dismissal, just return
-        }
-      })
+      toast.error("ID nhóm không hợp lệ hoặc không được cung cấp trong URL!")
       console.error("Invalid groupId:", id, "Parsed:", parsedGroupId)
       return
     }
 
     setIsLoading(true)
     try {
-      const res = await axiosPrivate.post(`http://localhost:7777/api/groups/users`, {
-          group_id: parsedGroupId,
-          email: memberData.email,
-          role: memberData.role,
+      const res = await axiosPrivate.post(`http://localhost:7777/api/groups/members`, {
+        groupId: parsedGroupId,
+        username: memberData.username,
+        role: memberData.role,
       })
 
-      const data = await res.json()
-
-      if (res.ok) {
-        onOpenChange(false) // ✅ Đóng Dialog TRƯỚC
-        setTimeout(() => {
-          Swal.fire({
-            icon: "success",
-            title: "Thành công!",
-            text: `Thành viên ${memberData.username} đã được thêm với vai trò ${memberData.role}!`,
-            confirmButtonText: "OK",
-            customClass: {
-              confirmButton: "bg-green-500 text-white hover:bg-green-600",
-            },
-            didOpen: () => {
-              Swal.getConfirmButton().focus()
-            },
-          }).then((result) => {
-            if (result.isConfirmed) {
-              onSave(data)
-              setMemberData({ username: "", role: "" })
-            }
-          })
-        }, 200) // Đợi một chút để dialog unmount xong
-      } else {
-        // Handle specific API errors based on message
-        const errorMessage = data.message || "Thêm thành viên thất bại!"
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi!",
-          text: errorMessage,
-          confirmButtonText: "OK",
-          customClass: {
-            confirmButton: "bg-red-500 text-white hover:bg-red-600",
-          },
-          didOpen: () => {
-            Swal.getConfirmButton().focus() // Ensure the OK button is focused
-          },
-        }).then((result) => {
-          if (result.isConfirmed) {
-            // No action needed on dismissal, just return
-          }
-        })
+      if (res) {
+        onSave(res.data || res) // Notify parent component
+        setMemberData({ username: "", role: "" }) // Reset form
+        onOpenChange(false) // Close dialog
+        toast.success(`Thành viên ${memberData.username} đã được thêm với vai trò ${memberData.role}!`)
+       
       }
     } catch (error) {
       console.error("API Error:", error)
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi!",
-        text: error.message || "Lỗi khi thêm thành viên do kết nối mạng!",
-        confirmButtonText: "OK",
-        customClass: {
-          confirmButton: "bg-red-500 text-white hover:bg-red-600",
-        },
-        didOpen: () => {
-          Swal.getConfirmButton().focus() // Ensure the OK button is focused
-        },
-      }).then((result) => {
-        if (result.isConfirmed) {
-          // No action needed on dismissal, just return
-        }
-      })
+      // Extract error message from API response, fallback to generic message
+      const errorMessage = error?.data?.message || error?.response?.data?.message || "Lỗi khi thêm thành viên!"
+      toast.error(errorMessage)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleCancel = () => {
-    Swal.fire({
-      icon: "info",
-      title: "Hủy bỏ",
-      text: "Bạn có chắc muốn hủy thêm thành viên?",
-      showCancelButton: true,
-      confirmButtonText: "Có",
-      cancelButtonText: "Không",
-      customClass: {
-        confirmButton: "bg-blue-500 text-white hover:bg-blue-600",
-        cancelButton: "bg-gray-300 text-gray-700 hover:bg-gray-400",
-      },
-      didOpen: () => {
-        Swal.getConfirmButton().focus() // Ensure the confirm button is focused
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        onOpenChange(false)
-        setMemberData({
-          username: "",
-          role: "",
-        })
-      }
+    toast.info("Đã hủy thêm thành viên.")
+    onOpenChange(false)
+    setMemberData({
+      username: "",
+      role: "",
     })
   }
 
@@ -267,4 +154,4 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
       </DialogContent>
     </Dialog>
   )
-}
+} 

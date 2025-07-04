@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Building, Briefcase, GraduationCap, Home, MapPin, Palette, X, Building2, Bed, Castle, TreePine, Crown, BookOpen } from "lucide-react";
+import { Home, MapPin, Palette, X } from "lucide-react";
 import IconHousePickerPopup from "../../icon-picker/icon-house-picker-popup";
-import Swal from "sweetalert2";
-import axiosPrivate from "@/apis/clients/private.client";
+import { toast } from "sonner";
 import { HOUSE_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
 import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
 
@@ -16,8 +15,8 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
     name: "",
     address: "",
     icon: {
-      iconId: "HOUSE",
-      component: HOUSE_ICON_MAP.HOUSE,
+      iconId: "HOME",
+      component: HOUSE_ICON_MAP.HOME,
       color: COLOR_MAP.BLUE,
       colorId: "BLUE",
       name: "Nhà",
@@ -27,8 +26,8 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
 
   useEffect(() => {
     if (house && open) {
-      const iconKey = house.icon_name?.toUpperCase() || "HOUSE";
-      const iconComponent = HOUSE_ICON_MAP[iconKey] || HOUSE_ICON_MAP.HOUSE;
+      const iconKey = house.icon_name?.toUpperCase() || "HOME";
+      const iconComponent = HOUSE_ICON_MAP[iconKey] || HOUSE_ICON_MAP.HOME;
       const colorId = house.icon_color_id || "BLUE";
       setHouseData({
         name: house.name || house.house_name || "",
@@ -46,12 +45,16 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
 
   const handleSave = async () => {
     try {
-      if (!house?.id && !house?.house_id) {
+      const houseId = house?.id || house?.house_id;
+      if (!houseId) {
         throw new Error("House ID is required for editing");
       }
+      if (!groupId || isNaN(Number(groupId))) {
+        throw new Error("Group ID is invalid");
+      }
       const requestBody = {
-        house_name: houseData.name.trim(),
-        address: houseData.address.trim(),
+        house_name: houseData.name,
+        address: houseData.address || "",
         icon_name: houseData.icon.iconId,
         icon_color: houseData.icon.color,
       };
@@ -64,33 +67,32 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
         throw new Error("Địa chỉ nhà không được để trống");
       }
 
-      const houseId = house?.id || house?.house_id;
-      const response = await axiosPrivate.put(`http://localhost:7777/api/houses/${houseId}`, requestBody)
+      const response = await fetch(`http://localhost:7777/api/houses/${houseId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
 
-      if (!response.success) {
-        const errorData = response.data;
+      if (!response.ok) {
+        const errorData = await response.json();
         throw new Error(errorData.message || "Chỉnh sửa nhà thất bại");
       }
 
-      const updatedHouse = response.data;
+      const updatedHouse = await response.json();
       onSave(updatedHouse);
       onOpenChange(false);
 
-      Swal.fire({
-        icon: "success",
-        title: "Thành công",
-        text: "Chỉnh sửa nhà thành công!",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#28a745",
-      });
 
       // Reset form after save
       setHouseData({
         name: "",
         address: "",
         icon: {
-          iconId: "HOUSE",
-          component: HOUSE_ICON_MAP.HOUSE,
+          iconId: "HOME",
+          component: HOUSE_ICON_MAP.HOME,
           color: COLOR_MAP.BLUE,
           colorId: "BLUE",
           name: "Nhà",
@@ -98,13 +100,7 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
       });
     } catch (error) {
       console.error("Lỗi khi chỉnh sửa nhà:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Đã xảy ra lỗi khi chỉnh sửa nhà. Vui lòng thử lại.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      toast.error(error.message || "Đã xảy ra lỗi khi chỉnh sửa nhà. Vui lòng thử lại.");
     }
   };
 
@@ -115,8 +111,8 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
 
   const handleCancel = () => {
     // Restore original house data instead of resetting
-    const iconKey = house?.icon_name?.toUpperCase() || "HOUSE";
-    const iconComponent = HOUSE_ICON_MAP[iconKey] || HOUSE_ICON_MAP.HOUSE;
+    const iconKey = house?.icon_name?.toUpperCase() || "HOME";
+    const iconComponent = HOUSE_ICON_MAP[iconKey] || HOUSE_ICON_MAP.HOME;
     const colorId = house?.icon_color_id || "BLUE";
     setHouseData({
       name: house?.name || house?.house_name || "",
@@ -130,6 +126,7 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
       },
     });
     onOpenChange(false);
+    toast.info("Đã hủy chỉnh sửa nhà.");
   };
 
   const IconComponent = houseData.icon.component || Home;

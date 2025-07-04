@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Users, FileText, Palette, X } from "lucide-react";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 import IconPickerPopup from "../icon-picker/icon-picker-popup";
 import { GROUP_ICON_MAP } from "@/components/common/CustomerSearch/IconMap";
 import { COLOR_MAP } from "@/components/common/CustomerSearch/ColorMap";
@@ -42,13 +42,7 @@ export default function EditGroupPopup({ open, onOpenChange, onSave, formData, s
       await onSave(updateData);
       onOpenChange(false);
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Đã xảy ra lỗi khi cập nhật nhóm. Vui lòng thử lại.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#d33",
-      });
+      toast.error(error.message || "Đã xảy ra lỗi khi cập nhật nhóm. Vui lòng thử lại.");
     }
   };
 
@@ -59,6 +53,7 @@ export default function EditGroupPopup({ open, onOpenChange, onSave, formData, s
 
   const handleCancel = () => {
     onOpenChange(false);
+    toast.info("Đã hủy chỉnh sửa nhóm.");
   };
 
   const IconComponent = formData.icon?.component || Users;
@@ -182,4 +177,3 @@ export default function EditGroupPopup({ open, onOpenChange, onSave, formData, s
     </>
   );
 }
-

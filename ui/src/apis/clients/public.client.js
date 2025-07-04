@@ -1,5 +1,4 @@
 import axios from 'axios'
-console.log(process.env.REACT_APP_SMART_NET_IOT_API_URL)
 
 const axiosPublic = axios.create({
     baseURL: process.env.REACT_APP_SMART_NET_IOT_API_URL || "http://localhost:7777/api/", // Địa chỉ API public
