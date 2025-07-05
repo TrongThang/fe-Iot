@@ -24,7 +24,11 @@ export const AuthProvider = ({ children }) => {
             });
 
             if (response.data.success) {
-                setUser(response.data.data);
+                const userData = response.data.data;
+                setUser(userData);
+                // Store user data for socket connection
+                localStorage.setItem('user', JSON.stringify(userData));
+                console.log('👤 User data stored:', userData);
             }
         } catch (error) {
             console.error('Error fetching user info:', error);
@@ -110,9 +114,8 @@ export const AuthProvider = ({ children }) => {
                 const token = response.accessToken;
                 localStorage.setItem('authToken', token);
 
-                const decoded = jwtDecode(token);
-
-                setUser(decoded);
+                // Fetch full user info after login
+                await fetchUserInfo(token);
                 setIsAuthenticated(true);
                 return { success: true };
             } else {

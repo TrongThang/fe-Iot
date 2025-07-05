@@ -62,7 +62,6 @@ export default function DeviceManagement({
 	const { 
 		user, 
 		isConnected, 
-		connectSocket, 
 		connectToDevice,
 		disconnectFromDevice,
 		deviceNotifications,
@@ -89,13 +88,14 @@ export default function DeviceManagement({
 		return () => clearTimeout(timer)
 	}, [])
 
-	// Initialize socket connection when user is available
+	// Global socket connection DISABLED - use device-specific connections
+	// Device connections will be handled by individual device components
 	useEffect(() => {
-		if (user && !isConnected) {
-			console.log('🔌 Initializing socket connection for user:', user.id || user.account_id);
-			connectSocket(user.id || user.account_id);
+		if (user) {
+			console.log('👤 User authenticated, ready for device-specific connections:', user.id || user.account_id);
+			console.log('💡 Global socket connection disabled - devices will connect individually');
 		}
-	}, [user, isConnected, connectSocket])
+	}, [user])
 
 	// Handle emergency alerts
 	useEffect(() => {

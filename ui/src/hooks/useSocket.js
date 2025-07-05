@@ -10,9 +10,11 @@ export const useSocket = (accountId) => {
 
   const connect = useCallback(async () => {
     if (!accountId || connectionAttemptRef.current) {
+      console.log('🚫 Socket connect skipped:', { accountId: !!accountId, attempting: connectionAttemptRef.current });
       return;
     }
 
+    console.log('🔌 Socket connecting for account:', accountId);
     connectionAttemptRef.current = true;
     setConnectionError(null);
 
@@ -20,8 +22,9 @@ export const useSocket = (accountId) => {
       await socketService.connect(accountId);
       setIsConnected(true);
       setRetryCount(0);
+      console.log('✅ Socket connected successfully');
     } catch (error) {
-      console.error('Socket connection failed:', error);
+      console.error('❌ Socket connection failed:', error);
       setConnectionError(error.message);
       setRetryCount(prev => prev + 1);
     } finally {
@@ -30,6 +33,7 @@ export const useSocket = (accountId) => {
   }, [accountId]);
 
   const disconnect = useCallback(() => {
+    console.log('🔌 Socket disconnecting...');
     socketService.disconnect();
     setIsConnected(false);
     setConnectionError(null);
@@ -37,9 +41,23 @@ export const useSocket = (accountId) => {
   }, []);
 
   useEffect(() => {
-    if (accountId && !isConnected && !connectionError && retryCount < 3) {
-      connect();
+    // DISABLED: No auto-connect for global socket
+    // IoT API requires serialNumber + accountId for /client namespace
+    // Only device-specific connections are allowed
+    
+    if (!accountId) {
+      console.log('🚫 No accountId provided, skipping socket connection');
+      return;
     }
+
+    console.log('🔄 useSocket effect called but auto-connect DISABLED for global socket');
+    console.log('📋 Use device-specific socket hooks (useDeviceSocket, useDoorSocket, useLEDSocket) instead');
+
+    // Don't auto-connect to avoid continuous connection attempts
+    // if (!isConnected && !connectionError && retryCount < 3 && !connectionAttemptRef.current) {
+    //   console.log('🔄 Attempting socket connection...', { retryCount, accountId });
+    //   connect();
+    // }
 
     return () => {
       // Cleanup on unmount
@@ -47,7 +65,7 @@ export const useSocket = (accountId) => {
         disconnect();
       }
     };
-  }, [accountId, connect, disconnect, isConnected, connectionError, retryCount]);
+  }, [accountId, disconnect]);
 
   return {
     isConnected,
@@ -61,7 +79,7 @@ export const useSocket = (accountId) => {
 
 // Hook for device-specific real-time data
 export const useDeviceSocket = (serialNumber, accountId, options = {}) => {
-  const { autoConnect = true, enableRealTime = true } = options;
+  const { autoConnect = true, enableRealTime = true } = options; // CHANGED: autoConnect = true by default
   const [deviceData, setDeviceData] = useState(null);
   const [sensorData, setSensorData] = useState(null);
   const [deviceStatus, setDeviceStatus] = useState(null);
@@ -69,17 +87,34 @@ export const useDeviceSocket = (serialNumber, accountId, options = {}) => {
   const [isDeviceConnected, setIsDeviceConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
 
-  const { isConnected } = useSocket(accountId);
+  // Don't use global socket connection - create device-specific connection
+  const [isConnected, setIsConnected] = useState(false);
+  
+  console.log('🔌 useDeviceSocket called with serialNumber:', serialNumber, 'accountId:', accountId, 'options:', options);
 
-  // Connect to specific device
-  const connectToDevice = useCallback(() => {
-    if (isConnected && serialNumber && accountId) {
-      const success = socketService.connectToDevice(serialNumber, accountId);
-      setIsDeviceConnected(success);
-      return success;
+  // Connect to specific device - create device-specific connection
+  const connectToDevice = useCallback(async () => {
+    if (serialNumber && accountId) {
+      console.log('🔄 Connecting to device:', serialNumber, 'for account:', accountId);
+      
+      try {
+        // Create device-specific socket connection
+        const success = await socketService.connectToDevice(serialNumber, accountId);
+        setIsDeviceConnected(success);
+        setIsConnected(success);
+        
+        console.log('✅ Device connection result:', success);
+        return success;
+      } catch (error) {
+        console.error('❌ Device connection error:', error);
+        setIsDeviceConnected(false);
+        setIsConnected(false);
+        return false;
+      }
     }
+    console.log('🚫 Missing serialNumber or accountId');
     return false;
-  }, [isConnected, serialNumber, accountId]);
+  }, [serialNumber, accountId]);
 
   // Disconnect from device
   const disconnectFromDevice = useCallback(() => {
@@ -123,7 +158,8 @@ export const useDeviceSocket = (serialNumber, accountId, options = {}) => {
     socketService.on(`realtime_started_${serialNumber}`, handleRealtimeStarted);
 
     // Auto-connect if enabled
-    if (autoConnect && enableRealTime) {
+    if (autoConnect && enableRealTime && serialNumber && accountId) {
+      console.log(`🔄 Auto-connecting to device ${serialNumber} with account ${accountId}`);
       connectToDevice();
     }
 
@@ -134,7 +170,7 @@ export const useDeviceSocket = (serialNumber, accountId, options = {}) => {
       socketService.off(`device_alarm_${serialNumber}`, handleAlarmData);
       socketService.off(`realtime_started_${serialNumber}`, handleRealtimeStarted);
     };
-  }, [isConnected, serialNumber, autoConnect, enableRealTime, connectToDevice]);
+  }, [isConnected, serialNumber, accountId, autoConnect, enableRealTime, connectToDevice]);
 
   // Send commands to device
   const sendCommand = useCallback((commandData) => {
@@ -145,6 +181,8 @@ export const useDeviceSocket = (serialNumber, accountId, options = {}) => {
     // Connection status
     isConnected,
     isDeviceConnected,
+    connectionStatus: isDeviceConnected ? 'connected' : 'disconnected',
+    error: null,
     
     // Device data
     deviceData,
@@ -156,22 +194,26 @@ export const useDeviceSocket = (serialNumber, accountId, options = {}) => {
     // Actions
     connectToDevice,
     disconnectFromDevice,
-    sendCommand
+    sendCommand,
+    reconnect: connectToDevice
   };
 };
 
 // Hook for door control
 export const useDoorSocket = (serialNumber, accountId, options = {}) => {
-  const { autoConnect = true } = options;
+  const { autoConnect = false } = options; // CHANGED: autoConnect = false by default
   const [doorStatus, setDoorStatus] = useState(null);
   const [doorCommandResponse, setDoorCommandResponse] = useState(null);
   const [lastDoorUpdate, setLastDoorUpdate] = useState(null);
 
-  const { isConnected } = useSocket(accountId);
+  // Don't use global socket connection - avoid continuous connections
+  const [isConnected, setIsConnected] = useState(false);
 
   // Setup door-specific event listeners
   useEffect(() => {
-    if (!isConnected || !serialNumber) return;
+    if (!serialNumber || !accountId) return;
+
+    console.log('🚪 Setting up door socket for:', serialNumber, 'with account:', accountId);
 
     // Door status updates
     const handleDoorStatus = (data) => {
@@ -189,9 +231,16 @@ export const useDoorSocket = (serialNumber, accountId, options = {}) => {
     socketService.on(`door_status_${serialNumber}`, handleDoorStatus);
     socketService.on(`door_command_response_${serialNumber}`, handleDoorCommandResponse);
 
-    // Auto-connect if enabled
+    // Auto-connect if enabled - create device-specific connection
     if (autoConnect) {
-      socketService.connectToDevice(serialNumber, accountId);
+      console.log('🔄 Auto-connecting door socket for:', serialNumber);
+      socketService.connectToDevice(serialNumber, accountId).then(success => {
+        setIsConnected(success);
+        console.log('🚪 Door socket connection result:', success);
+      }).catch(error => {
+        console.error('❌ Door socket connection failed:', error);
+        setIsConnected(false);
+      });
     }
 
     // Cleanup
@@ -199,7 +248,7 @@ export const useDoorSocket = (serialNumber, accountId, options = {}) => {
       socketService.off(`door_status_${serialNumber}`, handleDoorStatus);
       socketService.off(`door_command_response_${serialNumber}`, handleDoorCommandResponse);
     };
-  }, [isConnected, serialNumber, accountId, autoConnect]);
+  }, [serialNumber, accountId, autoConnect]);
 
   // Door control commands
   const toggleDoor = useCallback((state = {}) => {
@@ -242,13 +291,14 @@ export const useDoorSocket = (serialNumber, accountId, options = {}) => {
 
 // Hook for LED control
 export const useLEDSocket = (serialNumber, accountId, options = {}) => {
-  const { autoConnect = true } = options;
+  const { autoConnect = false } = options; // CHANGED: autoConnect = false by default
   const [ledCapabilities, setLedCapabilities] = useState(null);
   const [ledStatus, setLedStatus] = useState(null);
   const [effectStatus, setEffectStatus] = useState(null);
   const [lastLedUpdate, setLastLedUpdate] = useState(null);
 
-  const { isConnected } = useSocket(accountId);
+  // Don't use global socket connection - avoid continuous connections
+  const [isConnected, setIsConnected] = useState(false);
 
   console.log(`[useLEDSocket] Hook initialized for ${serialNumber}`, {
     isConnected,
@@ -258,12 +308,12 @@ export const useLEDSocket = (serialNumber, accountId, options = {}) => {
 
   // Setup LED-specific event listeners
   useEffect(() => {
-    if (!isConnected || !serialNumber) {
-      console.log(`[useLEDSocket] Not ready: isConnected=${isConnected}, serialNumber=${serialNumber}`);
+    if (!serialNumber || !accountId) {
+      console.log(`[useLEDSocket] Not ready: serialNumber=${serialNumber}, accountId=${accountId}`);
       return;
     }
 
-    console.log(`[useLEDSocket] Setting up event listeners for ${serialNumber}`);
+    console.log(`[useLEDSocket] Setting up event listeners for ${serialNumber} with account ${accountId}`);
 
     // LED capabilities response
     const handleLedCapabilities = (data) => {
@@ -292,18 +342,24 @@ export const useLEDSocket = (serialNumber, accountId, options = {}) => {
     socketService.on(`led_state_updated_${serialNumber}`, handleLedStateUpdated);
     socketService.on(`led_effect_set_${serialNumber}`, handleLedEffectSet);
 
-    // Auto-connect and get capabilities
+    // Auto-connect and get capabilities - create device-specific connection
     if (autoConnect) {
       console.log(`[useLEDSocket] Auto-connecting to device ${serialNumber}`);
-      const connected = socketService.connectToDevice(serialNumber, accountId);
-      
-      if (connected) {
-        // Request LED capabilities after a short delay to ensure connection is established
-        setTimeout(() => {
-          console.log(`[useLEDSocket] Requesting LED capabilities for ${serialNumber}`);
-          socketService.getLEDCapabilities(serialNumber);
-        }, 1000);
-      }
+      socketService.connectToDevice(serialNumber, accountId).then(success => {
+        setIsConnected(success);
+        console.log(`[useLEDSocket] LED socket connection result:`, success);
+        
+        if (success) {
+          // Request LED capabilities after a short delay to ensure connection is established
+          setTimeout(() => {
+            console.log(`[useLEDSocket] Requesting LED capabilities for ${serialNumber}`);
+            socketService.getLEDCapabilities(serialNumber);
+          }, 1000);
+        }
+      }).catch(error => {
+        console.error(`[useLEDSocket] LED socket connection failed:`, error);
+        setIsConnected(false);
+      });
     }
 
     // Cleanup
@@ -314,7 +370,7 @@ export const useLEDSocket = (serialNumber, accountId, options = {}) => {
       socketService.off(`led_state_updated_${serialNumber}`, handleLedStateUpdated);
       socketService.off(`led_effect_set_${serialNumber}`, handleLedEffectSet);
     };
-  }, [isConnected, serialNumber, accountId, autoConnect]);
+  }, [serialNumber, accountId, autoConnect]);
 
   // LED control functions với logging
   const setEffect = useCallback((effectData) => {
@@ -396,74 +452,41 @@ export const useGlobalDeviceNotifications = (accountId) => {
   const [deviceNotifications, setDeviceNotifications] = useState([]);
   const [emergencyAlerts, setEmergencyAlerts] = useState([]);
 
-  const { isConnected } = useSocket(accountId);
+  console.log('🔔 useGlobalDeviceNotifications called with accountId:', accountId);
+
+  // Don't use useSocket for global notifications to avoid continuous connections
+  // IoT API requires serialNumber + accountId for /client namespace
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!isConnected) return;
+    console.log('🔔 useGlobalDeviceNotifications effect - accountId:', accountId);
+    
+    // Early return if no accountId - don't try to connect for global notifications
+    if (!accountId) {
+      console.log('🚫 Skipping global notifications setup - no accountId');
+      return;
+    }
 
-    // Global device connection events
-    const handleGlobalDeviceConnect = (data) => {
-      setDeviceNotifications(prev => [...prev, {
-        id: Date.now(),
-        type: 'connect',
-        data,
-        timestamp: new Date()
-      }]);
-    };
+    // For now, don't auto-connect for global notifications
+    // Global notifications will be handled per-device connections
+    console.log('📋 Global notifications available but no auto-connect');
+    setIsConnected(false);
 
-    const handleGlobalDeviceDisconnect = (data) => {
-      setDeviceNotifications(prev => [...prev, {
-        id: Date.now(),
-        type: 'disconnect',
-        data,
-        timestamp: new Date()
-      }]);
-    };
+    // Skip event listeners setup for now - no global connection
+    // Global notifications will be handled per-device when user accesses device pages
+    
+    // Global device connection events - DISABLED for now
+    // const handleGlobalDeviceConnect = (data) => { ... };
+    // Emergency alerts - DISABLED for now  
+    // const handleEmergencyAlert = (data) => { ... };
 
-    // Emergency alerts
-    const handleEmergencyAlert = (data) => {
-      setEmergencyAlerts(prev => [...prev, {
-        id: Date.now(),
-        type: 'emergency',
-        data,
-        timestamp: new Date()
-      }]);
-    };
+    console.log('📋 Global notifications ready but no event listeners setup (avoiding continuous connections)');
 
-    const handleFireAlert = (data) => {
-      setEmergencyAlerts(prev => [...prev, {
-        id: Date.now(),
-        type: 'fire',
-        data,
-        timestamp: new Date()
-      }]);
-    };
-
-    const handleSmokeAlert = (data) => {
-      setEmergencyAlerts(prev => [...prev, {
-        id: Date.now(),
-        type: 'smoke',
-        data,
-        timestamp: new Date()
-      }]);
-    };
-
-    // Register global event listeners
-    socketService.on('global_device_connect', handleGlobalDeviceConnect);
-    socketService.on('global_device_disconnect', handleGlobalDeviceDisconnect);
-    socketService.on('emergency_alert', handleEmergencyAlert);
-    socketService.on('fire_alert', handleFireAlert);
-    socketService.on('smoke_alert', handleSmokeAlert);
-
-    // Cleanup
+    // No cleanup needed since no event listeners registered
     return () => {
-      socketService.off('global_device_connect', handleGlobalDeviceConnect);
-      socketService.off('global_device_disconnect', handleGlobalDeviceDisconnect);
-      socketService.off('emergency_alert', handleEmergencyAlert);
-      socketService.off('fire_alert', handleFireAlert);
-      socketService.off('smoke_alert', handleSmokeAlert);
+      console.log('📋 Global notifications cleanup - no listeners to remove');
     };
-  }, [isConnected]);
+  }, [accountId]);
 
   // Clear notifications
   const clearNotifications = useCallback(() => {
@@ -491,4 +514,6 @@ export const useGlobalDeviceNotifications = (accountId) => {
     dismissNotification,
     dismissEmergencyAlert
   };
-}; 
+};
+
+ 

@@ -5,6 +5,7 @@ import { SidebarProvider, useSidebar } from "./partials/contexts/Sidebar-context
 import { useAuth } from "@/contexts/AuthContext"
 import { useEffect } from "react"
 import { jwtDecode } from "jwt-decode"
+import EmergencyAlertSystem from "@/components/common/EmergencyAlertSystem"
 
 function LayoutContent() {
     const { isOpen } = useSidebar()
@@ -41,6 +42,8 @@ function LayoutContent() {
                     <Outlet />
                 </main>
             </div>
+            {/* Global Emergency Alert System */}
+            <EmergencyAlertSystem />
         </div>
     )
 }

@@ -4,6 +4,7 @@ import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Lightbulb, Flame, Thermometer, Palette, Zap, AlertTriangle, Droplets, Wind } from "lucide-react"
 import { useEffect } from "react"
+import RealtimeSensorDisplay from "@/components/common/devices/RealtimeSensorDisplay"
 
 // Light Detail Component
 export function LightDetail({ device }) {
@@ -130,6 +131,12 @@ export function SmokeDetectorDetail({ device }) {
 					</div>
 				</CardContent>
 			</Card>
+
+			{/* Real-time Sensor Display */}
+			<RealtimeSensorDisplay 
+				deviceSerial={device.serial_number || device.serialNumber}
+				deviceName={device.name || device.device_name}
+			/>
 
 			{/* Environmental Stats */}
 			<div className="grid grid-cols-2 gap-4">

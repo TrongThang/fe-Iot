@@ -28,6 +28,7 @@ import LightControl from './LightControl';
 import { useDeviceSocket, useLEDSocket } from '@/hooks/useSocket';
 import { useAuth } from '@/contexts/AuthContext';
 import TestFireAlert from '@/components/common/devices/TestFireAlert';
+import GasMonitoringDetail from './type/GasMonitoringDetail';
 
 export default function DynamicDeviceDetail({ device }) {
     const [refreshSharedUsers, setRefreshSharedUsers] = useState(0);
@@ -35,9 +36,9 @@ export default function DynamicDeviceDetail({ device }) {
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [showAlertOverlay, setShowAlertOverlay] = useState(false);
 
-    // Auth context để lấy user ID
+    // Auth context để lấy user ID - prioritize account_id for IoT API
     const { user } = useAuth();
-    const accountId = user?.id || user?.userId;
+    const accountId = user?.account_id || user?.id || user?.userId;
 
     // Use custom hooks for capabilities and controls
     const {
@@ -64,7 +65,17 @@ export default function DynamicDeviceDetail({ device }) {
                         capabilities?.capabilities?.includes('GAS_DETECTION') ||
                         capabilities?.capabilities?.includes('SMOKE_DETECTION');
 
-    // Fire Alert Socket - only for fire/smoke detectors
+    // Check if device is gas monitoring sensor
+    const isGasMonitoring = device?.type?.toLowerCase().includes('gas') ||
+                           device?.type?.toLowerCase().includes('sensor') ||
+                           device?.template_type?.toLowerCase().includes('gas') ||
+                           device?.template_type?.toLowerCase().includes('monitoring') ||
+                           device?.template_type?.toLowerCase().includes('temperature') ||
+                           capabilities?.capabilities?.includes('GAS_MONITORING') ||
+                           capabilities?.capabilities?.includes('TEMPERATURE_MONITORING');
+
+    // Fire Alert Socket - only for fire/smoke detectors with valid data
+    const canConnectFireSocket = isFireDetector && device && device.serial_number && accountId;
     const {
         currentAlert: fireAlert,
         alertHistory: fireAlertHistory,
@@ -77,22 +88,28 @@ export default function DynamicDeviceDetail({ device }) {
         isConnected: fireSocketConnected,
         isDeviceConnected: fireDeviceConnected,
         sensorData: fireSensorData
-    } = useFireAlertSocket(isFireDetector ? device : null, {
+    } = useFireAlertSocket(canConnectFireSocket ? device : null, {
         enableSound: soundEnabled,
         enableNotifications: notificationsEnabled,
-        autoConnect: isFireDetector
+        autoConnect: canConnectFireSocket
     });
 
-    // LED Socket hook để lấy LED modes từ socket
+    // LED Socket hook để lấy LED modes từ socket - only with valid data
+    const canConnectLEDSocket = device?.serial_number && accountId && 
+                               (deviceTypeHelpers.isLEDDevice(device) ||
+                                capabilities?.capabilities?.includes('LIGHT_CONTROL'));
     const { 
         ledCapabilities, 
         isConnected: isLEDConnected,
         applyPreset: socketApplyPreset,
         setEffect: socketSetEffect 
-    } = useLEDSocket(device?.serial_number, accountId, { 
-        autoConnect: deviceTypeHelpers.isLEDDevice(device) ||
-                    capabilities?.capabilities?.includes('LIGHT_CONTROL')
-    });
+    } = useLEDSocket(
+        canConnectLEDSocket ? device?.serial_number : null, 
+        canConnectLEDSocket ? accountId : null, 
+        { 
+            autoConnect: canConnectLEDSocket
+        }
+    );
 
     // Chuẩn hóa danh sách preset từ socket (ledCapabilities)
     const ledModes = useMemo(() => {
@@ -261,6 +278,11 @@ export default function DynamicDeviceDetail({ device }) {
                 </Card>
             </div>
         );
+    }
+
+    // If this is a gas monitoring device, show specialized component
+    if (isGasMonitoring) {
+        return <GasMonitoringDetail device={device} />;
     }
 
     return (
