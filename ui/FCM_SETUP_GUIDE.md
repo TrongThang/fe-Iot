@@ -52,13 +52,13 @@ REACT_APP_SOCKET_URL=http://localhost:3000
 **Config hiện tại:**
 ```javascript
 const firebaseConfig = {
-  apiKey: "AIzaSyDDG_6dS0sQf-ST3ZjzLCOO7JnhbA93Sek",
-  authDomain: "homeconnect-teamiot.firebaseapp.com",
-  projectId: "homeconnect-teamiot",
-  storageBucket: "homeconnect-teamiot.firebasestorage.app",
-  messagingSenderId: "697438598174",
-  appId: "1:697438598174:web:0fb3109284f665c5532a0f",
-  measurementId: "G-PVR53BGMC1"
+  apiKey: "your-api-key",
+  authDomain: "your-auth-domain",
+  projectId: "your-project-Id",
+  storageBucket: "your-storage-bucket",
+  messagingSenderId: "your-message-sender-id",
+  appId: "1:your-message-sender-id:web:1aaaa",
+  measurementId: "your-measurement-id"
 };
 ```
 

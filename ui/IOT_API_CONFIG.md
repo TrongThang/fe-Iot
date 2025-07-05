@@ -16,8 +16,8 @@ NODE_ENV=development
 **For Production with Railway:**
 ```bash
 # IoT API Configuration (remove /api suffix if present)
-REACT_APP_IOT_API_URL=https://iothomeconnectapiv2-production.up.railway.app
-REACT_APP_SMART_NET_IOT_API_URL=https://iothomeconnectapiv2-production.up.railway.app
+REACT_APP_IOT_API_URL=https://your-iot-api.com
+REACT_APP_SMART_NET_IOT_API_URL=https://your-iot-api.com
 NODE_ENV=production
 ```
 

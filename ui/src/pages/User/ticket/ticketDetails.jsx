@@ -48,7 +48,7 @@ export default function TicketDetailDialog({
       try {
         // Replace with actual API call when available
         const response = await fetch(
-          `https://iothomeconnectapiv2-production.up.railway.app/api/tickets/${ticket?.ticket_id}/comments`,
+          `${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/tickets/${ticket?.ticket_id}/comments`,
           {
             headers: {
               "Content-Type": "application/json",

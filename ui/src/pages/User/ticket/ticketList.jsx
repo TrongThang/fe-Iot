@@ -39,7 +39,7 @@ export default function TicketList() {
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/tickets/user", {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/tickets/user`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -66,7 +66,7 @@ export default function TicketList() {
   // Fetch ticket types
   const fetchTicketTypes = async () => {
     try {
-      const res = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/ticket-types", {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/ticket-types`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -155,7 +155,7 @@ export default function TicketList() {
     if (result.isConfirmed) {
       try {
         const response = await fetch(
-          `https://iothomeconnectapiv2-production.up.railway.app/api/tickets/${ticketId}/cancel`,
+          `${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/tickets/${ticketId}/cancel`,
           {
             method: "PUT",
             headers: {

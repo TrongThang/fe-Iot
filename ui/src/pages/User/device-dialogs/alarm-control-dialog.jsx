@@ -213,7 +213,7 @@ export default function AlarmControlDialog({ device, onClose, onDeviceUpdate }) 
 
     try {
       const response = await fetch(
-        `https://iothomeconnectapiv2-production.up.railway.app/api/devices/${deviceData.id}`,
+        `${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/devices/${deviceData.id}`,
         {
           method: "PATCH",
           headers: {
