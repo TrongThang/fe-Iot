@@ -23,18 +23,17 @@ const ALERT_THRESHOLDS = {
 // Alert severity levels
 export const ALERT_LEVELS = {
     NORMAL: 'normal',
-    WARNING: 'warning', 
+    WARNING: 'warning',
     DANGER: 'danger',
     CRITICAL: 'critical'
 };
 
 // Alert types
 export const ALERT_TYPES = {
+    GAS: 'gas',
     FIRE: 'fire',
     SMOKE: 'smoke',
-    GAS: 'gas',
-    TEMPERATURE: 'temperature',
-    EMERGENCY: 'emergency'
+    TEMPERATURE: 'temperature'
 };
 
 export const useFireAlertSocket = (device, options = {}) => {
@@ -56,19 +55,21 @@ export const useFireAlertSocket = (device, options = {}) => {
     const audioRef = useRef(null);
     const soundTimeoutRef = useRef(null);
     
-    // Device connection
+    // Device connection - ensure we have valid data before connecting
     const serialNumber = device?.serial_number;
     const accountId = device?.account_id || device?.user_id;
+    const hasValidConnectionData = device && serialNumber && accountId;
 
     console.log(`[FireAlertSocket] Hook initialized:`, {
         device: !!device,
         serialNumber,
         accountId,
+        hasValidConnectionData,
         autoConnect,
         enableSound
     });
 
-    // Use device-specific socket for real-time sensor data (only if device exists)
+    // Use device-specific socket for real-time sensor data (only with valid data)
     const {
         isConnected,
         isDeviceConnected,
@@ -76,16 +77,20 @@ export const useFireAlertSocket = (device, options = {}) => {
         deviceStatus,
         alarmData,
         lastUpdate
-    } = useDeviceSocket(device ? serialNumber : null, device ? accountId : null, { 
-        autoConnect: autoConnect && !!device,
-        enableRealTime: true 
-    });
+    } = useDeviceSocket(
+        hasValidConnectionData ? serialNumber : null, 
+        hasValidConnectionData ? accountId : null, 
+        { 
+            autoConnect: autoConnect && hasValidConnectionData,
+            enableRealTime: true 
+        }
+    );
 
-    // Use global notifications for emergency alerts (only if device exists)
+    // Use global notifications for emergency alerts (only with valid account)
     const {
         emergencyAlerts,
         dismissEmergencyAlert
-    } = useGlobalDeviceNotifications(device ? accountId : null);
+    } = useGlobalDeviceNotifications(hasValidConnectionData ? accountId : null);
 
     // Debug logging for connection status
     useEffect(() => {

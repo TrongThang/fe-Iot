@@ -90,13 +90,14 @@ export default function DeviceManagement({
     fetchDevice();
   }, []);
 
-  // Initialize socket connection when user is available
-  useEffect(() => {
-    if (user && !isConnected) {
-      console.log("🔌 Initializing socket connection for user:", user.id || user.account_id);
-      connectSocket(user.id || user.account_id);
-    }
-  }, [user, isConnected, connectSocket]);
+	// Global socket connection DISABLED - use device-specific connections
+	// Device connections will be handled by individual device components
+	useEffect(() => {
+		if (user) {
+			console.log('👤 User authenticated, ready for device-specific connections:', user.id || user.account_id);
+			console.log('💡 Global socket connection disabled - devices will connect individually');
+		}
+	}, [user])
 
   // Handle emergency alerts
   useEffect(() => {

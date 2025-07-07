@@ -3,6 +3,7 @@ import { Flame, AlertTriangle, Thermometer, Wind, Droplets } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 // Import fire alert components and hooks
@@ -11,6 +12,7 @@ import FireAlertComponent from '../components/FireAlertComponent';
 import AlertOverlay from '../components/AlertOverlay';
 import ActionDetail from "../ActionDetail";
 import HeaderDeviceDetail from "../HeaderDeviceDetail";
+import RealtimeSensorDisplay from "../RealtimeSensorDisplay";
 
 export default function SmokeDetectorDetail({ device }) {
     const [soundEnabled, setSoundEnabled] = useState(true);
@@ -126,6 +128,12 @@ export default function SmokeDetectorDetail({ device }) {
                     compact={false}
                 />
             )}
+
+            {/* Real-time Sensor Display */}
+            <RealtimeSensorDisplay 
+                deviceSerial={device.serial_number || device.serialNumber}
+                deviceName={device.name || device.device_name}
+            />
 
             {/* Connection Status */}
             <Card>

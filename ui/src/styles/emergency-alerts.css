@@ -1,0 +1,477 @@
+/* Emergency Alert Swal Styling */
+
+.emergency-alert-popup {
+  border: 3px solid #ff4444 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 40px rgba(255, 68, 68, 0.3) !important;
+  animation: emergencyPulse 1s infinite alternate !important;
+}
+
+.emergency-alert-title {
+  color: #d33 !important;
+  font-size: 24px !important;
+  font-weight: bold !important;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.emergency-alert-content {
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+  white-space: pre-line !important;
+}
+
+/* Emergency pulse animation */
+@keyframes emergencyPulse {
+  0% {
+    box-shadow: 0 20px 40px rgba(255, 68, 68, 0.3);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 25px 50px rgba(255, 68, 68, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+/* Fire alert specific styling */
+.fire-alert-popup {
+  border-color: #ff4444 !important;
+  background: linear-gradient(135deg, #fff 0%, #fff5f5 100%) !important;
+}
+
+/* Smoke alert specific styling */  
+.smoke-alert-popup {
+  border-color: #888888 !important;
+  background: linear-gradient(135deg, #fff 0%, #f8f8f8 100%) !important;
+}
+
+/* Gas alert specific styling */
+.gas-alert-popup {
+  border-color: #ff8800 !important;
+  background: linear-gradient(135deg, #fff 0%, #fff8f0 100%) !important;
+}
+
+/* Button styling for emergency alerts */
+.swal2-confirm.swal2-styled {
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+}
+
+.swal2-cancel.swal2-styled {
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+}
+
+.swal2-deny.swal2-styled {
+  font-weight: bold !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+}
+
+/* Progress bar styling */
+.swal2-timer-progress-bar {
+  background: #ff4444 !important;
+  height: 6px !important;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .emergency-alert-popup {
+    margin: 20px !important;
+    width: calc(100% - 40px) !important;
+  }
+  
+  .emergency-alert-title {
+    font-size: 20px !important;
+  }
+  
+  .emergency-alert-content {
+    font-size: 14px !important;
+  }
+}
+
+/* High contrast mode for accessibility */
+@media (prefers-contrast: high) {
+  .emergency-alert-popup {
+    border-width: 4px !important;
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.8) !important;
+  }
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .emergency-alert-popup {
+    animation: none !important;
+  }
+  
+  @keyframes emergencyPulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+  }
+}
+
+/* Enhanced Emergency Alert System CSS */
+
+/* Custom colors for gas/fire alerts */
+:root {
+  --alert-critical: #dc2626;
+  --alert-danger: #ea580c;
+  --alert-warning: #f59e0b;
+  --alert-gas: #f97316;
+  --alert-fire: #dc2626;
+  --alert-smoke: #6b7280;
+  --alert-temp: #ef4444;
+}
+
+/* Emergency alert container enhancements */
+.emergency-alert-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: 0.025em;
+}
+
+/* Enhanced card styling based on severity */
+.alert-card-critical {
+  box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.3), 0 10px 10px -5px rgba(220, 38, 38, 0.2);
+  border-width: 3px;
+  border-color: var(--alert-critical);
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  animation: criticalPulse 2s infinite;
+}
+
+.alert-card-danger {
+  box-shadow: 0 20px 25px -5px rgba(234, 88, 12, 0.25), 0 10px 10px -5px rgba(234, 88, 12, 0.15);
+  border-width: 3px;
+  border-color: var(--alert-danger);
+  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+}
+
+.alert-card-warning {
+  box-shadow: 0 20px 25px -5px rgba(245, 158, 11, 0.2), 0 10px 10px -5px rgba(245, 158, 11, 0.1);
+  border-width: 2px;
+  border-color: var(--alert-warning);
+  background: linear-gradient(135deg, #fffbeb 0%, #fde68a 100%);
+}
+
+/* Gas specific styling */
+.alert-gas {
+  border-left: 6px solid var(--alert-gas);
+}
+
+.alert-gas .alert-icon {
+  color: var(--alert-gas);
+  filter: drop-shadow(0 2px 4px rgba(249, 115, 22, 0.3));
+}
+
+/* Fire specific styling */
+.alert-fire {
+  border-left: 6px solid var(--alert-fire);
+}
+
+.alert-fire .alert-icon {
+  color: var(--alert-fire);
+  filter: drop-shadow(0 2px 4px rgba(220, 38, 38, 0.3));
+}
+
+/* Smoke specific styling */
+.alert-smoke {
+  border-left: 6px solid var(--alert-smoke);
+}
+
+.alert-smoke .alert-icon {
+  color: var(--alert-smoke);
+  filter: drop-shadow(0 2px 4px rgba(107, 114, 128, 0.3));
+}
+
+/* Temperature specific styling */
+.alert-temp {
+  border-left: 6px solid var(--alert-temp);
+}
+
+.alert-temp .alert-icon {
+  color: var(--alert-temp);
+  filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
+}
+
+/* Enhanced severity badges */
+.severity-badge-critical {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+  animation: severityPulse 2s infinite;
+}
+
+.severity-badge-danger {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  color: white;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(234, 88, 12, 0.3);
+}
+
+.severity-badge-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.3);
+}
+
+/* Enhanced data display */
+.alert-data-point {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  margin: 4px 0;
+  transition: all 0.2s ease;
+}
+
+.alert-data-point:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateX(2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.alert-data-critical {
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.alert-data-danger {
+  background: rgba(234, 88, 12, 0.1);
+  border-color: rgba(234, 88, 12, 0.3);
+  color: #9a3412;
+  font-weight: 600;
+}
+
+.alert-data-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #92400e;
+  font-weight: 500;
+}
+
+/* Safety recommendations styling */
+.safety-recommendations {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+
+.safety-recommendations h4 {
+  color: #1e40af;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.safety-action-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  background: white;
+  color: #1e40af;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.safety-action-btn:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.safety-action-btn:active {
+  transform: translateX(2px);
+}
+
+/* Enhanced emergency call buttons */
+.emergency-call-btn-gas {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  border: none;
+  color: white;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+  transition: all 0.2s ease;
+}
+
+.emergency-call-btn-gas:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.5);
+}
+
+.emergency-call-btn-fire {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  border: none;
+  color: white;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+  transition: all 0.2s ease;
+}
+
+.emergency-call-btn-fire:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5);
+}
+
+.emergency-call-btn-critical {
+  animation: emergencyPulse 1.5s infinite;
+}
+
+/* Vietnamese text enhancements */
+.vietnamese-text {
+  font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+  letter-spacing: 0.025em;
+}
+
+.vietnamese-title {
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.05em;
+}
+
+/* Location and device info styling */
+.device-location-info {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  border-left: 4px solid #6b7280;
+}
+
+.device-location-info.critical {
+  background: rgba(220, 38, 38, 0.1);
+  border-left-color: #dc2626;
+  color: #991b1b;
+}
+
+/* Audio indicator enhancements */
+.audio-indicator {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 2px solid #fca5a5;
+  color: #b91c1c;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(248, 113, 113, 0.2);
+}
+
+.audio-indicator .volume-icon {
+  animation: volumePulse 1s infinite;
+}
+
+/* Animations */
+@keyframes criticalPulse {
+  0%, 100% {
+    border-color: #dc2626;
+    box-shadow: 0 20px 25px -5px rgba(220, 38, 38, 0.3), 0 10px 10px -5px rgba(220, 38, 38, 0.2);
+  }
+  50% {
+    border-color: #b91c1c;
+    box-shadow: 0 25px 30px -5px rgba(220, 38, 38, 0.4), 0 15px 15px -5px rgba(220, 38, 38, 0.3);
+  }
+}
+
+@keyframes severityPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes volumePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .emergency-alert-container {
+    max-width: 100%;
+    margin: 0 8px;
+  }
+  
+  .alert-card-critical,
+  .alert-card-danger,
+  .alert-card-warning {
+    margin: 8px;
+  }
+  
+  .emergency-call-btn-gas,
+  .emergency-call-btn-fire {
+    font-size: 0.875rem;
+    padding: 10px 16px;
+  }
+  
+  .safety-recommendations {
+    padding: 12px;
+  }
+  
+  .vietnamese-title {
+    font-size: 1rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .alert-card-critical,
+  .alert-card-danger,
+  .alert-card-warning {
+    border-width: 4px;
+  }
+  
+  .severity-badge-critical,
+  .severity-badge-danger,
+  .severity-badge-warning {
+    font-weight: 900;
+  }
+  
+  .safety-action-btn {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .alert-card-critical,
+  .severity-badge-critical,
+  .emergency-call-btn-critical,
+  .audio-indicator .volume-icon {
+    animation: none;
+  }
+  
+  .alert-data-point:hover,
+  .safety-action-btn:hover,
+  .emergency-call-btn-gas:hover,
+  .emergency-call-btn-fire:hover {
+    transform: none;
+  }
+} 

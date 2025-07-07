@@ -2,11 +2,19 @@ import { io } from "socket.io-client";
 
 // Socket configuration for IoT API
 const SOCKET_CONFIG = {
-  // Change this to match your IoT API URL
-  url: process.env.REACT_APP_API_URL || "http://localhost:3000",
+  // Change this to match your IoT API URL (IoT API runs on port 7777)
+  // Remove /api prefix as IoT API namespaces are directly /client and /device
+  url: (() => {
+    const baseUrl = process.env.REACT_APP_IOT_API_URL || 
+                   process.env.REACT_APP_SMART_NET_IOT_API_URL || 
+                   "http://localhost:7777";
+    
+    // Remove /api or /api/ suffix if present
+    return baseUrl.replace(/\/api\/?$/, '');
+  })(),
   options: {
     transports: ["websocket", "polling"],
-  withCredentials: false,
+    withCredentials: false,
     timeout: 20000,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
@@ -29,71 +37,86 @@ class SocketService {
 
   // Initialize client socket connection
   connect(accountId) {
-    if (this.clientSocket && this.isConnected) {
-      console.log("🔌 Socket already connected");
-      return Promise.resolve(this.clientSocket);
-    }
+    console.log("🚫 GLOBAL SOCKET CONNECTION DISABLED");
+    console.log("💡 IoT API requires serialNumber + accountId for /client namespace");
+    console.log("📋 Use device-specific connections instead:");
+    console.log("   - socketService.connectToDevice(serialNumber, accountId)");
+    console.log("   - useDeviceSocket(serialNumber, accountId, options)");
+    
+    return Promise.reject(new Error('Global socket connection disabled. Use device-specific connections.'));
+  }
 
-    return new Promise((resolve, reject) => {
-      try {
-        // Connect to /client namespace for web applications
-        this.clientSocket = io(`${SOCKET_CONFIG.url}/client`, {
-          ...SOCKET_CONFIG.options,
-          query: {
-            accountId: accountId,
-            clientType: 'web_app'
-          }
-        });
+  // Setup client socket event listeners
+  setupClientSocketEvents(resolve, reject) {
+    if (!this.clientSocket) return;
 
-        // Connection successful
-        this.clientSocket.on('connect', () => {
-          console.log('✅ Socket connected to /client namespace');
-          console.log('📡 Socket ID:', this.clientSocket.id);
-          this.isConnected = true;
-          this.retryCount = 0;
-          resolve(this.clientSocket);
-        });
+    // Connection successful
+    this.clientSocket.on('connect', () => {
+      console.log('✅ Socket connected to /client namespace');
+      console.log('📡 Socket ID:', this.clientSocket.id);
+      console.log('🔍 Socket query params:', this.clientSocket.io.opts.query);
+      this.isConnected = true;
+      this.retryCount = 0;
+      
+      // If connected with device params, start real-time monitoring
+      const query = this.clientSocket.io.opts.query;
+      if (query.serialNumber && query.accountId) {
+        console.log(`🔴 Starting real-time monitoring for device: ${query.serialNumber}`);
+        this.clientSocket.emit('start_real_time_device', { serialNumber: query.serialNumber });
+      }
+      
+      if (resolve) resolve(this.clientSocket);
+    });
 
-        // Connection error
-        this.clientSocket.on('connect_error', (error) => {
-          console.error('❌ Socket connection error:', error);
-          this.isConnected = false;
-          
-          if (this.retryCount < this.maxRetries) {
-            this.retryCount++;
-            console.log(`🔄 Retrying connection (${this.retryCount}/${this.maxRetries})...`);
-            setTimeout(() => {
-              this.clientSocket.connect();
-            }, 2000 * this.retryCount);
-          } else {
-            reject(error);
-          }
-        });
-
-        // Disconnection
-        this.clientSocket.on('disconnect', (reason) => {
-          console.log('🔌 Socket disconnected:', reason);
-          this.isConnected = false;
-          this.connectedDevices.clear();
-          
-          // Auto-reconnect for certain reasons
-          if (reason === 'io server disconnect') {
-            console.log('🔄 Server initiated disconnect, reconnecting...');
-            this.clientSocket.connect();
-          }
-        });
-
-        // Global device events
-        this.setupGlobalEventListeners();
-
-        // Actually connect
-        this.clientSocket.connect();
-
-      } catch (error) {
-        console.error('❌ Socket initialization error:', error);
-        reject(error);
+    // Connection error
+    this.clientSocket.on('connect_error', (error) => {
+      console.error('❌ Socket connection error:', error);
+      console.error('🔍 Error details:', {
+        message: error.message,
+        description: error.description,
+        context: error.context,
+        type: error.type,
+        transport: error.transport
+      });
+      
+      // Specific error handling for common issues
+      if (error.message === 'Invalid namespace') {
+        console.error('🚨 Invalid namespace error - check URL configuration!');
+        console.error('💡 Troubleshooting:');
+        console.error('   - Remove /api from REACT_APP_IOT_API_URL');
+        console.error('   - Ensure IoT API is running');
+        console.error('   - Check if URL is correct');
+        console.error(`   - Current URL: ${SOCKET_CONFIG.url}/client`);
+      }
+      
+      this.isConnected = false;
+      
+      if (this.retryCount < this.maxRetries) {
+        this.retryCount++;
+        console.log(`🔄 Retrying connection (${this.retryCount}/${this.maxRetries})...`);
+        setTimeout(() => {
+          this.clientSocket.connect();
+        }, 2000 * this.retryCount);
+      } else {
+        if (reject) reject(error);
       }
     });
+
+    // Disconnection
+    this.clientSocket.on('disconnect', (reason) => {
+      console.log('🔌 Socket disconnected:', reason);
+      this.isConnected = false;
+      this.connectedDevices.clear();
+      
+      // Auto-reconnect for certain reasons
+      if (reason === 'io server disconnect') {
+        console.log('🔄 Server initiated disconnect, reconnecting...');
+        this.clientSocket.connect();
+      }
+    });
+
+    // Setup global event listeners
+    this.setupGlobalEventListeners();
   }
 
   // Setup global event listeners for device notifications
@@ -132,12 +155,24 @@ class SocketService {
       console.log('💨 SMOKE ALERT:', data);
       this.emit('smoke_alert', data);
     });
+
+    // Real-time monitoring confirmations
+    this.clientSocket.on('realtime_started', (data) => {
+      console.log('✅ Real-time monitoring started:', data);
+      this.emit('realtime_started', data);
+    });
+
+    this.clientSocket.on('realtime_stopped', (data) => {
+      console.log('⏹️ Real-time monitoring stopped:', data);
+      this.emit('realtime_stopped', data);
+    });
   }
 
   // Connect to a specific device for real-time monitoring
-  connectToDevice(serialNumber, accountId) {
-    if (!this.clientSocket || !this.isConnected) {
-      console.error('❌ Socket not connected. Call connect() first.');
+  // New strategy: Create dedicated device connection with serialNumber + accountId
+  async connectToDevice(serialNumber, accountId) {
+    if (!serialNumber || !accountId) {
+      console.error('❌ Missing serialNumber or accountId');
       return false;
     }
 
@@ -146,64 +181,151 @@ class SocketService {
       return true;
     }
 
-    // Update query parameters for device-specific connection
-    this.clientSocket.io.opts.query = {
-      ...this.clientSocket.io.opts.query,
-      serialNumber: serialNumber,
-      accountId: accountId
-    };
+    console.log(`🔗 Creating device-specific connection for ${serialNumber} with account ${accountId}`);
 
-    // Join device-specific room
-    this.clientSocket.emit('join_device_room', { serialNumber, accountId });
+    try {
+      // Create new socket connection specifically for this device
+      const deviceSocket = io(`${SOCKET_CONFIG.url}/client`, {
+        ...SOCKET_CONFIG.options,
+        query: {
+          serialNumber: serialNumber,
+          accountId: accountId,
+          clientType: 'web_app'
+        }
+      });
 
-    // Start real-time monitoring
-    this.clientSocket.emit('start_real_time_device', { serialNumber });
+      // Setup device socket events
+      await new Promise((resolve, reject) => {
+        deviceSocket.on('connect', () => {
+          console.log(`✅ Device socket connected for ${serialNumber}`);
+          console.log('📡 Device Socket ID:', deviceSocket.id);
+          
+          // Start real-time monitoring
+          deviceSocket.emit('start_real_time_device', { serialNumber });
+          
+          // Setup device-specific event listeners
+          try {
+            this.setupDeviceEventListeners(serialNumber, deviceSocket);
+          } catch (error) {
+            console.error(`❌ Error setting up device listeners for ${serialNumber}:`, error);
+          }
+          
+          // Mark as connected
+          this.connectedDevices.set(serialNumber, {
+            connected: true,
+            lastUpdate: new Date(),
+            socket: deviceSocket
+          });
+          
+          resolve(true);
+        });
 
-    // Setup device-specific event listeners
-    this.setupDeviceEventListeners(serialNumber);
+        deviceSocket.on('connect_error', (error) => {
+          console.error(`❌ Device socket connection error for ${serialNumber}:`, error);
+          reject(error);
+        });
 
-    this.connectedDevices.set(serialNumber, {
-      connected: true,
-      lastUpdate: new Date()
-    });
+        deviceSocket.on('disconnect', (reason) => {
+          console.log(`🔌 Device socket disconnected for ${serialNumber}:`, reason);
+          this.connectedDevices.delete(serialNumber);
+        });
 
-    console.log(`✅ Connected to device ${serialNumber} for real-time monitoring`);
-    return true;
+        // Connect
+        deviceSocket.connect();
+      });
+
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to connect to device ${serialNumber}:`, error);
+      return false;
+    }
   }
 
   // Setup device-specific event listeners
-  setupDeviceEventListeners(serialNumber) {
-    if (!this.clientSocket) return;
+  setupDeviceEventListeners(serialNumber, deviceSocket = null) {
+    if (!serialNumber) {
+      console.error('❌ Cannot setup device event listeners: serialNumber is required');
+      return;
+    }
+    
+    const socket = deviceSocket || this.clientSocket;
+    if (!socket) {
+      console.error('❌ Cannot setup device event listeners: socket is null');
+      return;
+    }
+
+    // Validate socket has .on method
+    if (typeof socket.on !== 'function') {
+      console.error('❌ Cannot setup device event listeners: socket.on is not a function');
+      return;
+    }
+
+    console.log(`🔧 Setting up event listeners for device ${serialNumber}`);
 
     // Real-time sensor data
-    this.clientSocket.on('sensorData', (data) => {
-      if (data.serialNumber === serialNumber || !data.serialNumber) {
-        console.log(`🌡️ Sensor data for ${serialNumber}:`, data);
-        this.emit(`device_sensor_data_${serialNumber}`, data);
-        this.emit('device_sensor_data', { serialNumber, ...data });
-      }
+    socket.on('sensorData', (data) => {
+      console.log(`🌡️ Sensor data for ${serialNumber}:`, data);
+      this.emit(`device_sensor_data_${serialNumber}`, data);
+      this.emit('device_sensor_data', { serialNumber, ...data });
+      this.emit('sensorData', data); // Emit global event too
+    });
+
+    // Real-time device value from IoT API
+    socket.on('realtime_device_value', (data) => {
+      console.log(`📊 Real-time device value for ${serialNumber}:`, data);
+      this.emit(`device_sensor_data_${serialNumber}`, data);
+      this.emit('device_sensor_data', { serialNumber, ...data });
+      this.emit('realtime_device_value', data); // Emit global event too
     });
 
     // Device status updates
-    this.clientSocket.on('deviceStatus', (data) => {
-      if (data.serialNumber === serialNumber || !data.serialNumber) {
-        console.log(`📊 Device status for ${serialNumber}:`, data);
-        this.emit(`device_status_${serialNumber}`, data);
-        this.emit('device_status', { serialNumber, ...data });
-      }
+    socket.on('deviceStatus', (data) => {
+      console.log(`📊 Device status for ${serialNumber}:`, data);
+      this.emit(`device_status_${serialNumber}`, data);
+      this.emit('device_status', { serialNumber, ...data });
     });
 
     // Alarm alerts
-    this.clientSocket.on('alarmAlert', (data) => {
-      if (data.serialNumber === serialNumber || !data.serialNumber) {
-        console.log(`🚨 Alarm alert for ${serialNumber}:`, data);
-        this.emit(`device_alarm_${serialNumber}`, data);
-        this.emit('device_alarm', { serialNumber, ...data });
-      }
+    socket.on('alarmAlert', (data) => {
+      console.log(`🚨 Alarm alert for ${serialNumber}:`, data);
+      this.emit(`device_alarm_${serialNumber}`, data);
+      this.emit('device_alarm', { serialNumber, ...data });
+    });
+
+    // Gas sensor data
+    socket.on('gasData', (data) => {
+      console.log(`💨 Gas data for ${serialNumber}:`, data);
+      this.emit(`device_gas_data_${serialNumber}`, data);
+      this.emit('device_gas_data', { serialNumber, ...data });
+    });
+
+    // Temperature sensor data
+    socket.on('temperatureData', (data) => {
+      console.log(`🌡️ Temperature data for ${serialNumber}:`, data);
+      this.emit(`device_temperature_data_${serialNumber}`, data);
+      this.emit('device_temperature_data', { serialNumber, ...data });
+    });
+
+    // Humidity sensor data
+    socket.on('humidityData', (data) => {
+      console.log(`💧 Humidity data for ${serialNumber}:`, data);
+      this.emit(`device_humidity_data_${serialNumber}`, data);
+      this.emit('device_humidity_data', { serialNumber, ...data });
+    });
+
+    // Real-time monitoring confirmations
+    socket.on('realtime_started', (data) => {
+      console.log(`✅ Real-time monitoring started for ${serialNumber}:`, data);
+      this.emit(`realtime_started_${serialNumber}`, data);
+    });
+
+    socket.on('realtime_stopped', (data) => {
+      console.log(`⏹️ Real-time monitoring stopped for ${serialNumber}:`, data);
+      this.emit(`realtime_stopped_${serialNumber}`, data);
     });
 
     // Command responses
-    this.clientSocket.on('command_response', (data) => {
+    socket.on('command_response', (data) => {
       if (data.serialNumber === serialNumber || !data.serialNumber) {
         console.log(`📥 Command response for ${serialNumber}:`, data);
         this.emit(`device_command_response_${serialNumber}`, data);
@@ -212,7 +334,7 @@ class SocketService {
     });
 
     // Door-specific events
-    this.clientSocket.on('door_status', (data) => {
+    socket.on('door_status', (data) => {
       if (data.serialNumber === serialNumber || !data.serialNumber) {
         console.log(`🚪 Door status for ${serialNumber}:`, data);
         this.emit(`door_status_${serialNumber}`, data);
@@ -220,7 +342,7 @@ class SocketService {
       }
     });
 
-    this.clientSocket.on('door_command_response', (data) => {
+    socket.on('door_command_response', (data) => {
       if (data.serialNumber === serialNumber || !data.serialNumber) {
         console.log(`🚪 Door command response for ${serialNumber}:`, data);
         this.emit(`door_command_response_${serialNumber}`, data);
@@ -229,7 +351,7 @@ class SocketService {
     });
 
     // ESP8266 specific events
-    this.clientSocket.on('esp8266_status', (data) => {
+    socket.on('esp8266_status', (data) => {
       if (data.serialNumber === serialNumber || !data.serialNumber) {
         console.log(`📊 ESP8266 status for ${serialNumber}:`, data);
         this.emit(`esp8266_status_${serialNumber}`, data);
@@ -238,7 +360,7 @@ class SocketService {
     });
 
     // LED effects events
-    this.clientSocket.on('led_effect_set', (data) => {
+    socket.on('led_effect_set', (data) => {
       if (data.serialNumber === serialNumber || !data.serialNumber) {
         console.log(`💡 LED effect set for ${serialNumber}:`, data);
         this.emit(`led_effect_set_${serialNumber}`, data);
@@ -246,7 +368,7 @@ class SocketService {
       }
     });
 
-    this.clientSocket.on('led_state_updated', (data) => {
+    socket.on('led_state_updated', (data) => {
       if (data.serialNumber === serialNumber || !data.serialNumber) {
         console.log(`💡 LED state updated for ${serialNumber}:`, data);
         this.emit(`led_state_updated_${serialNumber}`, data);
@@ -255,14 +377,14 @@ class SocketService {
     });
 
     // Real-time confirmation events
-    this.clientSocket.on('realtime_started', (data) => {
+    socket.on('realtime_started', (data) => {
       if (data.serialNumber === serialNumber) {
         console.log(`🔴 Real-time started for ${serialNumber}`);
         this.emit(`realtime_started_${serialNumber}`, data);
       }
     });
 
-    this.clientSocket.on('realtime_stopped', (data) => {
+    socket.on('realtime_stopped', (data) => {
       if (data.serialNumber === serialNumber) {
         console.log(`🔵 Real-time stopped for ${serialNumber}`);
         this.emit(`realtime_stopped_${serialNumber}`, data);
@@ -270,7 +392,7 @@ class SocketService {
     });
 
     // LED capabilities response
-    this.clientSocket.on('led_capabilities_response', (data) => {
+    socket.on('led_capabilities_response', (data) => {
       if (data.serialNumber === serialNumber || !data.serialNumber) {
         console.log(`🎨 LED capabilities for ${serialNumber}:`, data);
         this.emit('led_capabilities', data);
@@ -281,13 +403,14 @@ class SocketService {
 
   // Send commands to device
   sendCommand(serialNumber, commandData) {
-    if (!this.clientSocket || !this.isConnected) {
-      console.error('❌ Socket not connected');
+    const deviceConnection = this.connectedDevices.get(serialNumber);
+    if (!deviceConnection || !deviceConnection.socket) {
+      console.error('❌ Device not connected:', serialNumber);
       return false;
     }
 
     console.log(`🎮 Sending command to ${serialNumber}:`, commandData);
-    this.clientSocket.emit('command', {
+    deviceConnection.socket.emit('command', {
       serialNumber,
       ...commandData,
       timestamp: new Date().toISOString()
@@ -298,8 +421,9 @@ class SocketService {
 
   // Door-specific commands
   sendDoorCommand(serialNumber, action, state = {}) {
-    if (!this.clientSocket || !this.isConnected) {
-      console.error('❌ Socket not connected');
+    const deviceConnection = this.connectedDevices.get(serialNumber);
+    if (!deviceConnection || !deviceConnection.socket) {
+      console.error('❌ Device not connected:', serialNumber);
       return false;
     }
 
@@ -310,69 +434,78 @@ class SocketService {
     };
 
     console.log(`🚪 Sending door command to ${serialNumber}:`, doorCommand);
-    this.clientSocket.emit('door_command', doorCommand);
+    deviceConnection.socket.emit('door_command', doorCommand);
 
     return true;
   }
 
   // LED control commands
   setLEDEffect(serialNumber, effectData) {
-    if (!this.clientSocket || !this.isConnected) {
-      console.error('❌ Socket not connected');
+    const deviceConnection = this.connectedDevices.get(serialNumber);
+    if (!deviceConnection || !deviceConnection.socket) {
+      console.error('❌ Device not connected:', serialNumber);
       return false;
     }
 
     console.log(`🌟 Setting LED effect for ${serialNumber}:`, effectData);
-    this.clientSocket.emit('setEffect', effectData);
+    deviceConnection.socket.emit('setEffect', effectData);
 
     return true;
   }
 
   applyLEDPreset(serialNumber, presetData) {
-    if (!this.clientSocket || !this.isConnected) {
-      console.error('❌ Socket not connected');
+    const deviceConnection = this.connectedDevices.get(serialNumber);
+    if (!deviceConnection || !deviceConnection.socket) {
+      console.error('❌ Device not connected:', serialNumber);
       return false;
     }
 
     console.log(`🎨 Applying LED preset for ${serialNumber}:`, presetData);
-    this.clientSocket.emit('applyPreset', presetData);
+    deviceConnection.socket.emit('applyPreset', presetData);
 
     return true;
   }
 
   updateLEDState(serialNumber, stateData) {
-    if (!this.clientSocket || !this.isConnected) {
-      console.error('❌ Socket not connected');
+    const deviceConnection = this.connectedDevices.get(serialNumber);
+    if (!deviceConnection || !deviceConnection.socket) {
+      console.error('❌ Device not connected:', serialNumber);
       return false;
     }
 
     console.log(`💡 Updating LED state for ${serialNumber}:`, stateData);
-    this.clientSocket.emit('updateLEDState', stateData);
+    deviceConnection.socket.emit('updateLEDState', stateData);
 
     return true;
   }
 
   // Get LED capabilities
   getLEDCapabilities(serialNumber) {
-    if (!this.clientSocket || !this.isConnected) {
-      console.error('❌ Socket not connected');
+    const deviceConnection = this.connectedDevices.get(serialNumber);
+    if (!deviceConnection || !deviceConnection.socket) {
+      console.error('❌ Device not connected:', serialNumber);
       return false;
     }
 
     console.log(`🔍 Getting LED capabilities for ${serialNumber}`);
-    this.clientSocket.emit('getLEDCapabilities', { serialNumber });
+    deviceConnection.socket.emit('getLEDCapabilities', { serialNumber });
 
     return true;
   }
 
   // Disconnect from specific device
   disconnectFromDevice(serialNumber) {
-    if (!this.clientSocket || !this.isConnected) {
+    const deviceConnection = this.connectedDevices.get(serialNumber);
+    if (!deviceConnection || !deviceConnection.socket) {
+      console.log(`⚠️ Device ${serialNumber} not connected`);
       return false;
     }
 
     // Stop real-time monitoring
-    this.clientSocket.emit('stop_real_time_device', { serialNumber });
+    deviceConnection.socket.emit('stop_real_time_device', { serialNumber });
+
+    // Disconnect the device socket
+    deviceConnection.socket.disconnect();
 
     // Remove device from connected list
     this.connectedDevices.delete(serialNumber);
@@ -387,6 +520,7 @@ class SocketService {
       this.eventListeners.set(event, []);
     }
     this.eventListeners.get(event).push(callback);
+    console.log(`📝 Event listener registered for: ${event} (${this.eventListeners.get(event).length} listeners)`);
   }
 
   off(event, callback) {
@@ -400,7 +534,9 @@ class SocketService {
   }
 
   emit(event, data) {
+    console.log(`📡 Emitting event: ${event} with data:`, data);
     if (this.eventListeners.has(event)) {
+      console.log(`📡 Found ${this.eventListeners.get(event).length} listeners for ${event}`);
       this.eventListeners.get(event).forEach(callback => {
         try {
           callback(data);
@@ -408,6 +544,8 @@ class SocketService {
           console.error(`❌ Error in event listener for ${event}:`, error);
         }
       });
+    } else {
+      console.log(`📡 No listeners found for event: ${event}`);
     }
   }
 
@@ -432,11 +570,38 @@ class SocketService {
     return Array.from(this.connectedDevices.keys());
   }
 
+  // Getter for external access to connection status  
+  get connected() {
+    return this.isConnected;
+  }
+
   getConnectionStatus() {
     return {
       isConnected: this.isConnected,
       connectedDevices: this.getConnectedDevices(),
-      socketId: this.clientSocket?.id || null
+      socketId: this.clientSocket?.id || null,
+      url: SOCKET_CONFIG.url,
+      namespace: '/client',
+      fullUrl: `${SOCKET_CONFIG.url}/client`
+    };
+  }
+
+  // Test connection without reconnecting
+  testConnection() {
+    if (!this.clientSocket) {
+      return {
+        success: false,
+        message: 'Socket not initialized'
+      };
+    }
+
+    return {
+      success: this.isConnected,
+      message: this.isConnected ? 'Connected' : 'Disconnected',
+      socketId: this.clientSocket.id,
+      transport: this.clientSocket.io.engine.transport.name,
+      query: this.clientSocket.io.opts.query,
+      url: `${SOCKET_CONFIG.url}/client`
     };
   }
 }

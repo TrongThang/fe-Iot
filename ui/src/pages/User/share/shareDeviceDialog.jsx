@@ -93,7 +93,7 @@ export default function DeviceSharingDialog({ deviceId, device, onClose }) {
         permission_type: permissionMap[controlLevel],
       };
 
-      const response = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/tickets", {
+      const response = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/tickets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

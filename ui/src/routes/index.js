@@ -27,8 +27,13 @@ import SearchCustomerDevices from "@/pages/Admin/search/searchCustomerDevices";
 import SearchCustomerInfo from "@/pages/Admin/search/searchCustomerInfo";
 import DashboardAdmin from "@/pages/Admin/Dashboard/dashboard";
 import CustomerShare from "@/pages/Admin/customer_manager/customerShareList";
+import FCMTestPage from "@/pages/User/FCMTestPage";
 
 export const router = createBrowserRouter([
+    {
+        path: '/fcm-test',
+        element: <FCMTestPage />
+    },
     {
         path: '/login',
         element: <Login />
