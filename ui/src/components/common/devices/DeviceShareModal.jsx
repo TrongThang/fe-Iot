@@ -287,13 +287,14 @@ const DeviceShareModal = ({ device, onShareDevice, trigger }) => {
                         <Select
                             value={shareData.permission_level}
                             onValueChange={(value) => setShareData(prev => ({ ...prev, permission_level: value }))}
+                            
                         >
-                            <SelectTrigger>
+                            <SelectTrigger  >
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent >
                                 {Object.entries(permissionLevels).map(([key, permission]) => (
-                                    <SelectItem key={key} value={key}>
+                                    <SelectItem key={key} value={key} className="bg-white">
                                         <div className="flex items-center space-x-2">
                                             <Badge className={permission.color} variant="secondary">
                                                 {permission.label}

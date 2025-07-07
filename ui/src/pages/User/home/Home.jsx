@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import {
     Activity,
@@ -30,7 +31,6 @@ import axiosPrivate from "@/apis/clients/private.client"
 import StatisticsChart from "@/components/common/StatisticsChart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-
 export default function IoTDashboard() {
     const [currentTime, setCurrentTime] = useState(new Date())
     const [systemStats, setSystemStats] = useState({
@@ -44,9 +44,13 @@ export default function IoTDashboard() {
     const [isEnvironmentalExpanded, setIsEnvironmentalExpanded] = useState(true)
     const [expandedSpaces, setExpandedSpaces] = useState({})
     const [selectedSpaceForStats, setSelectedSpaceForStats] = useState('')
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true)
+            setError(null)
             try {
                 console.log('Fetching data...')
                 const [cardResponse, statisticResponse, devicesResponse] = await Promise.all([
@@ -54,38 +58,40 @@ export default function IoTDashboard() {
                     axiosPrivate.get('statistic'),
                     axiosPrivate.get('devices/account')
                 ])
-                
+
                 console.log('Card response:', cardResponse)
-                console.log('Statistic response:', statisticResponse) 
+                console.log('Statistic response:', statisticResponse)
                 console.log('Devices response:', devicesResponse)
-                
-                if(cardResponse.success) {
+
+                if (cardResponse.success) {
                     setSystemStats(cardResponse.data)
                 }
-                if(statisticResponse.success) {
-                    setSpaceEnvironmentalData(statisticResponse.data)
-                    if (statisticResponse.data.length > 0) {
+                if (statisticResponse.success) {
+                    setSpaceEnvironmentalData(statisticResponse.data || [])
+                    if (statisticResponse.data && statisticResponse.data.length > 0) {
                         setSelectedSpaceForStats(statisticResponse.data[0].space_id.toString())
                     }
                 }
-                if(devicesResponse.success) {
-                    setDevices(devicesResponse.data)
+                if (devicesResponse.success) {
+                    setDevices(devicesResponse.data || [])
                     console.log('Devices set:', devicesResponse.data)
                 }
             } catch (error) {
                 console.error('Error fetching data:', error)
+                setError('Không thể tải dữ liệu. Vui lòng thử lại sau.')
+            } finally {
+                setLoading(false)
             }
         }
         fetchData()
 
-        // Update time every minute
         const timeInterval = setInterval(() => {
             setCurrentTime(new Date())
         }, 60000)
 
         return () => clearInterval(timeInterval)
     }, [])
-    
+
     const getStatusColor = (status) => {
         switch (status) {
             case "warning":
@@ -111,7 +117,7 @@ export default function IoTDashboard() {
 
     const getSpaceColor = (index) => {
         const colors = [
-            'bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 
+            'bg-blue-500', 'bg-purple-500', 'bg-emerald-500',
             'bg-orange-500', 'bg-cyan-500', 'bg-pink-500',
             'bg-indigo-500', 'bg-teal-500', 'bg-red-500'
         ]
@@ -136,16 +142,19 @@ export default function IoTDashboard() {
     }
 
     const formatTime = (date) => {
-        return date.toLocaleTimeString('vi-VN', { 
-            hour: '2-digit', 
+        return date.toLocaleTimeString('vi-VN', {
+            hour: '2-digit',
             minute: '2-digit',
-            hour12: false 
+            hour12: false
         })
     }
 
     const getSelectedSpace = () => {
         return spaceEnvironmentalData.find(space => space.space_id.toString() === selectedSpaceForStats)
     }
+
+    if (loading) return <div className="text-center py-10">Đang tải dữ liệu...</div>
+    if (error) return <div className="text-center py-10 text-red-600">{error}</div>
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -169,7 +178,7 @@ export default function IoTDashboard() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-blue-100 text-sm font-medium">Tổng thiết bị</p>
-                                    <p className="text-3xl font-bold">{systemStats.total_devices || 0}</p>
+                                    <p className="text-3xl font-bold">{systemStats.totalDevices || 0}</p>
                                 </div>
                                 <div className="bg-blue-400/30 rounded-xl p-3">
                                     <Power className="h-6 w-6" />
@@ -183,10 +192,10 @@ export default function IoTDashboard() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-emerald-100 text-sm font-medium">Thiết bị online</p>
-                                    <p className="text-3xl font-bold">{systemStats.online_devices || 0}</p>
+                                    <p className="text-3xl font-bold">{systemStats.onlineDevices || 0}</p>
                                     <p className="text-emerald-100 text-xs">
-                                        {systemStats.total_devices > 0 
-                                            ? Math.round((systemStats.online_devices / systemStats.total_devices) * 100)
+                                        {systemStats.totalDevices > 0
+                                            ? Math.round((systemStats.onlineDevices / systemStats.totalDevices) * 100)
                                             : 0}% hoạt động
                                     </p>
                                 </div>
@@ -217,7 +226,7 @@ export default function IoTDashboard() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-orange-100 text-sm font-medium">Năng lượng</p>
-                                    <p className="text-3xl font-bold">{systemStats.energy_usage || 0}kW</p>
+                                    <p className="text-3xl font-bold">{systemStats.energyUsage || 0}kW</p>
                                     <p className="text-orange-100 text-xs flex items-center">
                                         <TrendingDown className="h-3 w-3 mr-1" />
                                         -15% hôm nay
@@ -245,10 +254,10 @@ export default function IoTDashboard() {
                                     <SelectTrigger className="w-64">
                                         <SelectValue placeholder="Chọn không gian để xem thống kê" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-60 overflow-y-auto bg-white">
                                         {spaceEnvironmentalData.map(space => (
-                                            <SelectItem 
-                                                key={space.space_id} 
+                                            <SelectItem
+                                                key={space.space_id}
                                                 value={space.space_id.toString()}
                                             >
                                                 <div className="flex items-center gap-2">
@@ -267,8 +276,8 @@ export default function IoTDashboard() {
                             </div>
                         )}
                     </div>
-                    
-                    <StatisticsChart 
+
+                    <StatisticsChart
                         spaceId={selectedSpaceForStats}
                         spaceData={getSelectedSpace()}
                         devices={devices}
@@ -306,17 +315,15 @@ export default function IoTDashboard() {
                             </Button>
                         </div>
                     </CardHeader>
-                    
-                    <div className={`transition-all duration-300 ease-in-out ${
-                        isEnvironmentalExpanded ? 'max-h-none opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
-                    }`}>
+
+                    <div className={`transition-all duration-300 ease-in-out ${isEnvironmentalExpanded ? 'max-h-none opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                         <CardContent className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {spaceEnvironmentalData.map((space, index) => {
                                     const SpaceIcon = getSpaceIcon(space.space_name)
                                     const spaceColor = getSpaceColor(index)
                                     const status = calculateStatus(space)
-                                    
+
                                     return (
                                         <Card key={space.space_id} className="hover:shadow-md transition-shadow shadow-sm border-slate-300 border-2">
                                             <CardContent className="p-4">
@@ -334,8 +341,8 @@ export default function IoTDashboard() {
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         <Badge className={`${getStatusColor(status)} text-xs`}>
-                                                            {status === "normal" ? "Bình thường" : 
-                                                             status === "warning" ? "Cảnh báo" : "Nguy hiểm"}
+                                                            {status === "normal" ? "Bình thường" :
+                                                                status === "warning" ? "Cảnh báo" : "Nguy hiểm"}
                                                         </Badge>
                                                     </div>
                                                 </div>
@@ -351,7 +358,7 @@ export default function IoTDashboard() {
                                                     </div>
                                                 </div>
 
-                                                <div className={`transition-all duration-300 ease-in-out max-h-40 opacity-100 mt-3`}>
+                                                <div className="transition-all duration-300 ease-in-out max-h-40 opacity-100 mt-3">
                                                     <div className="grid grid-cols-2 gap-3 text-sm pt-3 border-t border-slate-100">
                                                         <div className="flex items-center space-x-2 p-2 bg-emerald-50 rounded-lg">
                                                             <Shield className="h-4 w-4 text-emerald-500" />
@@ -368,7 +375,7 @@ export default function IoTDashboard() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div className="mt-3 pt-3 border-t border-slate-100">
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-xs text-slate-500">Trạng thái thiết bị</span>
@@ -380,10 +387,10 @@ export default function IoTDashboard() {
                                                             </div>
                                                         </div>
                                                         <div className="mt-2 bg-slate-100 rounded-full h-2">
-                                                            <div 
+                                                            <div
                                                                 className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                                                                style={{ 
-                                                                    width: `${space.total_devices > 0 ? (space.active_devices / space.total_devices) * 100 : 0}%` 
+                                                                style={{
+                                                                    width: `${space.total_devices > 0 ? (space.active_devices / space.total_devices) * 100 : 0}%`
                                                                 }}
                                                             ></div>
                                                         </div>

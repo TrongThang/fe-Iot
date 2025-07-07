@@ -29,6 +29,16 @@ export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
       if (!groupId) {
         throw new Error("Group ID is required");
       }
+
+      if (houseData.name.length > 255) {
+        toast.error("Tên nhà không được vượt quá 255 ký tự.");
+        return;
+      }
+      if (houseData.address.length > 255) {
+        toast.error("Địa chỉ nhà không được vượt quá 255 ký tự.");
+        return;
+      }
+
       const requestBody = {
         groupId: Number(groupId),
         house_name: houseData.name,

@@ -20,6 +20,7 @@ import {
   Shield,
   AlertTriangle,
   Package,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,18 +29,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 
 export default function CreateTicketDialog({ onClose, onTicketCreated }) {
   const [formData, setFormData] = useState({
     description: "",
     ticket_type_id: null,
     device_serial: "",
+    assigned_to: "", // Added for franchise and share permission
+    permission_type: "", // Added for share permission
   });
   const [attachments, setAttachments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userDevices, setUserDevices] = useState([]);
   const [ticketTypes, setTicketTypes] = useState([]);
+  const [users, setUsers] = useState([]); // Added for assigned_to dropdown
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
   const accessToken = localStorage.getItem("authToken");
@@ -57,17 +61,14 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
       if (response.ok) {
         const data = await response.json();
         console.log("User Devices:", data);
-        setUserDevices(data ? data : []);
+        setUserDevices(Array.isArray(data) ? data : []);
       } else {
         throw new Error(`Failed to fetch devices: ${response.status}`);
       }
     } catch (error) {
       console.error("Failed to fetch user devices:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: "Không thể tải danh sách thiết bị. Vui lòng thử lại.",
-        confirmButtonColor: "#2563eb",
+      toast.error("Không thể tải danh sách thiết bị. Vui lòng thử lại.", {
+        duration: 5000,
       });
     }
   };
@@ -85,7 +86,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
       if (response.ok) {
         const data = await response.json();
         console.log("Ticket Types Data:", data);
-        const activeTypes = (data ? data : []).filter(
+        const activeTypes = (Array.isArray(data) ? data : []).filter(
           (type) =>
             type.is_active &&
             !type.is_deleted &&
@@ -95,11 +96,8 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
         console.log("Filtered Active Types:", activeTypes);
         setTicketTypes(activeTypes);
         if (activeTypes.length === 0) {
-          Swal.fire({
-            icon: "warning",
-            title: "Không có loại yêu cầu",
-            text: "Hiện không có loại yêu cầu nào khả dụng. Vui lòng liên hệ quản trị viên.",
-            confirmButtonColor: "#2563eb",
+          toast.warning("Hiện không có loại yêu cầu nào khả dụng. Vui lòng liên hệ quản trị viên.", {
+            duration: 5000,
           });
         }
       } else {
@@ -107,11 +105,33 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
       }
     } catch (error) {
       console.error("Failed to fetch ticket types:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: "Không thể tải danh sách loại yêu cầu. Vui lòng thử lại.",
-        confirmButtonColor: "#2563eb",
+      toast.error("Không thể tải danh sách loại yêu cầu. Vui lòng thử lại.", {
+        duration: 5000,
+      });
+    }
+  };
+
+  // Fetch users for assigned_to dropdown
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("http://localhost:7777/api/accounts", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Users Data:", data);
+        setUsers(Array.isArray(data) ? data.filter(user => !user.is_locked && !user.deleted_at) : []);
+      } else {
+        throw new Error(`Failed to fetch users: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+      toast.error("Không thể tải danh sách người dùng. Vui lòng thử lại.", {
+        duration: 5000,
       });
     }
   };
@@ -120,12 +140,10 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
     if (accessToken) {
       fetchDevice();
       fetchTicketType();
+      fetchUsers(); // Fetch users on mount
     } else {
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: "Vui lòng đăng nhập để tạo yêu cầu.",
-        confirmButtonColor: "#2563eb",
+      toast.error("Vui lòng đăng nhập để tạo yêu cầu.", {
+        duration: 5000,
       });
       onClose();
     }
@@ -187,12 +205,22 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
     const parsedTypeId = Number(typeId);
     if (!isNaN(parsedTypeId) && parsedTypeId > 0) {
       console.log("Selected ticket_type_id:", parsedTypeId);
-      setFormData({ ...formData, ticket_type_id: parsedTypeId });
-      setErrors({ ...errors, ticket_type_id: null });
+      setFormData({ ...formData, ticket_type_id: parsedTypeId, assigned_to: "", permission_type: "" }); // Reset assigned_to and permission_type
+      setErrors({ ...errors, ticket_type_id: null, assigned_to: null, permission_type: null });
     } else {
       console.error("Invalid ticket_type_id:", typeId);
       setErrors({ ...errors, ticket_type_id: "Loại yêu cầu không hợp lệ." });
     }
+  };
+
+  const handleUserSelect = (userId) => {
+    setFormData({ ...formData, assigned_to: userId });
+    setErrors({ ...errors, assigned_to: null });
+  };
+
+  const handlePermissionTypeSelect = (permissionType) => {
+    setFormData({ ...formData, permission_type: permissionType });
+    setErrors({ ...errors, permission_type: null });
   };
 
   const handleFileUpload = (event) => {
@@ -213,24 +241,21 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
     });
 
     if (validFiles.length !== files.length) {
-      Swal.fire({
-        icon: "warning",
-        title: "File không hợp lệ",
-        text: "Chỉ hỗ trợ JPG, PNG, MP4, WebM, PDF, TXT, hoặc LOG (tối đa 10MB mỗi file).",
-        confirmButtonColor: "#2563eb",
+      toast.warning("Chỉ hỗ trợ JPG, PNG, MP4, WebM, PDF, TXT, hoặc LOG (tối đa 10MB mỗi file).", {
+        duration: 5000,
       });
     }
 
     const newAttachments = validFiles.map((file) => ({
       id: Date.now() + Math.random(),
-      file, // The File object
+      file,
       name: file.name,
       size: (file.size / 1024).toFixed(1) + " KB",
       type: file.type.startsWith("image/")
         ? "image"
         : file.type.startsWith("video/")
-          ? "video"
-          : "file",
+        ? "video"
+        : "file",
     }));
     setAttachments([...attachments, ...newAttachments]);
   };
@@ -251,6 +276,19 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
     if (!formData.description.trim()) {
       newErrors.description = "Vui lòng nhập mô tả vấn đề.";
     }
+
+    const selectedType = ticketTypes.find(type => type.ticket_type_id === formData.ticket_type_id);
+    if (selectedType) {
+      if (["nhượng quyền thiết bị", "chia sẻ quyền"].includes(selectedType.type_name.toLowerCase())) {
+        if (!formData.assigned_to) {
+          newErrors.assigned_to = "Vui lòng chọn người nhận.";
+        }
+        if (selectedType.type_name.toLowerCase() === "chia sẻ quyền" && !formData.permission_type) {
+          newErrors.permission_type = "Vui lòng chọn loại quyền.";
+        }
+      }
+    }
+
     setErrors(newErrors);
     console.log("Validation Errors:", newErrors);
     return Object.keys(newErrors).length === 0;
@@ -264,7 +302,6 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
     setIsSubmitting(true);
 
     try {
-      // Prepare the evidence object
       const evidence = {
         images: attachments
           .filter((att) => att.type === "image" || att.type === "video")
@@ -275,43 +312,24 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
       };
       console.log("Evidence object:", evidence);
 
-      let response;
-      if (attachments.length > 0) {
-        // Use FormData for requests with attachments
-        const formDataToSend = {
-          description: formData.description,
-          ticket_type_id: Number(formData.ticket_type_id),
-          device_serial: formData.device_serial,
-          evidence: evidence,
-        }
+      const body = {
+        description: formData.description,
+        ticket_type_id: Number(formData.ticket_type_id),
+        device_serial: formData.device_serial,
+        evidence,
+        assigned_to: formData.assigned_to || undefined,
+        permission_type: formData.permission_type || undefined,
+      };
+      console.log("JSON Body to send:", body);
 
-        response = await fetch("http://localhost:7777/api/tickets", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formDataToSend),
-        });
-      } else {
-        // Use JSON for requests without attachments
-        const body = {
-          description: formData.description,
-          ticket_type_id: Number(formData.ticket_type_id),
-          device_serial: formData.device_serial,
-          evidence,
-        };
-        console.log("JSON Body to send:", body);
-
-        response = await fetch("http://localhost:7777/api/tickets", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-      }
+      const response = await fetch("http://localhost:7777/api/tickets", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
       const responseData = await response.json();
       if (!response.ok) {
@@ -330,15 +348,13 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
         created_at: responseData.data?.created_at || new Date().toISOString(),
         updated_at: responseData.data?.updated_at || new Date().toISOString(),
         evidence: responseData.data?.evidence || { images: [], logs: [] },
+        assigned_to: formData.assigned_to || null,
+        permission_type: formData.permission_type || null,
       };
 
-      Swal.fire({
-        icon: "success",
-        title: "Thành công",
-        text: `Yêu cầu hỗ trợ đã được tạo (ID: ${newTicket.ticket_id}).`,
-        confirmButtonColor: "#2563eb",
-        timer: 1500,
-        timerProgressBar: true,
+      toast.success(`Yêu cầu hỗ trợ đã được tạo (ID: ${newTicket.ticket_id}).`, {
+        duration: 1500,
+        progress: true,
       });
 
       onTicketCreated(newTicket);
@@ -353,19 +369,14 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
       } else if (error.message.includes("403")) {
         errorMessage = "Bạn không có quyền tạo yêu cầu này.";
       }
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: errorMessage,
-        confirmButtonColor: "#2563eb",
+      toast.error(errorMessage, {
+        duration: 5000,
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Rest of the JSX remains the same
-  // [Your existing JSX code here]
   return (
     <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-lg overflow-hidden max-h-screen flex flex-col">
       <ScrollArea className="flex-1 overflow-auto">
@@ -491,15 +502,15 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
                               type.priority === 1
                                 ? "bg-red-100 text-red-700"
                                 : type.priority === 2
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-emerald-100 text-emerald-700"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-emerald-100 text-emerald-700"
                             )}
                           >
                             {type.priority === 1
                               ? "Khẩn cấp"
                               : type.priority === 2
-                                ? "Quan trọng"
-                                : "Bình thường"}
+                              ? "Quan trọng"
+                              : "Bình thường"}
                           </Badge>
                         </div>
                         <p className="text-xs sm:text-sm text-blue-200">
@@ -511,6 +522,90 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
                 ))}
               </div>
             </div>
+
+            {/* Assigned To Selection (for Franchise and Share Permission) */}
+            {ticketTypes.find(type => type.ticket_type_id === formData.ticket_type_id)?.type_name.toLowerCase() === "nhượng quyền thiết bị" ||
+             ticketTypes.find(type => type.ticket_type_id === formData.ticket_type_id)?.type_name.toLowerCase() === "chia sẻ quyền" ? (
+              <div className="space-y-2">
+                <Label className="text-white font-medium text-sm sm:text-base">
+                  Chọn người nhận *
+                </Label>
+                {errors.assigned_to && (
+                  <p className="text-red-400 text-xs">{errors.assigned_to}</p>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto pr-2">
+                  {users.length === 0 && (
+                    <p className="text-blue-200 text-sm">Không có người dùng nào khả dụng.</p>
+                  )}
+                  {users.map((user) => (
+                    <div
+                      key={user.account_id}
+                      onClick={() => handleUserSelect(user.account_id)}
+                      className={cn(
+                        "p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                        formData.assigned_to === user.account_id
+                          ? "border-blue-500 bg-blue-500/10"
+                          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                      )}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                          <User className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-white text-sm sm:text-base">
+                            {user.username || "Unknown User"}
+                          </h4>
+                          <p className="text-xs text-blue-200">
+                            ID: {user.account_id}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Permission Type Selection (for Share Permission only) */}
+            {ticketTypes.find(type => type.ticket_type_id === formData.ticket_type_id)?.type_name.toLowerCase() === "chia sẻ quyền" ? (
+              <div className="space-y-2">
+                <Label className="text-white font-medium text-sm sm:text-base">
+                  Chọn loại quyền *
+                </Label>
+                {errors.permission_type && (
+                  <p className="text-red-400 text-xs">{errors.permission_type}</p>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  {["CONTROL", "VIEW"].map((permType) => (
+                    <div
+                      key={permType}
+                      onClick={() => handlePermissionTypeSelect(permType)}
+                      className={cn(
+                        "p-4 rounded-xl border cursor-pointer transition-all duration-200",
+                        formData.permission_type === permType
+                          ? "border-blue-500 bg-blue-500/10"
+                          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                      )}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 rounded-lg flex items-center justify-center">
+                          <Shield className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-white text-sm sm:text-base">
+                            {permType === "CONTROL" ? "Kiểm soát" : "Xem"}
+                          </h4>
+                          <p className="text-xs text-blue-200">
+                            {permType === "CONTROL" ? "Cho phép điều khiển thiết bị" : "Chỉ cho phép xem trạng thái thiết bị"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {/* Description */}
             <div className="space-y-2">
@@ -564,7 +659,6 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
                 </label>
               </div>
 
-              {/* Attachment List */}
               {attachments.length > 0 && (
                 <div className="space-y-2 mt-3">
                   {attachments.map((attachment) => (

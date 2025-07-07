@@ -95,7 +95,7 @@ const SidebarAdmin = () => {
       </div>
 
       {/* Sidebar Content with Custom Scrollbar */}
-      <div className={`py-4 h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar ${isOpen ? "px-3" : "px-2"}`}>
+      <div className={`py-4 h-[calc(100vh-10px)] overflow-y-auto custom-scrollbar ${isOpen ? "px-3" : "px-2"}`}>
         {/* Overview Section */}
         <div className="mb-4">
           {isOpen ? (
@@ -149,20 +149,7 @@ const SidebarAdmin = () => {
 
           {(isManagementOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-              <Link
-                to="/admin/customers"
-                onClick={() => handleItemClick("customers")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "customers"
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Khách hàng" : ""}
-              >
-                <User className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Khách hàng</span>}
-              </Link>
-              <Link
+                <Link
                 to="/admin/tickets"
                 onClick={() => handleItemClick("tickets")}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
@@ -236,78 +223,7 @@ const SidebarAdmin = () => {
             </div>
           )}
         </div>
-
-        {/* Automation Section */}
-        <div className="mb-4">
-          {isOpen ? (
-            <button
-              onClick={toggleAutomation}
-              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800/30 transition-colors"
-            >
-              <span className="text-sm font-semibold uppercase tracking-wider">Tự động hóa</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform duration-200 ${isAutomationOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-          ) : (
-            <div className="h-px bg-blue-800/50 mx-2 mb-2"></div>
-          )}
-
-          {(isAutomationOpen || !isOpen) && (
-            <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-              <Link
-                to="/admin/schedules"
-                onClick={() => handleItemClick("schedules")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "schedules"
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Lịch trình" : ""}
-              >
-                <Clock className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Lịch trình</span>}
-              </Link>
-              <Link
-                to="/admin/scenes"
-                onClick={() => handleItemClick("scenes")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "scenes" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Cảnh" : ""}
-              >
-                <Thermometer className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Cảnh</span>}
-              </Link>
-            </div>
-          )}
-        </div>
       </div>
-
-      {/* Sidebar Footer */}
-      <div className={`absolute bottom-0 left-0 right-0 border-t border-blue-800/50 p-4 ${!isOpen && "px-2"}`}>
-        <div className="space-y-3">
-          <Link
-            to="/admin/settings"
-            onClick={() => handleItemClick("settings")}
-            className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg text-blue-200 hover:bg-blue-800/40 transition-colors ${!isOpen && "justify-center"}`}
-            title={!isOpen ? "Cài đặt" : ""}
-          >
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            {isOpen && <span>Cài đặt</span>}
-          </Link>
-          <Link
-            to="/admin/help"
-            onClick={() => handleItemClick("help")}
-            className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg text-blue-200 hover:bg-blue-800/40 transition-colors ${!isOpen && "justify-center"}`}
-            title={!isOpen ? "Trợ giúp" : ""}
-          >
-            <HelpCircle className="w-4 h-4 flex-shrink-0" />
-            {isOpen && <span>Trợ giúp</span>}
-          </Link>
-        </div>
-      </div>
-
     </aside>
   )
 }

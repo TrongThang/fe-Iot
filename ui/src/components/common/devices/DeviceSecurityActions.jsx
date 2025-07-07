@@ -3,10 +3,10 @@ import { Card, CardContent } from '../../ui/card';
 import { Button } from '../../ui/button';
 import { Badge } from '../../ui/badge';
 import { Switch } from '../../ui/switch';
-import { 
-    Lock, 
-    Unlock, 
-    Shield, 
+import {
+    Lock,
+    Unlock,
+    Shield,
     AlertTriangle,
     Clock,
     User
@@ -50,11 +50,11 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
         setIsUpdating(true);
         setError('');
         setSuccessMessage('');
-        
+
         try {
             const deviceId = device?.device_id || device?.id;
             const serialNumber = device?.serial_number;
-            
+
             if (!deviceId || !serialNumber) {
                 throw new Error('Thiếu thông tin thiết bị');
             }
@@ -66,15 +66,15 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
                 await deviceApi.unlockDevice(deviceId, serialNumber);
                 setSuccessMessage('Thiết bị đã được mở khóa thành công');
             }
-            
+
             setIsLocked(locked);
-            
+
             // Call parent callback if provided
-            await onSecurityUpdate?.('lock', { 
-                is_locked: locked, 
-                lock_status: locked ? 'locked' : 'unlocked' 
+            await onSecurityUpdate?.('lock', {
+                is_locked: locked,
+                lock_status: locked ? 'locked' : 'unlocked'
             });
-            
+
         } catch (error) {
             console.error('Failed to update device lock status:', error);
             setError(error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái khóa thiết bị');
@@ -87,11 +87,11 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
         setIsUpdating(true);
         setError('');
         setSuccessMessage('');
-        
+
         try {
             const deviceId = device?.device_id || device?.id;
             const serialNumber = device?.serial_number;
-            
+
             if (!deviceId || !serialNumber) {
                 throw new Error('Thiếu thông tin thiết bị');
             }
@@ -99,13 +99,13 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
             await deviceApi.lockDevice(deviceId, serialNumber);
             setIsLocked(true);
             setSuccessMessage('Khóa khẩn cấp đã được kích hoạt');
-            
-            await onSecurityUpdate?.('emergency_lock', { 
-                is_locked: true, 
+
+            await onSecurityUpdate?.('emergency_lock', {
+                is_locked: true,
                 lock_status: 'locked',
-                emergency: true 
+                emergency: true
             });
-            
+
         } catch (error) {
             console.error('Failed to activate emergency lock:', error);
             setError(error.response?.data?.message || 'Có lỗi xảy ra khi kích hoạt khóa khẩn cấp');
@@ -158,8 +158,8 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
                                     {isLocked ? "Thiết bị đã bị khoá" : "Thiết bị đang hoạt động"}
                                 </p>
                                 <p className="text-sm text-slate-600">
-                                    {isLocked 
-                                        ? "Tất cả điều khiển đã bị vô hiệu hoá" 
+                                    {isLocked
+                                        ? "Tất cả điều khiển đã bị vô hiệu hoá"
                                         : "Thiết bị có thể được điều khiển bình thường"
                                     }
                                 </p>
@@ -187,11 +187,11 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
                                 <span className="text-slate-600">Cập nhật cuối:</span>
                             </div>
                             <span className="font-medium">
-                                {device?.updated_at ? 
-                                    new Date(device.updated_at).toLocaleString('vi-VN') : 
+                                {device?.updated_at ?
+                                    new Date(device.updated_at).toLocaleString('vi-VN') :
                                     device?.locked_at ?
-                                    new Date(device.locked_at).toLocaleString('vi-VN') :
-                                    "Chưa rõ"
+                                        new Date(device.locked_at).toLocaleString('vi-VN') :
+                                        "Chưa rõ"
                                 }
                             </span>
                         </div>
@@ -208,10 +208,10 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
 
                     {/* Emergency Lock */}
                     <div className="pt-4 border-t border-slate-200">
-                        <AlertDialog>
+                        <AlertDialog className="bg-white rounded-lg shadow-lg">
                             <AlertDialogTrigger asChild>
-                                <Button 
-                                    variant="destructive" 
+                                <Button
+                                    variant="destructive"
                                     className="w-full"
                                     disabled={isLocked || isUpdating}
                                 >
@@ -226,7 +226,7 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
                                         Xác nhận khoá khẩn cấp
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Khóa khẩn cấp sẽ ngay lập tức vô hiệu hóa tất cả chức năng của thiết bị. 
+                                        Khóa khẩn cấp sẽ ngay lập tức vô hiệu hóa tất cả chức năng của thiết bị.
                                         <br /><br />
                                         <strong>Khi nào nên sử dụng:</strong>
                                         <ul className="list-disc list-inside mt-2 space-y-1 text-sm">

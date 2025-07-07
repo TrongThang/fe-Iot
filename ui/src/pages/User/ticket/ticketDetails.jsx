@@ -23,7 +23,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 
 export default function TicketDetailDialog({
   ticket,
@@ -64,11 +64,8 @@ export default function TicketDetailDialog({
         }
       } catch (error) {
         console.error("Failed to fetch comments:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: "Không thể tải bình luận. Vui lòng thử lại.",
-          confirmButtonColor: "#2563eb",
+        toast.error("Không thể tải bình luận. Vui lòng thử lại.", {
+          duration: 5000,
         });
       } finally {
         setIsLoading(false);
@@ -86,49 +83,58 @@ export default function TicketDetailDialog({
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
 
-    const result = await Swal.fire({
-      title: "Xác nhận",
-      text: "Bạn có chắc muốn gửi bình luận này?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#2563eb",
-      cancelButtonColor: "#ef4444",
-      confirmButtonText: "Gửi",
-      cancelButtonText: "Hủy",
+    const result = await toast.custom((t) => (
+      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+        <h3 className="text-lg font-semibold text-blue-600 mb-2">Xác nhận</h3>
+        <p className="text-sm text-gray-600 mb-4">Bạn có chắc muốn gửi bình luận này?</p>
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => toast.dismiss(t)}
+            className="bg-red-600 text-white hover:bg-red-700"
+          >
+            Hủy
+          </Button>
+          <Button
+            variant="default"
+            onClick={async () => {
+              toast.dismiss(t);
+              const comment = {
+                id: comments.length + 1,
+                author: "Bạn",
+                author_type: "customer",
+                content: newComment,
+                created_at: new Date().toISOString(),
+                attachments: [],
+              };
+              setComments([...comments, comment]);
+              setNewComment("");
+              toast.success("Bình luận đã được gửi.", {
+                duration: 1500,
+                progress: true,
+              });
+            }}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Gửi
+          </Button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
     });
 
-    if (result.isConfirmed) {
-      const comment = {
-        id: comments.length + 1,
-        author: "Bạn",
-        author_type: "customer",
-        content: newComment,
-        created_at: new Date().toISOString(),
-        attachments: [],
-      };
-      setComments([...comments, comment]);
-      setNewComment("");
-      Swal.fire({
-        icon: "success",
-        title: "Thành công",
-        text: "Bình luận đã được gửi.",
-        confirmButtonColor: "#2563eb",
-        timer: 1500,
-        timerProgressBar: true,
-      });
+    if (result) {
+      // Không cần xử lý thêm vì toast.custom tự xử lý logic
     }
   };
 
   // Handle rating selection
   const handleRating = (rating) => {
     setSelectedRating(rating);
-    Swal.fire({
-      icon: "success",
-      title: "Đánh giá",
-      text: `Bạn đã đánh giá ${rating} sao.`,
-      confirmButtonColor: "#2563eb",
-      timer: 1500,
-      timerProgressBar: true,
+    toast.success(`Bạn đã đánh giá ${rating} sao.`, {
+      duration: 1500,
+      progress: true,
     });
   };
 
@@ -172,13 +178,9 @@ export default function TicketDetailDialog({
   // Copy ticket ID to clipboard
   const copyTicketId = () => {
     navigator.clipboard.writeText(`#${ticket?.ticket_id || "N/A"}`);
-    Swal.fire({
-      icon: "success",
-      title: "Sao chép",
-      text: "Đã sao chép mã ticket vào clipboard.",
-      confirmButtonColor: "#2563eb",
-      timer: 1500,
-      timerProgressBar: true,
+    toast.success("Đã sao chép mã ticket vào clipboard.", {
+      duration: 1500,
+      progress: true,
     });
   };
 

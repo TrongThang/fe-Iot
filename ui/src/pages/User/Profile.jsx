@@ -309,7 +309,7 @@ export default function Profile() {
                                         </div>
                                         <div className="flex items-center justify-center space-x-2">
                                             <Mail className="w-4 h-4 text-slate-500" />
-                                            <span className="text-slate-600">{customerData.email}</span>
+                                            <span className="text-slate-600 break-words max-w-[300px] text-center">{customerData.email}</span>
                                         </div>
 
                                         {/* Email Verification Badge */}
