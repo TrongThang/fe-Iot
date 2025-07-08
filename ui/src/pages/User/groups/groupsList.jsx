@@ -40,7 +40,7 @@ export default function GroupsManagement() {
 
   const fetchGroupsUser = async (groupId) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/groups/${groupId}/members`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/${groupId}/members`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -63,7 +63,7 @@ export default function GroupsManagement() {
 
   const fetchAllGroupsData = async () => {
     try {
-      const res = await fetch(`http://localhost:7777/api/groups/my-groups`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/my-groups`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -126,7 +126,7 @@ export default function GroupsManagement() {
 
     if (confirmed) {
       try {
-        const res = await fetch(`http://localhost:7777/api/groups/${group.group_id}`, {
+        const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/${group.group_id}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",

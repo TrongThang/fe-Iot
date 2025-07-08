@@ -48,7 +48,7 @@ export default function AddMemberPopup({ open, onOpenChange, onSave }) {
 
     setIsLoading(true)
     try {
-      const res = await axiosPrivate.post(`http://localhost:7777/api/groups/members`, {
+      const res = await axiosPrivate.post(`groups/members`, {
         groupId: parsedGroupId,
         username: memberData.username,
         role: memberData.role,

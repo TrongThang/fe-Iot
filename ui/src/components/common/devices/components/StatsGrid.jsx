@@ -27,7 +27,7 @@ const StatsGrid = ({ capabilities, currentValues }) => {
                 const IconComponent = iconMap[stat.icon];
                 
                 return (
-                    <Card key={index}>
+                    <Card key={index}>  
                         <CardContent className="p-4 text-center">
                             <IconComponent className={`w-8 h-8 mx-auto mb-2 ${stat.color}`} />
                             <div className="text-lg font-semibold">{stat.value}</div>

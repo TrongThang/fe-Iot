@@ -59,7 +59,7 @@ const Topbar = () => {
 
     try {
       setIsLoading(true);
-      const res = await fetch(`http://localhost:7777/api/notifications/user`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/notifications/user`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

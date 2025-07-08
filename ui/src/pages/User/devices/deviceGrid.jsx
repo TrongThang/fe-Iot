@@ -21,7 +21,6 @@ export default function DeviceGrid({
     onToggle,
     onEdit,
     onDelete,
-    getDeviceIcon,
     getDeviceColor,
     getDeviceStatusColor,
     isCompact = false,
@@ -54,8 +53,8 @@ export default function DeviceGrid({
             className={cn(
                 "grid gap-4",
                 isCompact
-                    ? "grid-cols-1" // Single column khi compact
-                    : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3", // Normal grid
+                    ? "grid-cols-1"
+                    : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
             )}
         >
             {devices.map((device) => (
@@ -68,7 +67,7 @@ export default function DeviceGrid({
                     className={cn(
                         "bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:shadow-md hover:border-blue-300 transition-all duration-200 relative group",
                         selectedDevice?.id === device.id && "ring-2 ring-blue-500 shadow-md border-blue-300",
-                        isCompact && "flex items-center space-x-4", // Horizontal layout khi compact
+                        isCompact && "flex items-center space-x-4",
                     )}
                 >
                     {isCompact ? (
@@ -77,7 +76,7 @@ export default function DeviceGrid({
                                 <div
                                     className={`w-12 h-12 bg-gradient-to-br ${getDeviceColor(device.type)} rounded-lg flex items-center justify-center shadow-sm`}
                                 >
-                                    {getDeviceIcon(device.type)}
+                                    <img src={device.device_type_parent_image} alt={device.name} className="w-10 h-10" />
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="font-medium text-slate-900">{device.name}</h3>
@@ -103,17 +102,17 @@ export default function DeviceGrid({
                             </div>
                         </>
                     ) : (
-                        // ... (giữ nguyên phần layout normal như code cũ của bạn)
                         <>
                             <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center space-x-3">
                                     <div
                                         className={`w-10 h-10 bg-gradient-to-br ${getDeviceColor(device.type)} rounded-lg flex items-center justify-center shadow-sm`}
                                     >
-                                        {getDeviceIcon(device.type)}
+                                        <img src={device.device_type_parent_image} alt={device.name} className="w-10 h-10 object-cover" />
                                     </div>
                                     <div>
                                         <h3 className="font-medium text-slate-900">{device.name}</h3>
+                                        <p className="text-sm text-white overflow-hidden whitespace-nowrap badge bg-blue-300 rounded-full px-2 py-1">{device.device_type_parent_name}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">

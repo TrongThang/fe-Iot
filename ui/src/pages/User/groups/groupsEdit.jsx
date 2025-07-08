@@ -51,7 +51,7 @@ export default function EditGroups() {
         throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
       }
 
-      const res = await fetch(`http://localhost:7777/api/groups/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -93,7 +93,7 @@ export default function EditGroups() {
         throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
       }
 
-      const res = await fetch(`http://localhost:7777/api/groups/${id}/members`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/${id}/members`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -119,7 +119,7 @@ export default function EditGroups() {
         throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
       }
 
-      const res = await fetch(`http://localhost:7777/api/groups/role/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/role/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -167,7 +167,7 @@ export default function EditGroups() {
         if (!memberToDelete || !memberToDelete.account_id) {
           throw new Error("Không tìm thấy thông tin thành viên để xóa.");
         }
-        const res = await fetch(`http://localhost:7777/api/groups/${id}/members`, {
+        const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/${id}/members`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -223,7 +223,7 @@ export default function EditGroups() {
           throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.");
         }
 
-        const res = await fetch(`http://localhost:7777/api/groups/${id}/leave`, {
+        const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/${id}/leave`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -267,7 +267,7 @@ export default function EditGroups() {
     setFormData(updatedFormData)
 
     try {
-      const res = await axiosPrivate.put(`http://localhost:7777/api/groups/${id}`, {
+      const res = await axiosPrivate.put(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/${id}`, {
         group_name: updatedData.group_name,
         group_description: updatedData.group_description,
         icon_name: updatedData.icon_name,

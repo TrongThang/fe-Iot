@@ -56,20 +56,19 @@ export default function DeviceManagement({
     status: "all",
   });
 
-  const [devices, setDevices] = useState([]);
+	const [devices, setDevices] = useState([])
+	
+	// Socket context for real-time device communication
+	const { 
+		user, 
+		isConnected, 
+		connectToDevice,
+		disconnectFromDevice,
+		emergencyAlerts,
+		dismissEmergencyAlert
+	} = useSocketContext()
 
-  // Socket context for real-time device communication
-  const {
-    user,
-    isConnected,
-    connectSocket,
-    connectToDevice,
-    disconnectFromDevice,
-    deviceNotifications,
-    emergencyAlerts,
-    dismissNotification,
-    dismissEmergencyAlert,
-  } = useSocketContext();
+ 
 
   const fetchDevice = async () => {
     try {
@@ -454,57 +453,54 @@ export default function DeviceManagement({
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="all" className="mt-4">
-                    <DeviceGrid
-                      devices={filteredDevices}
-                      isLoading={isLoading}
-                      selectedDevice={selectedDevice}
-                      onDeviceClick={handleDeviceClick}
-                      onToggle={handleToggle}
-                      onEdit={handleEditDevice}
-                      onDelete={handleDeleteDevice}
-                      getDeviceIcon={getDeviceIcon}
-                      getDeviceColor={getDeviceColor}
-                      getDeviceStatusColor={getDeviceStatusColor}
-                      isCompact={selectedDevice && selectedDevice.type !== "camera"}
-                    />
-                  </TabsContent>
+									<TabsContent value="all" className="mt-4">
+										<DeviceGrid
+											devices={filteredDevices}
+											isLoading={isLoading}
+											selectedDevice={selectedDevice}
+											onDeviceClick={handleDeviceClick}
+											onToggle={handleToggle}
+											onEdit={handleEditDevice}
+											onDelete={handleDeleteDevice}
+											getDeviceColor={getDeviceColor}
+											getDeviceStatusColor={getDeviceStatusColor}
+											isCompact={selectedDevice && selectedDevice.type !== "camera"}
+										/>
+									</TabsContent>
 
-                  <TabsContent value="mine" className="mt-4">
-                    <DeviceGrid
-                      devices={myDevices}
-                      isLoading={isLoading}
-                      selectedDevice={selectedDevice}
-                      onDeviceClick={handleDeviceClick}
-                      onToggle={handleToggle}
-                      onEdit={handleEditDevice}
-                      onDelete={handleDeleteDevice}
-                      getDeviceIcon={getDeviceIcon}
-                      getDeviceColor={getDeviceColor}
-                      getDeviceStatusColor={getDeviceStatusColor}
-                      isCompact={selectedDevice && selectedDevice.type !== "camera"}
-                    />
-                  </TabsContent>
+									<TabsContent value="mine" className="mt-4">
+										<DeviceGrid
+											devices={myDevices}
+											isLoading={isLoading}
+											selectedDevice={selectedDevice}
+											onDeviceClick={handleDeviceClick}
+											onToggle={handleToggle}
+											onEdit={handleEditDevice}
+											onDelete={handleDeleteDevice}
+											getDeviceColor={getDeviceColor}
+											getDeviceStatusColor={getDeviceStatusColor}
+											isCompact={selectedDevice && selectedDevice.type !== "camera"}
+										/>
+									</TabsContent>
 
-                  <TabsContent value="shared" className="mt-4">
-                    <DeviceGrid
-                      devices={sharedDevices}
-                      isLoading={isLoading}
-                      selectedDevice={selectedDevice}
-                      onDeviceClick={handleDeviceClick}
-                      onToggle={handleToggle}
-                      onEdit={handleEditDevice}
-                      onDelete={handleDeleteDevice}
-                      getDeviceIcon={getDeviceIcon}
-                      getDeviceColor={getDeviceColor}
-                      getDeviceStatusColor={getDeviceStatusColor}
-                      isCompact={selectedDevice && selectedDevice.type !== "camera"}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
-          </div>
+									<TabsContent value="shared" className="mt-4">
+										<DeviceGrid
+											devices={sharedDevices}
+											isLoading={isLoading}
+											selectedDevice={selectedDevice}
+											onDeviceClick={handleDeviceClick}
+											onToggle={handleToggle}
+											onEdit={handleEditDevice}
+											onDelete={handleDeleteDevice}
+											getDeviceColor={getDeviceColor}
+											getDeviceStatusColor={getDeviceStatusColor}
+											isCompact={selectedDevice && selectedDevice.type !== "camera"}
+										/>
+									</TabsContent>
+								</Tabs>
+							</div>
+						</div>
+					</div>
 
           {selectedDevice && selectedDevice.type !== "camera" && (
             <div className="bg-white w-full md:w-1/2 lg:w-3/5 min-h-screen md:min-h-0">

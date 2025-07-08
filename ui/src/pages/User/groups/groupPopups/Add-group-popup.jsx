@@ -28,7 +28,6 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
 
   const handleSave = async () => {
     try {
-
       if (groupData.name.length > 255) {
         toast.error("Tên nhóm không được vượt quá 255 ký tự.");
         return;
@@ -37,7 +36,7 @@ export default function AddGroupPopup({ open, onOpenChange, onSave }) {
         toast.error("Mô tả nhóm không được vượt quá 255 ký tự.");
         return;
       }
-      const response = await fetch("http://localhost:7777/api/groups", {
+      const response = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

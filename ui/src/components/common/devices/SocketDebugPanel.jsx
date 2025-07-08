@@ -59,8 +59,8 @@ const SocketDebugPanel = ({ deviceSerial, deviceName }) => {
     addLog('info', `🔌 Device Serial: ${deviceSerial || 'NOT SET'}`);
     
     if (!info.hasApiUrl) {
-      addLog('error', '❌ Missing REACT_APP_IOT_API_URL environment variable');
-      addLog('info', '💡 Create .env.local file with: REACT_APP_IOT_API_URL=http://localhost:7777');
+      addLog('error', '❌ Missing REACT_APP_SMART_NET_IOT_API_URL environment variable');
+      addLog('info', '💡 Create .env.local file with: REACT_APP_SMART_NET_IOT_API_URL=http://localhost:7777');
     }
   }, [accountId, deviceSerial]);
 

@@ -10,6 +10,7 @@ import axios from "axios"
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from "@/contexts/AuthContext"
 import { jwtDecode } from "jwt-decode"
+import axiosPublic from "@/apis/clients/public.client"
 
 
 export default function Login() {
@@ -73,7 +74,7 @@ export default function Login() {
             }
 
             // Gửi yêu cầu đến API
-            const response = await axios.post("http://localhost:7777/api/auth/login", payload)
+            const response = await axiosPublic.post(`/auth/login`, payload)
 
             // Xử lý phản hồi
             const { accessToken, refreshToken, deviceUuid } = response.data;

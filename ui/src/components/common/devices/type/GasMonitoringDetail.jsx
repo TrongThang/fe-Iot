@@ -1,18 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { Zap, Thermometer, Wind, Droplets, Settings, AlertTriangle, Activity, Flame } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from "react";
+import { Zap, Thermometer, Wind, Droplets, Settings, AlertTriangle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Slider } from "@/components/ui/slider";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 
 import RealtimeSensorDisplay from "../RealtimeSensorDisplay";
-import ActionDetail from "../ActionDetail";
-import HeaderDeviceDetail from "../HeaderDeviceDetail";
-import SocketDebugPanel from "../SocketDebugPanel";
 import { useSocketContext } from "@/contexts/SocketContext";
 import socketService from "@/lib/socket";
 
@@ -114,38 +107,6 @@ export default function GasMonitoringDetail({ device }) {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <HeaderDeviceDetail
-                icon={<Zap size={48} className="text-white" />}
-                status={isMonitoring ? (gasStatus.status === 'safe' ? 'Đang giám sát' : gasStatus.text) : 'Tạm dừng'}
-                isOn={isMonitoring && isConnected}
-            />
-
-            {/* Connection Status */}
-            <Card>
-                <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className={cn(
-                                "w-3 h-3 rounded-full",
-                                isConnected ? "bg-green-500" : "bg-red-500"
-                            )} />
-                            <span className="text-sm font-medium">
-                                Trạng thái: {isConnected ? '🟢 Đã kết nối' : '🔴 Mất kết nối'}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Switch
-                                checked={isMonitoring}
-                                onCheckedChange={toggleMonitoring}
-                                disabled={!isConnected}
-                            />
-                            <Label className="text-sm">Giám sát</Label>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* Alert if dangerous levels */}
             {(gasStatus.status !== 'safe' || tempStatus.status === 'critical') && (
                 <Alert className={cn(
@@ -244,7 +205,7 @@ export default function GasMonitoringDetail({ device }) {
             </div>
 
             {/* Settings Controls */}
-            <Card>
+            {/* <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Settings className="h-5 w-5" />
@@ -252,7 +213,6 @@ export default function GasMonitoringDetail({ device }) {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {/* Gas Threshold */}
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
                             <Label className="text-sm font-medium">Ngưỡng Cảnh Báo Khí Gas</Label>
@@ -271,7 +231,6 @@ export default function GasMonitoringDetail({ device }) {
                         </div>
                     </div>
 
-                    {/* Sensitivity */}
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
                             <Label className="text-sm font-medium">Độ Nhạy Cảm Biến</Label>
@@ -290,7 +249,6 @@ export default function GasMonitoringDetail({ device }) {
                         </div>
                     </div>
 
-                    {/* Humidity Threshold */}
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
                             <Label className="text-sm font-medium">Ngưỡng Cảnh Báo Độ Ẩm</Label>
@@ -309,7 +267,6 @@ export default function GasMonitoringDetail({ device }) {
                         </div>
                     </div>
 
-                    {/* Temperature Threshold */}
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
                             <Label className="text-sm font-medium">Ngưỡng Cảnh Báo Nhiệt Độ</Label>
@@ -328,7 +285,6 @@ export default function GasMonitoringDetail({ device }) {
                         </div>
                     </div>
 
-                    {/* Alarm Settings */}
                     <div className="flex items-center justify-between">
                         <div>
                             <Label className="text-sm font-medium">Báo Động Âm Thanh</Label>
@@ -340,7 +296,6 @@ export default function GasMonitoringDetail({ device }) {
                         />
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="flex gap-3 pt-4">
                         <Button
                             onClick={updateDeviceSettings}
@@ -359,22 +314,11 @@ export default function GasMonitoringDetail({ device }) {
                         </Button>
                     </div>
                 </CardContent>
-            </Card>
-
-            {/* Device Actions */}
-            <ActionDetail
-                lock={() => { }}
-                disconnect={() => { }}
-                share={() => { }}
-                reset={() => { }}
-                transfer={() => { }}
-                version={() => { }}
-            />
-
+            </Card> */}
             {/* Socket Debug Panel */}
-            <SocketDebugPanel
+            {/* <SocketDebugPanel 
                 deviceSerial={deviceSerial}
-            />
+            /> */}
         </div>
     );
 } 

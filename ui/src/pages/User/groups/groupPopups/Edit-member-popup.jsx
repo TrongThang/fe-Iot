@@ -60,7 +60,7 @@ export default function EditMemberPopup({ open, onOpenChange, onSave, member }) 
           throw new Error("Không tìm thấy token xác thực. Vui lòng đăng nhập lại.")
         }
 
-        const res = await fetch(`http://localhost:7777/api/groups/${parsedGroupId}/members/role`, {
+        const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/groups/${parsedGroupId}/members/role`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
