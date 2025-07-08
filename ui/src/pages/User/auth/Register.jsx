@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import axios from "axios"
 import { useAuth } from "@/contexts/AuthContext"
 import { jwtDecode } from "jwt-decode"
+import axiosPublic from "@/apis/clients/public.client"
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false)
@@ -59,7 +60,7 @@ export default function Register() {
             }
             console.log("payload", payload)
 
-            const response = await axios.post("http://localhost:7777/api/auth/register", payload)
+            const response = await axiosPublic.post(`/auth/register`, payload)
 
             if (response.status === 201) {
                 toast.success("Đăng ký thành công!")

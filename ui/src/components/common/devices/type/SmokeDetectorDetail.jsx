@@ -11,7 +11,6 @@ import { useFireAlertSocket, ALERT_LEVELS, ALERT_TYPES } from '../hooks/useFireA
 import FireAlertComponent from '../components/FireAlertComponent';
 import AlertOverlay from '../components/AlertOverlay';
 import ActionDetail from "../ActionDetail";
-import HeaderDeviceDetail from "../HeaderDeviceDetail";
 import RealtimeSensorDisplay from "../RealtimeSensorDisplay";
 
 export default function SmokeDetectorDetail({ device }) {
@@ -109,13 +108,6 @@ export default function SmokeDetectorDetail({ device }) {
 
     return (
         <div className="space-y-6">
-            {/* Header thẻ */}
-            <HeaderDeviceDetail 
-                icon={<Flame size={48} className="text-white" />} 
-                status={getStatusText()} 
-                isOn={device.isOn && isDeviceConnected} 
-            />
-
             {/* Fire Alert Component - Show if there's an active alert */}
             {currentAlert && (
                 <FireAlertComponent

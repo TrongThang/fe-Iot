@@ -25,10 +25,11 @@ import DeviceShareModal from './DeviceShareModal';
 import SharedUsersList from './SharedUsersList';
 import DoorControl from './DoorControl';
 import LightControl from './LightControl';  
-import { useDeviceSocket, useLEDSocket } from '@/hooks/useSocket';
+import { useLEDSocket } from '@/hooks/useSocket';
 import { useAuth } from '@/contexts/AuthContext';
-import TestFireAlert from '@/components/common/devices/TestFireAlert';
 import GasMonitoringDetail from './type/GasMonitoringDetail';
+import DeviceSecuritySection from './components/DeviceSecuritySection';
+import DeviceShareSection from './components/DeviceShareSection';
 
 export default function DynamicDeviceDetail({ device }) {
     const [refreshSharedUsers, setRefreshSharedUsers] = useState(0);
@@ -67,12 +68,12 @@ export default function DynamicDeviceDetail({ device }) {
 
     // Check if device is gas monitoring sensor
     const isGasMonitoring = device?.type?.toLowerCase().includes('gas') ||
-                           device?.type?.toLowerCase().includes('sensor') ||
-                           device?.template_type?.toLowerCase().includes('gas') ||
-                           device?.template_type?.toLowerCase().includes('monitoring') ||
-                           device?.template_type?.toLowerCase().includes('temperature') ||
-                           capabilities?.capabilities?.includes('GAS_MONITORING') ||
-                           capabilities?.capabilities?.includes('TEMPERATURE_MONITORING');
+                        device?.type?.toLowerCase().includes('sensor') ||
+                        device?.template_type?.toLowerCase().includes('gas') ||
+                        device?.template_type?.toLowerCase().includes('monitoring') ||
+                        device?.template_type?.toLowerCase().includes('temperature') ||
+                        capabilities?.capabilities?.includes('GAS_MONITORING') ||
+                        capabilities?.capabilities?.includes('TEMPERATURE_MONITORING');
 
     // Fire Alert Socket - only for fire/smoke detectors with valid data
     const canConnectFireSocket = isFireDetector && device && device.serial_number && accountId;
@@ -163,12 +164,6 @@ export default function DynamicDeviceDetail({ device }) {
         setNotificationsEnabled(!notificationsEnabled);
     };
 
-    const handleShowAlertOverlay = () => {
-        if (fireAlert) {
-            setShowAlertOverlay(true);
-        }
-    };
-
     const handleCloseAlertOverlay = () => {
         setShowAlertOverlay(false);
     };
@@ -185,10 +180,8 @@ export default function DynamicDeviceDetail({ device }) {
 
     // Render specialized device controls
     const renderSpecializedControl = () => {
-        const deviceCategory = capabilities?.category?.toLowerCase();
-        const deviceType = device?.type?.toLowerCase() || device?.template_type?.toLowerCase();
+        // Door Control    
         
-        // Door Control     
         if (deviceTypeHelpers.isDoorDevice(device, capabilities)) {
             return (
                 <DoorControl
@@ -287,6 +280,12 @@ export default function DynamicDeviceDetail({ device }) {
 
     return (
         <div className="space-y-6">
+            {/* 1. Bảo mật thiết bị */}
+            <DeviceSecuritySection device={device} />
+
+            {/* 2. Chia sẻ thiết bị */}
+            <DeviceShareSection device={device} />
+
             {/* Quick Alert Mute - Show when there's an active fire alert */}
             {fireAlert && (
                 <QuickAlertMute

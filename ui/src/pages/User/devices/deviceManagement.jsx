@@ -64,9 +64,7 @@ export default function DeviceManagement({
 		isConnected, 
 		connectToDevice,
 		disconnectFromDevice,
-		deviceNotifications,
 		emergencyAlerts,
-		dismissNotification,
 		dismissEmergencyAlert
 	} = useSocketContext()
 
@@ -455,7 +453,6 @@ export default function DeviceManagement({
 											onToggle={handleToggle}
 											onEdit={handleEditDevice}
 											onDelete={handleDeleteDevice}
-											getDeviceIcon={getDeviceIcon}
 											getDeviceColor={getDeviceColor}
 											getDeviceStatusColor={getDeviceStatusColor}
 											isCompact={selectedDevice && selectedDevice.type !== "camera"}
@@ -471,7 +468,6 @@ export default function DeviceManagement({
 											onToggle={handleToggle}
 											onEdit={handleEditDevice}
 											onDelete={handleDeleteDevice}
-											getDeviceIcon={getDeviceIcon}
 											getDeviceColor={getDeviceColor}
 											getDeviceStatusColor={getDeviceStatusColor}
 											isCompact={selectedDevice && selectedDevice.type !== "camera"}
@@ -487,7 +483,6 @@ export default function DeviceManagement({
 											onToggle={handleToggle}
 											onEdit={handleEditDevice}
 											onDelete={handleDeleteDevice}
-											getDeviceIcon={getDeviceIcon}
 											getDeviceColor={getDeviceColor}
 											getDeviceStatusColor={getDeviceStatusColor}
 											isCompact={selectedDevice && selectedDevice.type !== "camera"}

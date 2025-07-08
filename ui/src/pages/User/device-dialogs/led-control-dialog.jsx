@@ -100,7 +100,7 @@ export default function LedControlDialog({ device, onClose, onDeviceUpdate }) {
 
     setIsUpdating(true);
     try {
-      const response = await fetch(`http://localhost:7777/api/devices/${deviceData.id}`, {
+      const response = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/devices/${deviceData.id}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${accessToken}`,

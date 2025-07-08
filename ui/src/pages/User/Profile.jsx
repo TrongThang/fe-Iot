@@ -14,6 +14,7 @@ import { formatDate } from "@/utils/format"
 import ImageCropper from "@/components/common/ImageCropper"
 import { toast } from "sonner"
 import axios from "axios"
+import axiosPublic from "@/apis/clients/public.client"
 
 export default function Profile() {
     const [isEditing, setIsEditing] = useState(false)
@@ -98,15 +99,7 @@ export default function Profile() {
             };
             console.log("dung lượng ảnh", updatedData.image.size)
             console.log("updatedata", updatedData)
-            const response = await axios.patch('http://localhost:7777/api/auth/update-profile', updatedData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                    }
-                }
-            );
+            const response = await axiosPublic.patch(`/auth/update-profile`, updatedData);
             if (response.data.success) {
                 setIsEditing(false)
                 toast.success("Cập nhật thông tin thành công");

@@ -18,7 +18,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSocketContext } from '@/contexts/SocketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import socketService from '@/lib/socket';
-import SocketStatusIndicator from '../SocketStatusIndicator';
 
 const RealtimeSensorDisplay = ({ deviceSerial, deviceName }) => {
     const { user } = useSocketContext(); // Removed isConnected (global socket disabled)
@@ -447,9 +446,6 @@ const RealtimeSensorDisplay = ({ deviceSerial, deviceName }) => {
 
     return (
         <div className="space-y-4">
-            {/* Socket Status Indicator */}
-            <SocketStatusIndicator />
-
             {/* Connection Status */}
             <Card>
                 <CardHeader className="pb-3">

@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
     const fetchUserInfo = async (token) => {
         try {
             // const response = await axiosPublic.get('auth/getme', {
-            const response = await axios.get('http://localhost:7777/api/auth/getMe', {
+            const response = await axios.get(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/getMe`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -188,7 +188,7 @@ export const AuthProvider = ({ children }) => {
             const deviceMap = JSON.parse(localStorage.getItem("deviceMap") || "{}");
             const deviceUuid = user?.username ? deviceMap[user?.username] : null;
     
-            const response = await axios.post("http://localhost:7777/api/auth/logout", {
+            const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/logout`, {
                 userDeviceId: deviceUuid
             }, {
                 headers: {
@@ -227,7 +227,7 @@ export const AuthProvider = ({ children }) => {
 
     const sendOtp = async (email) => {
         try {
-            const response = await axios.post('http://localhost:7777/api/notifications/otp', { email });
+            const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/notifications/otp`, { email });
 
             console.log("res",response)
             if (response.data.success) {
@@ -250,7 +250,7 @@ export const AuthProvider = ({ children }) => {
     const verifyOtp = async (email, otp) => {
         try {
             // const response = await axiosPublic.post('auth/verify-otp', { email, otp });
-            const response = await axios.post('http://localhost:7777/api/notifications/otp/verify', { email, otp });
+            const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/notifications/otp/verify`, { email, otp });
             if (response.data.success) {
                 return { success: true };
             } else {
@@ -270,7 +270,7 @@ export const AuthProvider = ({ children }) => {
 
     const verifyEmail = async (email) => {
         try {
-            const response = await axios.post('http://localhost:7777/api/auth/verify-email', { email });
+            const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/verify-email`, { email });
             if (response.data.success) {
                 return { success: true };
             } else {
@@ -299,7 +299,7 @@ export const AuthProvider = ({ children }) => {
         if (!refreshToken) return;
     
         try {
-            const response = await axios.post('http://localhost:7777/api/auth/refresh', {
+            const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/refresh`, {
                 refreshToken,
             });
     
@@ -371,7 +371,7 @@ export const AuthProvider = ({ children }) => {
 
     const recoveryPassword = async (email, newPassword) => {
         try {
-            const response = await axios.post('http://localhost:7777/api/auth/recovery-password', { email, newPassword });
+            const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/recovery-password`, { email, newPassword });
             if (response.data.success) {
                 return { success: true };
             } else {
@@ -392,7 +392,7 @@ export const AuthProvider = ({ children }) => {
     const changePassword = async (currentPassword, newPassword) => {
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.post('http://localhost:7777/api/auth/change-password', { currentPassword, newPassword },
+            const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/change-password`, { currentPassword, newPassword },
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
