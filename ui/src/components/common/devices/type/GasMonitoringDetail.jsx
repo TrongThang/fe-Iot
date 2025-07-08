@@ -24,7 +24,7 @@ export default function GasMonitoringDetail({ device }) {
     const [humidityThreshold, setHumidityThreshold] = useState(device.humidity_threshold || 80);
     const [tempThreshold, setTempThreshold] = useState(device.temp_threshold || 35);
     const [alarmEnabled, setAlarmEnabled] = useState(device.alarm_enabled || true);
-    
+
     // Current sensor values (will be updated via real-time)
     const [currentValues, setCurrentValues] = useState({
         gas: device.gas || device.ppm || 0,
@@ -78,7 +78,7 @@ export default function GasMonitoringDetail({ device }) {
         };
 
         console.log('📤 Sending gas monitoring config to IoT API:', config);
-        
+
         // Sử dụng socketService trực tiếp để gửi update_config
         if (socketService && socketService.clientSocket) {
             socketService.clientSocket.emit('update_config', config);
@@ -89,7 +89,7 @@ export default function GasMonitoringDetail({ device }) {
     const toggleMonitoring = () => {
         const newState = !isMonitoring;
         setIsMonitoring(newState);
-        
+
         if (isConnected && deviceSerial) {
             // Gửi generic command với action toggle_monitoring
             const command = {
@@ -97,7 +97,7 @@ export default function GasMonitoringDetail({ device }) {
                 state: { enabled: newState },
                 timestamp: new Date().toISOString()
             };
-            
+
             console.log('📤 Sending toggle monitoring command:', command);
             sendDeviceCommand(deviceSerial, command);
         }
@@ -115,10 +115,10 @@ export default function GasMonitoringDetail({ device }) {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <HeaderDeviceDetail 
-                icon={<Zap size={48} className="text-white" />} 
-                status={isMonitoring ? (gasStatus.status === 'safe' ? 'Đang giám sát' : gasStatus.text) : 'Tạm dừng'} 
-                isOn={isMonitoring && isConnected} 
+            <HeaderDeviceDetail
+                icon={<Zap size={48} className="text-white" />}
+                status={isMonitoring ? (gasStatus.status === 'safe' ? 'Đang giám sát' : gasStatus.text) : 'Tạm dừng'}
+                isOn={isMonitoring && isConnected}
             />
 
             {/* Connection Status */}
@@ -150,22 +150,22 @@ export default function GasMonitoringDetail({ device }) {
             {(gasStatus.status !== 'safe' || tempStatus.status === 'critical') && (
                 <Alert className={cn(
                     "border-2",
-                    gasStatus.status === 'critical' || tempStatus.status === 'critical' 
-                        ? "border-red-500 bg-red-50" 
+                    gasStatus.status === 'critical' || tempStatus.status === 'critical'
+                        ? "border-red-500 bg-red-50"
                         : "border-orange-500 bg-orange-50"
                 )}>
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription className="font-medium">
                         {gasStatus.status === 'critical' ? '🔥 KHẨN CẤP! Nồng độ khí gas cực kỳ nguy hiểm!' :
-                         gasStatus.status === 'danger' ? '⚠️ NGUY HIỂM! Nồng độ khí gas cao!' :
-                         gasStatus.status === 'warning' ? '⚠️ CẢNH BÁO! Phát hiện khí gas!' :
-                         tempStatus.status === 'critical' ? '🌡️ KHẨN CẤP! Nhiệt độ quá cao!' : ''}
+                            gasStatus.status === 'danger' ? '⚠️ NGUY HIỂM! Nồng độ khí gas cao!' :
+                                gasStatus.status === 'warning' ? '⚠️ CẢNH BÁO! Phát hiện khí gas!' :
+                                    tempStatus.status === 'critical' ? '🌡️ KHẨN CẤP! Nhiệt độ quá cao!' : ''}
                     </AlertDescription>
                 </Alert>
             )}
 
             {/* Real-time Sensor Display */}
-            <RealtimeSensorDisplay 
+            <RealtimeSensorDisplay
                 deviceSerial={deviceSerial}
                 deviceName={device.name || device.device_name || 'Gas Monitoring Device'}
             />
@@ -176,16 +176,16 @@ export default function GasMonitoringDetail({ device }) {
                 <Card className={cn(
                     "border-2",
                     gasStatus.color === 'red' ? "border-red-500 bg-red-50" :
-                    gasStatus.color === 'orange' ? "border-orange-500 bg-orange-50" :
-                    gasStatus.color === 'yellow' ? "border-yellow-500 bg-yellow-50" :
-                    "border-green-500 bg-green-50"
+                        gasStatus.color === 'orange' ? "border-orange-500 bg-orange-50" :
+                            gasStatus.color === 'yellow' ? "border-yellow-500 bg-yellow-50" :
+                                "border-green-500 bg-green-50"
                 )}>
                     <CardContent className="p-4 text-center">
                         <Zap className={`w-8 h-8 mx-auto mb-2 text-${gasStatus.color}-600`} />
                         <div className="text-2xl font-bold">{currentValues.gas}</div>
                         <div className="text-sm text-gray-600">PPM</div>
-                        <Badge 
-                            variant={gasStatus.status === 'safe' ? 'default' : 'destructive'} 
+                        <Badge
+                            variant={gasStatus.status === 'safe' ? 'default' : 'destructive'}
                             className="mt-1 text-xs"
                         >
                             {gasStatus.text}
@@ -197,9 +197,9 @@ export default function GasMonitoringDetail({ device }) {
                 <Card className={cn(
                     "border-2",
                     tempStatus.color === 'red' ? "border-red-500 bg-red-50" :
-                    tempStatus.color === 'orange' ? "border-orange-500 bg-orange-50" :
-                    tempStatus.color === 'yellow' ? "border-yellow-500 bg-yellow-50" :
-                    "border-blue-500 bg-blue-50"
+                        tempStatus.color === 'orange' ? "border-orange-500 bg-orange-50" :
+                            tempStatus.color === 'yellow' ? "border-yellow-500 bg-yellow-50" :
+                                "border-blue-500 bg-blue-50"
                 )}>
                     <CardContent className="p-4 text-center">
                         <Thermometer className={`w-8 h-8 mx-auto mb-2 text-${tempStatus.color}-600`} />
@@ -215,8 +215,8 @@ export default function GasMonitoringDetail({ device }) {
                 <Card className={cn(
                     "border-2",
                     humidityStatus.color === 'blue' ? "border-blue-500 bg-blue-50" :
-                    humidityStatus.color === 'yellow' ? "border-yellow-500 bg-yellow-50" :
-                    "border-green-500 bg-green-50"
+                        humidityStatus.color === 'yellow' ? "border-yellow-500 bg-yellow-50" :
+                            "border-green-500 bg-green-50"
                 )}>
                     <CardContent className="p-4 text-center">
                         <Droplets className={`w-8 h-8 mx-auto mb-2 text-${humidityStatus.color}-600`} />
@@ -342,16 +342,16 @@ export default function GasMonitoringDetail({ device }) {
 
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-4">
-                        <Button 
-                            onClick={updateDeviceSettings} 
+                        <Button
+                            onClick={updateDeviceSettings}
                             className="flex-1"
                             disabled={!isConnected}
                         >
                             <Settings className="w-4 h-4 mr-2" />
                             Lưu Cài Đặt
                         </Button>
-                        <Button 
-                            onClick={resetToDefaults} 
+                        <Button
+                            onClick={resetToDefaults}
                             variant="outline"
                             className="flex-1"
                         >
@@ -362,17 +362,17 @@ export default function GasMonitoringDetail({ device }) {
             </Card>
 
             {/* Device Actions */}
-            <ActionDetail 
-                lock={() => {}} 
-                disconnect={() => {}} 
-                share={() => {}} 
-                reset={() => {}} 
-                transfer={() => {}} 
-                version={() => {}} 
+            <ActionDetail
+                lock={() => { }}
+                disconnect={() => { }}
+                share={() => { }}
+                reset={() => { }}
+                transfer={() => { }}
+                version={() => { }}
             />
 
             {/* Socket Debug Panel */}
-            <SocketDebugPanel 
+            <SocketDebugPanel
                 deviceSerial={deviceSerial}
             />
         </div>

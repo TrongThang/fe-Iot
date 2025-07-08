@@ -27,7 +27,6 @@ import DoorControl from './DoorControl';
 import LightControl from './LightControl';  
 import { useDeviceSocket, useLEDSocket } from '@/hooks/useSocket';
 import { useAuth } from '@/contexts/AuthContext';
-import TestFireAlert from '@/components/common/devices/TestFireAlert';
 import GasMonitoringDetail from './type/GasMonitoringDetail';
 
 export default function DynamicDeviceDetail({ device }) {

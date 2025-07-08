@@ -198,21 +198,14 @@ export default function TicketList() {
 
         setTickets((prevTickets) => prevTickets.filter((ticket) => ticket.ticket_id !== ticketId));
 
-        Swal.fire({
-          icon: "success",
-          title: "Thành công",
-          text: "Yêu cầu hỗ trợ đã được xóa.",
-          confirmButtonColor: "#2563eb",
-          timer: 1500,
-          timerProgressBar: true,
+        toast.success("Yêu cầu hỗ trợ đã được xóa.", {
+          duration: 1500,
+          progress: true,
         });
       } catch (error) {
         console.error("Failed to delete ticket:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: error.message || "Không thể xóa yêu cầu. Vui lòng thử lại.",
-          confirmButtonColor: "#2563eb",
+        toast.error(error.message || "Không thể xóa yêu cầu. Vui lòng thử lại.", {
+          duration: 5000,
         });
       }
     }
@@ -339,7 +332,7 @@ export default function TicketList() {
         return "Không xác định";
     }
   };
-  
+
   const getTimeAgo = (dateString) => {
     const now = new Date();
     const date = new Date(dateString);
