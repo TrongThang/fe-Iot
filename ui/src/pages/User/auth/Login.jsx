@@ -77,7 +77,7 @@ export default function Login() {
             const response = await axiosPublic.post(`/auth/login`, payload)
 
             // Xử lý phản hồi
-            const { accessToken, refreshToken, deviceUuid } = response.data;
+            const { accessToken, refreshToken, deviceUuid } = response;
             localStorage.setItem('authToken', accessToken);
             if(rememberMe && refreshToken) {
                 localStorage.setItem('refreshToken', refreshToken)

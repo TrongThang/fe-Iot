@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
                 },
             });
 
-            if (response.data.success) {
+            if (response) {
                 const userData = response.data.data;
                 setUser(userData);
                 // Store user data for socket connection
@@ -109,7 +109,7 @@ export const AuthProvider = ({ children }) => {
                 password
             });
 
-            if (response.status === 200) {
+            if (response) {
                 console.log('THành công')
                 const token = response.accessToken;
                 localStorage.setItem('authToken', token);
