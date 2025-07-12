@@ -106,8 +106,8 @@ export default function NotificationList() {
         return "safety";
       case "device_offline":
         return "connectivity";
-      case "device_maintenance":
-        return "maintenance";
+      case "device_alert":
+        return "alert";
       case "security_alert":
         return "security";
       default:
@@ -212,7 +212,7 @@ export default function NotificationList() {
         return <CheckCircle {...iconProps} className="h-5 w-5 text-emerald-500" />;
       case "device_offline":
         return <Wifi {...iconProps} className="h-5 w-5 text-red-500" />;
-      case "device_maintenance":
+      case "device_alert":
         return <Settings {...iconProps} className="h-5 w-5 text-blue-500" />;
       case "system_update":
         return <Info {...iconProps} className="h-5 w-5 text-blue-500" />;
@@ -248,7 +248,7 @@ export default function NotificationList() {
         return "bg-blue-50 text-blue-600";
       case "automation":
         return "bg-emerald-50 text-emerald-600";
-      case "maintenance":
+      case "alert":
         return "bg-amber-50 text-amber-600";
       case "ticket":
         return "bg-orange-50 text-orange-600";
@@ -519,7 +519,7 @@ function NotificationGrid({
                     {notification.type === "security" && "Bảo mật"}
                     {notification.type === "environment" && "Môi trường"}
                     {notification.type === "automation" && "Tự động"}
-                    {notification.type === "maintenance" && "Bảo trì"}
+                    {notification.type === "alert" && "Thông báo"}
                     {notification.type === "ticket" && "Yêu Cầu"}
                     {notification.type === "system" && "Hệ thống"}
                   </Badge>

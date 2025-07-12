@@ -31,6 +31,14 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
             if (!houseId) {
                 throw new Error("House ID is required");
             }
+            if (spaceData.name.length > 255) {
+                toast.error("Tên không gian không được vượt quá 255 ký tự.");
+                return;
+            }
+            if (spaceData.description.length > 255) {
+                toast.error("Mô tả không gian không được vượt quá 255 ký tự.");
+                return;
+            }
             const requestBody = {
                 houseId: Number(houseId),
                 space_name: spaceData.name,

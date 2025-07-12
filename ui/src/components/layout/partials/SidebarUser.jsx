@@ -122,16 +122,6 @@ const SidebarUser = () => {
                 <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
                 {isOpen && <span>Dashboard</span>}
               </Link>
-              <Link
-                to="/stats"
-                onClick={() => handleItemClick("stats")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "stats" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Thống kê" : ""}
-              >
-                <Gauge className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Thống kê</span>}
-              </Link>
             </div>
           )}
         </div>
@@ -200,49 +190,6 @@ const SidebarUser = () => {
           )}
         </div>
 
-        {/* Automation Section */}
-        <div className="mb-4">
-          {isOpen ? (
-            <button
-              onClick={toggleAutomation}
-              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800/30 transition-colors"
-            >
-              <span className="text-sm font-semibold uppercase tracking-wider">Tự động hóa</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform duration-200 ${isAutomationOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-          ) : (
-            <div className="h-px bg-blue-800/50 mx-2 mb-2"></div>
-          )}
-
-          {(isAutomationOpen || !isOpen) && (
-            <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-              <Link
-                to="/schedules"
-                onClick={() => handleItemClick("schedules")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "schedules"
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Lịch trình" : ""}
-              >
-                <Clock className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Lịch trình</span>}
-              </Link>
-              <Link
-                to="/scenes"
-                onClick={() => handleItemClick("scenes")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "scenes" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                  } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Cảnh" : ""}
-              >
-                <Thermometer className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Cảnh</span>}
-              </Link>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* Sidebar Footer */}
@@ -256,15 +203,6 @@ const SidebarUser = () => {
           >
             <Settings className="w-4 h-4 flex-shrink-0" />
             {isOpen && <span>Cài đặt</span>}
-          </Link>
-          <Link
-            to="/help"
-            onClick={() => handleItemClick("help")}
-            className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg text-blue-200 hover:bg-blue-800/40 transition-colors ${!isOpen && "justify-center"}`}
-            title={!isOpen ? "Trợ giúp" : ""}
-          >
-            <HelpCircle className="w-4 h-4 flex-shrink-0" />
-            {isOpen && <span>Trợ giúp</span>}
           </Link>
         </div>
       </div>

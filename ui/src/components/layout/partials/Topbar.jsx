@@ -39,7 +39,6 @@ const Topbar = () => {
   const { isOpen, toggle } = useSidebar();
   const [notifications, setNotifications] = useState([]);
   const [isOnline, setIsOnline] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,10 +48,6 @@ const Topbar = () => {
 
   useEffect(() => {
     fetchNotifications();
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
   }, []);
 
   const fetchNotifications = async () => {
@@ -146,18 +141,6 @@ const Topbar = () => {
     }
   };
 
-  const time = currentTime.toLocaleTimeString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-  const date = currentTime.toLocaleDateString("vi-VN", {
-    weekday: "long",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
@@ -207,14 +190,8 @@ const Topbar = () => {
           </button>
         </div>
 
-        {/* Right Side - Time, Notifications, User */}
+        {/* Right Side - Notifications, User */}
         <div className="flex items-center gap-2 md:gap-6">
-          {/* Time Display */}
-          <div className="hidden md:block text-right">
-            <div className="font-bold text-xl text-white font-mono">{time}</div>
-            <div className="text-xs text-blue-200 capitalize">{date}</div>
-          </div>
-
           {/* Notifications */}
           <div className="relative group">
             <button className="p-2 hover:bg-white/10 rounded-lg transition-all duration-200 group-hover:bg-white/10">
@@ -337,27 +314,6 @@ const Topbar = () => {
                     <span className="font-medium text-gray-700 text-sm">Hồ sơ của tôi</span>
                   </Link>
                 </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/calendar"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
-                  >
-                    <Calendar className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-gray-700 text-sm">Lịch điều khiển</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    to="/settings"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
-                  >
-                    <Settings className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-gray-700 text-sm">Cài đặt hệ thống</span>
-                  </Link>
-                </DropdownMenuItem>
-
                 <div className="h-px bg-gray-200 my-2"></div>
 
                 <DropdownMenuItem asChild>

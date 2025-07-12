@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import CreateTicketDialog from "./Add-ticket-popup";
 import TicketDetailDialog from "./ticketDetails";
-import Swal from "sweetalert2";
+import { toast } from "sonner";
 
 export default function TicketList() {
   const [tickets, setTickets] = useState([]);
@@ -54,11 +54,8 @@ export default function TicketList() {
       }
     } catch (error) {
       setError(error.message);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Không thể tải danh sách yêu cầu. Vui lòng thử lại.",
-        confirmButtonColor: "#2563eb",
+      toast.error(error.message || "Không thể tải danh sách yêu cầu. Vui lòng thử lại.", {
+        duration: 5000,
       });
     }
   };
@@ -81,11 +78,8 @@ export default function TicketList() {
       }
     } catch (error) {
       setError(error.message);
-      Swal.fire({
-        icon: "error",
-        title: "Lỗi",
-        text: error.message || "Không thể tải loại yêu cầu. Vui lòng thử lại.",
-        confirmButtonColor: "#2563eb",
+      toast.error(error.message || "Không thể tải loại yêu cầu. Vui lòng thử lại.", {
+        duration: 5000,
       });
     }
   };
@@ -100,11 +94,8 @@ export default function TicketList() {
         await Promise.all([fetchTickets(), fetchTicketTypes()]);
       } catch (err) {
         setError("Không thể tải dữ liệu. Vui lòng thử lại.");
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: "Không thể tải dữ liệu. Vui lòng thử lại.",
-          confirmButtonColor: "#2563eb",
+        toast.error("Không thể tải dữ liệu. Vui lòng thử lại.", {
+          duration: 5000,
         });
       } finally {
         setIsLoading(false);
@@ -116,11 +107,8 @@ export default function TicketList() {
     } else {
       setError("Vui lòng đăng nhập để xem yêu cầu hỗ trợ.");
       setIsLoading(false);
-      Swal.fire({
-        icon: "warning",
-        title: "Chưa đăng nhập",
-        text: "Vui lòng đăng nhập để xem yêu cầu hỗ trợ.",
-        confirmButtonColor: "#2563eb",
+      toast.warning("Vui lòng đăng nhập để xem yêu cầu hỗ trợ.", {
+        duration: 5000,
       });
     }
   }, [accessToken]);
@@ -129,27 +117,66 @@ export default function TicketList() {
   const handleTicketCreated = (newTicket) => {
     setTickets([newTicket, ...tickets]);
     setShowCreateDialog(false);
-    Swal.fire({
-      icon: "success",
-      title: "Thành công",
-      text: "Yêu cầu hỗ trợ đã được tạo.",
-      confirmButtonColor: "#2563eb",
-      timer: 1500,
-      timerProgressBar: true,
+    toast.success("Yêu cầu hỗ trợ đã được tạo.", {
+      duration: 1500,
+      progress: true,
     });
   };
 
   // Handle ticket deletion
   const handleTicketDeleted = async (ticketId) => {
-    const result = await Swal.fire({
-      title: "Xác nhận xóa",
-      text: "Bạn có chắc muốn xóa yêu cầu hỗ trợ này? Hành động này không thể hoàn tác.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      cancelButtonColor: "#2563eb",
-      confirmButtonText: "Xóa",
-      cancelButtonText: "Hủy",
+    const result = await toast.custom((t) => (
+      <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
+        <h3 className="text-lg font-semibold text-red-600 mb-2">Xác nhận xóa</h3>
+        <p className="text-sm text-gray-600 mb-4">Bạn có chắc muốn xóa yêu cầu hỗ trợ này? Hành động này không thể hoàn tác.</p>
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => toast.dismiss(t)}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Hủy
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={async () => {
+              toast.dismiss(t);
+              try {
+                const response = await fetch(
+                  `https://iothomeconnectapiv2-production.up.railway.app/api/tickets/${ticketId}/cancel`,
+                  {
+                    method: "PUT",
+                    headers: {
+                      Authorization: `Bearer ${accessToken}`,
+                    },
+                  }
+                );
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.message || "Failed to delete ticket");
+                }
+
+                setTickets((prevTickets) => prevTickets.filter((ticket) => ticket.ticket_id !== ticketId));
+
+                toast.success("Yêu cầu hỗ trợ đã được xóa.", {
+                  duration: 1500,
+                  progress: true,
+                });
+              } catch (error) {
+                console.error("Failed to delete ticket:", error);
+                toast.error(error.message || "Không thể xóa yêu cầu. Vui lòng thử lại.", {
+                  duration: 5000,
+                });
+              }
+            }}
+          >
+            Xóa
+          </Button>
+        </div>
+      </div>
+    ), {
+      duration: Infinity,
     });
 
     if (result.isConfirmed) {
@@ -171,21 +198,14 @@ export default function TicketList() {
 
         setTickets((prevTickets) => prevTickets.filter((ticket) => ticket.ticket_id !== ticketId));
 
-        Swal.fire({
-          icon: "success",
-          title: "Thành công",
-          text: "Yêu cầu hỗ trợ đã được xóa.",
-          confirmButtonColor: "#2563eb",
-          timer: 1500,
-          timerProgressBar: true,
+        toast.success("Yêu cầu hỗ trợ đã được xóa.", {
+          duration: 1500,
+          progress: true,
         });
       } catch (error) {
         console.error("Failed to delete ticket:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Lỗi",
-          text: error.message || "Không thể xóa yêu cầu. Vui lòng thử lại.",
-          confirmButtonColor: "#2563eb",
+        toast.error(error.message || "Không thể xóa yêu cầu. Vui lòng thử lại.", {
+          duration: 5000,
         });
       }
     }
@@ -193,28 +213,27 @@ export default function TicketList() {
 
   // Filter and sort tickets
   const filteredTickets = tickets
-  .filter((ticket) => {
-    const matchesSearch =
-      (ticket.ticket_id?.toString().toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
-      (ticket.description?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
-      (ticket.device_serial?.toLowerCase() ?? "").includes(searchQuery.toLowerCase());
+    .filter((ticket) => {
+      const matchesSearch =
+        (ticket.ticket_id?.toString().toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
+        (ticket.description?.toLowerCase() ?? "").includes(searchQuery.toLowerCase()) ||
+        (ticket.device_serial?.toLowerCase() ?? "").includes(searchQuery.toLowerCase());
 
-    const matchesStatus =
-      filterOptions.status === "all" || ticket.status === filterOptions.status;
+      const matchesStatus =
+        filterOptions.status === "all" || ticket.status === filterOptions.status;
 
-    return matchesSearch && matchesStatus;
-  })
-  .sort((a, b) => {
-    const key = sortBy === "priority" ? "priority" : sortBy;
-    const valueA = sortBy === "priority" ? (a.priority || 0) : a[sortBy] || "";
-    const valueB = sortBy === "priority" ? (b.priority || 0) : b[sortBy] || "";
-    if (sortOrder === "asc") {
-      return valueA > valueB ? 1 : -1;
-    } else {
-      return valueA < valueB ? 1 : -1;
-    }
-  });
-
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const key = sortBy === "priority" ? "priority" : sortBy;
+      const valueA = sortBy === "priority" ? (a.priority || 0) : a[sortBy] || "";
+      const valueB = sortBy === "priority" ? (b.priority || 0) : b[sortBy] || "";
+      if (sortOrder === "asc") {
+        return valueA > valueB ? 1 : -1;
+      } else {
+        return valueA < valueB ? 1 : -1;
+      }
+    });
 
   // Group tickets by status
   const ticketsByStatus = filteredTickets.reduce((acc, ticket) => {
@@ -313,7 +332,7 @@ export default function TicketList() {
         return "Không xác định";
     }
   };
-  
+
   const getTimeAgo = (dateString) => {
     const now = new Date();
     const date = new Date(dateString);

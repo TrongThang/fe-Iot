@@ -52,6 +52,16 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
       if (!groupId || isNaN(Number(groupId))) {
         throw new Error("Group ID is invalid");
       }
+
+      if (houseData.name?.length > 255) {
+        toast.error("Tên nhà không được vượt quá 255 ký tự.");
+        return;
+      }
+      if (houseData.address?.length > 255) {
+        toast.error("Địa chỉ nhà không được vượt quá 255 ký tự.");
+        return;
+      }
+
       const requestBody = {
         house_name: houseData.name,
         address: houseData.address || "",

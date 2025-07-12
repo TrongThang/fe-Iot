@@ -32,6 +32,15 @@ export default function EditGroupPopup({ open, onOpenChange, onSave, formData, s
 
   const handleSave = async () => {
     try {
+      // Kiểm tra độ dài của group_name và group_description
+      if (formData.group_name?.length > 255) {
+        toast.error("Tên nhóm không được vượt quá 255 ký tự.");
+        return;
+      }
+      if (formData.group_description?.length > 255) {
+        toast.error("Mô tả nhóm không được vượt quá 255 ký tự.");
+        return;
+      }
       const updateData = {
         group_name: formData.group_name || "",
         group_description: formData.group_description || "",
