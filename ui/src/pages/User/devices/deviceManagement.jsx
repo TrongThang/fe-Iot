@@ -14,12 +14,9 @@ import {
   Lightbulb,
   Thermometer,
   Smartphone,
-  Loader2,
   Camera,
   Wifi,
   WifiOff,
-  Power,
-  Settings,
   AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -32,7 +29,6 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CameraControl from "./cameraControl";
-import { Card, CardContent } from "@/components/ui/card";
 import DeviceGrid from "./deviceGrid";
 import DynamicDeviceDetail from "@/components/common/devices/DynamicDeviceDetail";
 import RealTimeDeviceControl from "@/components/common/devices/RealTimeDeviceControl";
@@ -298,19 +294,7 @@ export default function DeviceManagement({
                     <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
                       {activeDevices} đang hoạt động
                     </Badge>
-                    {/* Socket Connection Status */}
-                    {isConnected ? (
-                      <Badge className="bg-blue-100 text-blue-700 border-blue-200">
-                        <Wifi className="w-3 h-3 mr-1" />
-                        Socket kết nối
-                      </Badge>
-                    ) : (
-                      <Badge className="bg-red-100 text-red-700 border-red-200">
-                        <WifiOff className="w-3 h-3 mr-1" />
-                        Socket mất kết nối
-                      </Badge>
-                    )}
-                    {/* Emergency Alert Indicator */}
+                     {/* Emergency Alert Indicator */}
                     {emergencyAlerts.length > 0 && (
                       <Badge className="bg-red-100 text-red-700 border-red-200 animate-pulse">
                         <AlertTriangle className="w-3 h-3 mr-1" />
@@ -324,31 +308,18 @@ export default function DeviceManagement({
 
             <div className="flex items-center space-x-2">
               {selectedDevice && (
-                <>
                   <Button
-                    onClick={() => setEnableRealTime(!enableRealTime)}
-                    variant={enableRealTime ? "default" : "outline"}
-                    className={enableRealTime ? "bg-green-600 hover:bg-green-700" : "border-slate-200"}
-                  >
-                    {enableRealTime ? "Tắt Real-time" : "Bật Real-time"}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      console.log("Clearing selected device");
-                      setSelectedDevice(null);
-                      setEnableRealTime(false);
-                    }}
+                    onClick={() => setSelectedDevice(null)}
                     variant="outline"
-                    className="border-slate-200"
+                    className="border-slate-200 bg-red-500 text-white hover:bg-red-600"
                   >
                     Đóng chi tiết
                   </Button>
-                </>
               )}
-              <Button onClick={handleAddDevice} className="bg-blue-600 hover:bg-blue-700 text-white">
+              {/* <Button onClick={handleAddDevice} className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Plus className="h-4 w-4 mr-2" />
                 <span>Thêm thiết bị</span>
-              </Button>
+              </Button> */}
             </div>
           </div>
         </header>

@@ -28,8 +28,7 @@ import LightControl from './LightControl';
 import { useLEDSocket } from '@/hooks/useSocket';
 import { useAuth } from '@/contexts/AuthContext';
 import GasMonitoringDetail from './type/GasMonitoringDetail';
-import DeviceSecuritySection from './components/DeviceSecuritySection';
-import DeviceShareSection from './components/DeviceShareSection';
+import CurrentValueEditor from './CurrentValueEditor';
 
 export default function DynamicDeviceDetail({ device }) {
     const [refreshSharedUsers, setRefreshSharedUsers] = useState(0);
@@ -47,7 +46,6 @@ export default function DynamicDeviceDetail({ device }) {
         currentValues,
         loading,
         setCurrentValues,
-        getDeviceId
     } = useDeviceCapabilities(device);
 
     const {
@@ -97,7 +95,7 @@ export default function DynamicDeviceDetail({ device }) {
 
     // LED Socket hook để lấy LED modes từ socket - only with valid data
     const canConnectLEDSocket = device?.serial_number && accountId && 
-                               (deviceTypeHelpers.isLEDDevice(device) ||
+                                (deviceTypeHelpers.isLEDDevice(device) ||
                                 capabilities?.capabilities?.includes('LIGHT_CONTROL'));
     const { 
         ledCapabilities, 
@@ -280,12 +278,6 @@ export default function DynamicDeviceDetail({ device }) {
 
     return (
         <div className="space-y-6">
-            {/* 1. Bảo mật thiết bị */}
-            <DeviceSecuritySection device={device} />
-
-            {/* 2. Chia sẻ thiết bị */}
-            <DeviceShareSection device={device} />
-
             {/* Quick Alert Mute - Show when there's an active fire alert */}
             {fireAlert && (
                 <QuickAlertMute
@@ -315,7 +307,6 @@ export default function DynamicDeviceDetail({ device }) {
                     isNotificationsEnabled={notificationsEnabled}
                 />
             ) : (
-                /* Status Display for non-fire detectors */
                 <StatusDisplay 
                     device={device}
                     capabilities={capabilities}
@@ -323,7 +314,6 @@ export default function DynamicDeviceDetail({ device }) {
                 />
             )}
 
-            {/* Specialized Device Controls */}
             {renderSpecializedControl()}
 
             {/* Standard Controls - only show if no specialized control is rendered */}
@@ -349,12 +339,6 @@ export default function DynamicDeviceDetail({ device }) {
                     </CardContent>
                 </Card>
             )}
-
-            {/* Stats Grid */}
-            <StatsGrid 
-                capabilities={capabilities}
-                currentValues={currentValues}
-            />
 
             {/* Device Security Actions */}
             <DeviceSecurityActions 
@@ -394,6 +378,19 @@ export default function DynamicDeviceDetail({ device }) {
             <DeviceCapabilitiesInfo 
                 device={device}
                 capabilities={capabilities}
+            />
+
+            {/* Current Value Editor */}
+            <CurrentValueEditor 
+                device={device}
+                currentValue={device?.current_value}
+                onCurrentValueChange={(updatedCurrentValue) => {
+                    console.log('🔄 Current value updated:', updatedCurrentValue);
+                    // Update device object to reflect changes
+                    if (device) {
+                        device.current_value = updatedCurrentValue;
+                    }
+                }}
             />
 
             {/* Fire Alert Debug Section - Only show for fire detectors */}
@@ -483,6 +480,7 @@ export default function DynamicDeviceDetail({ device }) {
                     allowOutsideClick={fireAlertLevel !== ALERT_LEVELS.CRITICAL}
                 />
             )}
+            
         </div>
     );
 } 

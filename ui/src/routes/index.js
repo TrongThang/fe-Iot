@@ -28,8 +28,14 @@ import SearchCustomerInfo from "@/pages/Admin/search/searchCustomerInfo";
 import DashboardAdmin from "@/pages/Admin/Dashboard/dashboard";
 import CustomerShare from "@/pages/Admin/customer_manager/customerShareList";
 import FCMTestPage from "@/pages/User/FCMTestPage";
+import DemoCurrentValueEditor from "@/components/common/devices/DemoCurrentValueEditor";
+import DeviceLinksPage from "@/pages/User/DeviceLinksPage";
 
 export const router = createBrowserRouter([
+    {
+        path: '/demo-current-value',
+        element: <DemoCurrentValueEditor />
+    },
     {
         path: '/fcm-test',
         element: <FCMTestPage />
@@ -138,6 +144,10 @@ export const router = createBrowserRouter([
             {
                 path: '/share/device-sharing-list',
                 element: <DeviceSharingList />
+            },
+            {
+                path: '/device-links',
+                element: <DeviceLinksPage />
             },
             {
                 path: '*',

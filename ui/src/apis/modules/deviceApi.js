@@ -7,7 +7,8 @@ const deviceEndpoints = {
     bulkUpdate: (serialNumber) => `devices/${serialNumber}/state/bulk`,     // POST - for bulk updates
     toggle: (serialNumber) => `devices/${serialNumber}/toggle`,            // PUT - for power toggle
     deviceDetail: (serialNumber) => `devices/${serialNumber}`,
-    deviceList: 'devices',
+    deviceList: 'devices/account',
+    deviceListWithComponents: 'devices/account/with-components',            // GET - get devices with components
     searchUser: 'customer-search',                                  // GET - search users for sharing
     createTicket: 'tickets',                                        // POST - create share permission ticket
     getSharedUsers: (serialNumber) => `permissions/get-shared-users/${serialNumber}`,
@@ -17,6 +18,12 @@ const deviceEndpoints = {
     // Door control endpoints (dựa theo IoT_HomeConnect_API_v2)
     toggleDoor: (serialNumber) => `doors/${serialNumber}/toggle`,                                            // POST - toggle door open/close
     getDoorStatus: (serialNumber) => `doors/${serialNumber}/status`,                                         // GET - get door status
+    
+    // Current value endpoints
+    updateCurrentValue: (serialNumber) => `devices/${serialNumber}/current-value`,                          // PUT - update device current_value
+    
+    // Components endpoints
+    getDeviceComponents: (deviceId) => `devices/${deviceId}/components`,                                     // GET - get device components
 };
 
 export const deviceApi = {
@@ -92,6 +99,19 @@ export const deviceApi = {
             return response;
         } catch (error) {
             console.error('Error in getDeviceList:', error);
+            throw error;
+        }
+    },
+
+    // Lấy danh sách devices kèm components
+    getDevicesWithComponents: async (params = {}) => {
+        try {
+            console.log('API Call: getDevicesWithComponents with params:', params);
+            const response = await publicClient.get(deviceEndpoints.deviceListWithComponents, { params });
+            console.log('API Response - getDevicesWithComponents:', response);
+            return response;
+        } catch (error) {
+            console.error('Error in getDevicesWithComponents:', error);
             throw error;
         }
     },
@@ -204,6 +224,37 @@ export const deviceApi = {
             return response;
         } catch (error) {
             console.error('Error in getDoorStatus:', error);
+            throw error;
+        }
+    },
+
+    // Update device current_value
+    updateDeviceCurrentValue: async (serialNumber, currentValue) => {
+        try {
+            console.log('API Call: updateDeviceCurrentValue with serialNumber:', serialNumber, 'currentValue:', currentValue);
+            
+            const updateData = {
+                current_value: currentValue
+            };
+            
+            const response = await publicClient.put(deviceEndpoints.updateCurrentValue(serialNumber), updateData);
+            console.log('API Response - updateDeviceCurrentValue:', response);
+            return response;
+        } catch (error) {
+            console.error('Error in updateDeviceCurrentValue:', error);
+            throw error;
+        }
+    },
+
+    // Get device components
+    getDeviceComponents: async (deviceId) => {
+        try {
+            console.log('API Call: getDeviceComponents with deviceId:', deviceId);
+            const response = await publicClient.get(deviceEndpoints.getDeviceComponents(deviceId));
+            console.log('API Response - getDeviceComponents:', response);
+            return response;
+        } catch (error) {
+            console.error('Error in getDeviceComponents:', error);
             throw error;
         }
     }

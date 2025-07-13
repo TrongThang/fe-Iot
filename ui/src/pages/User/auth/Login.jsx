@@ -91,7 +91,7 @@ export default function Login() {
             localStorage.setItem("deviceMap", JSON.stringify(deviceMap));
 
             // Điều hướng đến trang chính hoặc dashboard
-            navigate("/")
+            window.location.href = "/";
 
             // Hiển thị thông báo thành công
             toast.success("Đăng nhập thành công!")
