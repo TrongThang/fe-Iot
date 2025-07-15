@@ -77,7 +77,7 @@ export default function EditHousePopup({ open, onOpenChange, onSave, house, grou
         throw new Error("Địa chỉ nhà không được để trống");
       }
 
-      const response = await fetch(`http://localhost:7777/api/houses/${houseId}`, {
+      const response = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/houses/${houseId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

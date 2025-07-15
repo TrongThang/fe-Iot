@@ -268,7 +268,7 @@ export default function GroupsManagement() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-lg font-semibold text-gray-900 truncate">{group.group_name}</h3>
-                          <p className="text-sm text-gray-600 truncate">{group.description || "Không có mô tả"}</p>
+                          <p className="text-sm text-gray-600 truncate">{group.group_description || "Không có mô tả"}</p>
                         </div>
                       </div>
                     </div>

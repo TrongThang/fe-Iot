@@ -57,7 +57,7 @@ export default function NotificationList() {
 
     try {
       setIsLoading(true);
-      const res = await fetch(`http://localhost:7777/api/notifications/user`, {
+      const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/notifications/user`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -327,7 +327,7 @@ export default function NotificationList() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
+              {/* <div className="flex items-center space-x-3">
                 <Button
                   variant="outline"
                   size="sm"
@@ -338,7 +338,7 @@ export default function NotificationList() {
                   <Eye className="h-4 w-4 mr-2" />
                   Đánh dấu tất cả đã đọc
                 </Button>
-              </div>
+              </div> */}
             </div>
           </div>
         </header>

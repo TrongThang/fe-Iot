@@ -22,7 +22,6 @@ export default function DeviceGrid({
     onEdit,
     onDelete,
     getDeviceColor,
-    getDeviceStatusColor,
     isCompact = false,
 }) {
     if (isLoading) {
@@ -95,7 +94,7 @@ export default function DeviceGrid({
                                 )}
                                 <Switch
                                     checked={device.power_status}
-                                    onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
+                                    onCheckedChange={(checked) => onToggle(checked, device.device_id)}
                                     onClick={(e) => e.stopPropagation()}
                                     className="data-[state=checked]:bg-green-500"
                                 />
@@ -127,7 +126,7 @@ export default function DeviceGrid({
                                     )}
                                     <Switch
                                         checked={device.power_status}
-                                        onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
+                                        onCheckedChange={(checked) => onToggle(checked, device.device_id)}
                                         onClick={(e) => e.stopPropagation()}
                                         className="data-[state=checked]:bg-green-500"
                                     />

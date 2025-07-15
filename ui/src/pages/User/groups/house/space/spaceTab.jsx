@@ -33,7 +33,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick, rol
 
   const fetchSpaces = async (id) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/spaces/house/${id}`, {
+      const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/spaces/house/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -55,7 +55,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick, rol
 
   const fetchDevices = async (spaceId) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/devices/space/${spaceId}`, {
+      const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/devices/space/${spaceId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +141,7 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick, rol
 
     if (confirmed) {
       try {
-        const res = await fetch(`http://localhost:7777/api/spaces/${spaceId}`, {
+        const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/spaces/${spaceId}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -302,18 +302,6 @@ export default function SpaceTab({ houseId, houseName, onBack, onSpaceClick, rol
                   <p className="text-2xl font-bold text-amber-700">{totalAlerts || 0}</p>
                 </div>
                 <AlertTriangle className={`h-8 w-8 ${getAlertSeverityColor(totalAlerts)}`} />
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-purple-600 font-medium">Dữ liệu theo giờ</p>
-                  <p className="text-2xl font-bold text-purple-700">
-                    {spaces.reduce((sum, space) => sum + (space.hourly_values?.sample_count || 0), 0)}
-                  </p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-purple-500" />
               </div>
             </div>
           </div>

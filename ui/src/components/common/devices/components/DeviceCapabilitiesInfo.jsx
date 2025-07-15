@@ -19,9 +19,9 @@ const DeviceCapabilitiesInfo = ({ device, capabilities }) => {
                 </div>
                 <div className="mt-4">
                     <p className="text-sm text-slate-600">
-                        Danh mục: <span className="font-medium">{capabilities?.category}</span>
+                        Danh mục: <span className="font-medium text-white">{capabilities?.category}</span>
                     </p>
-                    <p className="text-xs text-slate-500 mt-2">
+                    <p className="text-xs text-slate-500 mt-2 text-white">
                         Device ID: {getDeviceId()} | Serial: {device?.serial_number}
                     </p>
                 </div>

@@ -37,15 +37,19 @@ export const AuthProvider = ({ children }) => {
 
     const fetchEmployeeInfo = async (token) => {
         try {
-            const response = await axiosPublic.get('auth/getme-employee', {
+            const response = await axios.get(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/employee/get-me`, {
                 headers: {
-                    Authorization: `BEARER ${token}`,
+                    Authorization: `Bearer ${token}`,
                 },
             });
 
-            if (response.status_code === 200) {
+            if (response.data.success) {
                 console.log('response Employee', response)
-                setEmployee(response.data);
+                const employeeData = response.data.data;
+                setEmployee(employeeData);
+                localStorage.setItem('employee', JSON.stringify(employeeData));
+                localStorage.setItem('employeeId', employeeData.id);
+                console.log('👤 Employee data stored:', employeeData);
             }
         } catch (error) {
             console.error('Error fetching employee info:', error);
@@ -110,7 +114,7 @@ export const AuthProvider = ({ children }) => {
             });
 
             if (response.status === 200) {
-                console.log('THành công')
+                console.log('Thành công')
                 const token = response.accessToken;
                 localStorage.setItem('authToken', token);
 
@@ -136,12 +140,12 @@ export const AuthProvider = ({ children }) => {
 
     const loginEmployee = async (username, password) => {
         try {
-            const response = await axiosPublic.post('auth/login-employee', {
+            const response = await axiosPublic.post('auth/employee/login', {
                 username,
                 password,
             });
-            if (response.data.accessToken) {
-                const token = response.data.accessToken;
+            if (response.accessToken) {
+                const token = response.accessToken;
                 localStorage.setItem('employeeToken', token);
 
                 setIsAdminAuthenticated(true);
@@ -187,7 +191,7 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('authToken');
             const deviceMap = JSON.parse(localStorage.getItem("deviceMap") || "{}");
             const deviceUuid = user?.username ? deviceMap[user?.username] : null;
-    
+
             const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/logout`, {
                 userDeviceId: deviceUuid
             }, {
@@ -197,22 +201,30 @@ export const AuthProvider = ({ children }) => {
                     'Content-Type': 'application/json',
                 }
             });
-    
+
             if (response.data.success) {
                 localStorage.removeItem('authToken');
-    
+
                 // Xóa deviceUuid của user hiện tại khỏi deviceMap
                 // if (user?.username && deviceMap[user.username]) {
                 //     delete deviceMap[user.username];
                 //     localStorage.setItem("deviceMap", JSON.stringify(deviceMap));
                 // }
-    
+
                 const refreshToken = localStorage.getItem('refreshToken');
                 if (refreshToken) localStorage.removeItem('refreshToken');
-    
+                const user = localStorage.getItem('user');
+                if (user) localStorage.removeItem('user');
+                const device_id = localStorage.getItem('device_id');
+                if (device_id) localStorage.removeItem('device_id');
+                if (deviceMap) localStorage.removeItem('deviceMap');
+                const device_name = localStorage.getItem('device_name');
+                if (device_name) localStorage.removeItem('device_name');
+
+
                 setUser(null);
                 setIsAuthenticated(false);
-    
+
                 return response.data;
             }
         } catch (error) {
@@ -223,13 +235,54 @@ export const AuthProvider = ({ children }) => {
             };
         }
     };
-    
+
+    const logoutEmployee = async () => {
+        try {
+            const token = localStorage.getItem('employeeToken');
+            const employeeId = localStorage.getItem('employeeId');
+
+            const response = await axios.post(
+                `${process.env.REACT_APP_SMART_NET_IOT_API_URL}auth/employee/logout`,
+                { employeeId: employeeId },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
+
+            // So sánh đúng với response.status (không phải response object)
+            if (response.status === 204) {
+                // Xóa toàn bộ các item trong localStorage
+                ['employeeToken', 'employeeRefreshToken', 'employeeId', 'employee'].forEach((key) =>
+                    localStorage.removeItem(key)
+                );
+
+                // Nếu có xài deviceMap
+                // if (user?.username && deviceMap[user.username]) {
+                //     delete deviceMap[user.username];
+                //     localStorage.setItem("deviceMap", JSON.stringify(deviceMap));
+                // }
+
+                setEmployee(null);
+                setIsAdminAuthenticated(false);
+
+                return response.data;
+            } else {
+                console.warn("Logout response không phải 204:", response.status);
+            }
+        } catch (error) {
+            console.error("Lỗi khi logout:", error?.response?.data || error.message);
+        }
+    };
 
     const sendOtp = async (email) => {
         try {
             const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/notifications/otp`, { email });
 
-            console.log("res",response)
+            console.log("res", response)
             if (response.data.success) {
                 return response.data;
             } else {
@@ -297,19 +350,19 @@ export const AuthProvider = ({ children }) => {
     const refreshAccessToken = async () => {
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) return;
-    
+
         try {
             const response = await axios.post(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/auth/refresh`, {
                 refreshToken,
             });
-    
+
             const { accessToken } = response.data;
             localStorage.setItem('authToken', accessToken);
-    
+
             const decoded = jwtDecode(accessToken);
             setUser(decoded);
             setIsAuthenticated(true);
-    
+
             return accessToken;
         } catch (err) {
             console.error("Refresh token failed", err);
@@ -428,6 +481,7 @@ export const AuthProvider = ({ children }) => {
         loginEmployee,
         register,
         logout,
+        logoutEmployee,
         sendOtp,
         verifyOtp,
         verifyEmail,
@@ -436,6 +490,7 @@ export const AuthProvider = ({ children }) => {
         setUser,
         setIsAuthenticated,
         fetchUserInfo,
+        fetchEmployeeInfo,
         isTokenExpiringSoon,
         refreshAccessToken,
     };

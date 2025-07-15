@@ -14,7 +14,6 @@ import {
   Lightbulb,
   Thermometer,
   Smartphone,
-  Loader2,
   Camera,
   Wifi,
   WifiOff,
@@ -32,19 +31,15 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import CameraControl from "./cameraControl";
-import { Card, CardContent } from "@/components/ui/card";
 import DeviceGrid from "./deviceGrid";
 import DynamicDeviceDetail from "@/components/common/devices/DynamicDeviceDetail";
 import RealTimeDeviceControl from "@/components/common/devices/RealTimeDeviceControl";
 import { useSocketContext } from "@/contexts/SocketContext";
 import axiosPublic from "@/apis/clients/public.client";
-import { toast } from "sonner"; // Added for error feedback
+import { toast } from "sonner";
 
 export default function DeviceManagement({
-  spaceId = "1",
-  spaceName = "Phòng khách",
-  spaceType = "living_room",
-  onBack = () => {},
+  onBack = () => { },
 }) {
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,19 +51,16 @@ export default function DeviceManagement({
     status: "all",
   });
 
-	const [devices, setDevices] = useState([])
-	
-	// Socket context for real-time device communication
-	const { 
-		user, 
-		isConnected, 
-		connectToDevice,
-		disconnectFromDevice,
-		emergencyAlerts,
-		dismissEmergencyAlert
-	} = useSocketContext()
+  const [devices, setDevices] = useState([]);
 
- 
+  const {
+    user,
+    isConnected,
+    connectToDevice,
+    disconnectFromDevice,
+    emergencyAlerts,
+    dismissEmergencyAlert,
+  } = useSocketContext();
 
   const fetchDevice = async () => {
     try {
@@ -89,28 +81,22 @@ export default function DeviceManagement({
     fetchDevice();
   }, []);
 
-	// Global socket connection DISABLED - use device-specific connections
-	// Device connections will be handled by individual device components
-	useEffect(() => {
-		if (user) {
-			console.log('👤 User authenticated, ready for device-specific connections:', user.id || user.account_id);
-			console.log('💡 Global socket connection disabled - devices will connect individually');
-		}
-	}, [user])
+  useEffect(() => {
+    if (user) {
+      console.log("👤 User authenticated, ready for device-specific connections:", user.id || user.account_id);
+      console.log("💡 Global socket connection disabled - devices will connect individually");
+    }
+  }, [user]);
 
-  // Handle emergency alerts
   useEffect(() => {
     if (emergencyAlerts.length > 0) {
       emergencyAlerts.forEach((alert) => {
         console.log("🚨 EMERGENCY ALERT:", alert);
-        // Show emergency notification (using toast for consistency)
         toast.error(`Cảnh báo khẩn cấp: ${alert.message}`);
-        // Note: Removed auto-dismiss timeout to avoid time-related logic
       });
     }
   }, [emergencyAlerts, dismissEmergencyAlert]);
 
-  // Enable real-time monitoring for selected device
   useEffect(() => {
     if (selectedDevice && user && isConnected && enableRealTime) {
       console.log("🔴 Starting real-time monitoring for:", selectedDevice.serial_number);
@@ -138,14 +124,26 @@ export default function DeviceManagement({
     }
   };
 
-  const handleToggle = (e, deviceId) => {
-    setDevices(
-      devices.map((device) =>
-        device.id === deviceId
-          ? { ...device, power_status: !device.power_status, status: !device.power_status ? "active" : "inactive" }
-          : device,
-      ),
+  const handleToggle = (checked, deviceId) => {
+    setDevices((prevDevices) =>
+      prevDevices.map((device) =>
+        device.device_id === deviceId
+          ? {
+            ...device,
+            power_status: checked,
+            status: checked ? "active" : "inactive",
+          }
+          : device
+      )
     );
+    // Sync selectedDevice if it matches the toggled device
+    if (selectedDevice && selectedDevice.device_id === deviceId) {
+      setSelectedDevice((prev) => ({
+        ...prev,
+        power_status: checked,
+        status: checked ? "active" : "inactive",
+      }));
+    }
   };
 
   const handleAddDevice = () => {
@@ -153,8 +151,8 @@ export default function DeviceManagement({
   };
 
   const handleDeleteDevice = (deviceId) => {
-    setDevices(devices.filter((device) => device.id !== deviceId));
-    if (selectedDevice?.id === deviceId) {
+    setDevices(devices.filter((device) => device.device_id !== deviceId));
+    if (selectedDevice?.device_id === deviceId) {
       setSelectedDevice(null);
     }
   };
@@ -249,7 +247,7 @@ export default function DeviceManagement({
         camera={selectedDevice}
         onBack={() => setSelectedDevice(null)}
         onUpdateCamera={(updatedCamera) => {
-          setDevices(devices.map((d) => (d.id === updatedCamera.id ? { ...d, ...updatedCamera } : d)));
+          setDevices(devices.map((d) => (d.device_id === updatedCamera.device_id ? { ...d, ...updatedCamera } : d)));
           setSelectedDevice(updatedCamera);
         }}
       />
@@ -267,11 +265,6 @@ export default function DeviceManagement({
               </Button>
 
               <div className="flex items-center space-x-3">
-                <div
-                  className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md`}
-                >
-                  {getSpaceIcon(spaceType)}
-                </div>
                 <div>
                   <h1
                     className={cn(
@@ -279,7 +272,7 @@ export default function DeviceManagement({
                       selectedDevice && selectedDevice.type !== "camera" ? "text-lg md:text-xl" : "text-xl",
                     )}
                   >
-                    {spaceName}
+                    Danh sách thiết bị
                     <span
                       className={cn(
                         "ml-2 text-sm font-normal text-slate-500",
@@ -298,7 +291,6 @@ export default function DeviceManagement({
                     <Badge variant="secondary" className="bg-green-100 text-green-700 border-green-200">
                       {activeDevices} đang hoạt động
                     </Badge>
-                    {/* Socket Connection Status */}
                     {isConnected ? (
                       <Badge className="bg-blue-100 text-blue-700 border-blue-200">
                         <Wifi className="w-3 h-3 mr-1" />
@@ -310,7 +302,6 @@ export default function DeviceManagement({
                         Socket mất kết nối
                       </Badge>
                     )}
-                    {/* Emergency Alert Indicator */}
                     {emergencyAlerts.length > 0 && (
                       <Badge className="bg-red-100 text-red-700 border-red-200 animate-pulse">
                         <AlertTriangle className="w-3 h-3 mr-1" />
@@ -331,17 +322,6 @@ export default function DeviceManagement({
                     className={enableRealTime ? "bg-green-600 hover:bg-green-700" : "border-slate-200"}
                   >
                     {enableRealTime ? "Tắt Real-time" : "Bật Real-time"}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      console.log("Clearing selected device");
-                      setSelectedDevice(null);
-                      setEnableRealTime(false);
-                    }}
-                    variant="outline"
-                    className="border-slate-200"
-                  >
-                    Đóng chi tiết
                   </Button>
                 </>
               )}
@@ -440,12 +420,6 @@ export default function DeviceManagement({
                       Tất cả ({filteredDevices.length})
                     </TabsTrigger>
                     <TabsTrigger
-                      value="mine"
-                      className="bg-gray-100 hover:bg-white data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-colors"
-                    >
-                      Của tôi ({myDevices.length})
-                    </TabsTrigger>
-                    <TabsTrigger
                       value="shared"
                       className="bg-gray-100 hover:bg-white data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-colors"
                     >
@@ -453,54 +427,54 @@ export default function DeviceManagement({
                     </TabsTrigger>
                   </TabsList>
 
-									<TabsContent value="all" className="mt-4">
-										<DeviceGrid
-											devices={filteredDevices}
-											isLoading={isLoading}
-											selectedDevice={selectedDevice}
-											onDeviceClick={handleDeviceClick}
-											onToggle={handleToggle}
-											onEdit={handleEditDevice}
-											onDelete={handleDeleteDevice}
-											getDeviceColor={getDeviceColor}
-											getDeviceStatusColor={getDeviceStatusColor}
-											isCompact={selectedDevice && selectedDevice.type !== "camera"}
-										/>
-									</TabsContent>
+                  <TabsContent value="all" className="mt-4">
+                    <DeviceGrid
+                      devices={filteredDevices}
+                      isLoading={isLoading}
+                      selectedDevice={selectedDevice}
+                      onDeviceClick={handleDeviceClick}
+                      onToggle={handleToggle}
+                      onEdit={handleEditDevice}
+                      onDelete={handleDeleteDevice}
+                      getDeviceColor={getDeviceColor}
+                      getDeviceStatusColor={getDeviceStatusColor}
+                      isCompact={selectedDevice && selectedDevice.type !== "camera"}
+                    />
+                  </TabsContent>
 
-									<TabsContent value="mine" className="mt-4">
-										<DeviceGrid
-											devices={myDevices}
-											isLoading={isLoading}
-											selectedDevice={selectedDevice}
-											onDeviceClick={handleDeviceClick}
-											onToggle={handleToggle}
-											onEdit={handleEditDevice}
-											onDelete={handleDeleteDevice}
-											getDeviceColor={getDeviceColor}
-											getDeviceStatusColor={getDeviceStatusColor}
-											isCompact={selectedDevice && selectedDevice.type !== "camera"}
-										/>
-									</TabsContent>
+                  <TabsContent value="mine" className="mt-4">
+                    <DeviceGrid
+                      devices={myDevices}
+                      isLoading={isLoading}
+                      selectedDevice={selectedDevice}
+                      onDeviceClick={handleDeviceClick}
+                      onToggle={handleToggle}
+                      onEdit={handleEditDevice}
+                      onDelete={handleDeleteDevice}
+                      getDeviceColor={getDeviceColor}
+                      getDeviceStatusColor={getDeviceStatusColor}
+                      isCompact={selectedDevice && selectedDevice.type !== "camera"}
+                    />
+                  </TabsContent>
 
-									<TabsContent value="shared" className="mt-4">
-										<DeviceGrid
-											devices={sharedDevices}
-											isLoading={isLoading}
-											selectedDevice={selectedDevice}
-											onDeviceClick={handleDeviceClick}
-											onToggle={handleToggle}
-											onEdit={handleEditDevice}
-											onDelete={handleDeleteDevice}
-											getDeviceColor={getDeviceColor}
-											getDeviceStatusColor={getDeviceStatusColor}
-											isCompact={selectedDevice && selectedDevice.type !== "camera"}
-										/>
-									</TabsContent>
-								</Tabs>
-							</div>
-						</div>
-					</div>
+                  <TabsContent value="shared" className="mt-4">
+                    <DeviceGrid
+                      devices={sharedDevices}
+                      isLoading={isLoading}
+                      selectedDevice={selectedDevice}
+                      onDeviceClick={handleDeviceClick}
+                      onToggle={handleToggle}
+                      onEdit={handleEditDevice}
+                      onDelete={handleDeleteDevice}
+                      getDeviceColor={getDeviceColor}
+                      getDeviceStatusColor={getDeviceStatusColor}
+                      isCompact={selectedDevice && selectedDevice.type !== "camera"}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
+          </div>
 
           {selectedDevice && selectedDevice.type !== "camera" && (
             <div className="bg-white w-full md:w-1/2 lg:w-3/5 min-h-screen md:min-h-0">
@@ -523,16 +497,7 @@ export default function DeviceManagement({
                       <div className="flex items-center space-x-3">
                         <Switch
                           checked={selectedDevice.power_status}
-                          onCheckedChange={(checked) => {
-                            setDevices(
-                              devices.map((device) =>
-                                device.device_id === selectedDevice.device_id
-                                  ? { ...device, power_status: checked, status: checked ? "active" : "inactive" }
-                                  : device,
-                              ),
-                            );
-                            setSelectedDevice({ ...selectedDevice, power_status: checked });
-                          }}
+                          onCheckedChange={(checked) => handleToggle(checked, selectedDevice.device_id)}
                           className="data-[state=checked]:bg-green-500"
                         />
                         <DropdownMenu>
@@ -542,12 +507,12 @@ export default function DeviceManagement({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditDevice(selectedDevice.id)}>
+                            <DropdownMenuItem onClick={() => handleEditDevice(selectedDevice.device_id)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Chỉnh sửa
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleDeleteDevice(selectedDevice.id)}
+                              onClick={() => handleDeleteDevice(selectedDevice.device_id)}
                               className="text-red-600"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -557,18 +522,16 @@ export default function DeviceManagement({
                         </DropdownMenu>
                       </div>
                     </div>
-
                     <Separator className="mb-6" />
-
                     {enableRealTime ? (
                       <RealTimeDeviceControl
-                        key={selectedDevice.id}
+                        key={selectedDevice.device_id}
                         device={selectedDevice}
                         accountId={user?.id || user?.account_id}
                       />
                     ) : (
                       <DynamicDeviceDetail
-                        key={selectedDevice.id} // Force re-render when device changes
+                        key={selectedDevice.device_id} // Force re-render when device changes
                         device={selectedDevice}
                       />
                     )}

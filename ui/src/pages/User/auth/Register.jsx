@@ -62,15 +62,19 @@ export default function Register() {
 
             const response = await axiosPublic.post(`/auth/register`, payload)
 
-            if (response.status === 201) {
+            if (response.success === true) {
                 toast.success("Đăng ký thành công!")
 
                 navigate("/login")
             }
+            else {
+                // Xử lý lỗi nếu không phải 200 OK
+                const errorMessage = response?.message || "Đăng ký thất bại. Vui lòng thử lại."
+                toast.error(errorMessage)
+            }
         } catch (error) {
             // Xử lý lỗi
-            console.log("error", error)
-            const errorMessage = error.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
+            const errorMessage = error.response?.message || "Đăng ký thất bại. Vui lòng thử lại."
             toast.error(errorMessage)
         } finally {
             setLoading(false)

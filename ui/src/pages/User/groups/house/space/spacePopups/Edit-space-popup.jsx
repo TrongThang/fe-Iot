@@ -77,7 +77,7 @@ export default function EditSpacePopup({ open, onOpenChange, onSave, space }) {
                 icon_color: spaceData.icon.color,
             };
 
-            const response = await fetch(`http://localhost:7777/api/spaces/${space.space_id}`, {
+            const response = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/spaces/${space.space_id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

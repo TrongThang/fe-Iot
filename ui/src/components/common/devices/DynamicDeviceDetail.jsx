@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +26,7 @@ import DeviceSecurityActions from './DeviceSecurityActions';
 import DeviceShareModal from './DeviceShareModal';
 import SharedUsersList from './SharedUsersList';
 import DoorControl from './DoorControl';
-import LightControl from './LightControl';  
+import LightControl from './LightControl';
 import { useLEDSocket } from '@/hooks/useSocket';
 import { useAuth } from '@/contexts/AuthContext';
 import GasMonitoringDetail from './type/GasMonitoringDetail';
@@ -47,7 +49,6 @@ export default function DynamicDeviceDetail({ device }) {
         currentValues,
         loading,
         setCurrentValues,
-        getDeviceId
     } = useDeviceCapabilities(device);
 
     const {
@@ -59,21 +60,21 @@ export default function DynamicDeviceDetail({ device }) {
     } = useDeviceControls(device, currentValues, setCurrentValues);
 
     // Check if device is smoke/fire detector
-    const isFireDetector = device?.type?.toLowerCase().includes('smoke') || 
-                        device?.type?.toLowerCase().includes('fire') ||
-                        device?.template_type?.toLowerCase().includes('smoke') ||
-                        device?.template_type?.toLowerCase().includes('fire') ||
-                        capabilities?.capabilities?.includes('GAS_DETECTION') ||
-                        capabilities?.capabilities?.includes('SMOKE_DETECTION');
+    const isFireDetector = device?.type?.toLowerCase().includes('smoke') ||
+        device?.type?.toLowerCase().includes('fire') ||
+        device?.template_type?.toLowerCase().includes('smoke') ||
+        device?.template_type?.toLowerCase().includes('fire') ||
+        capabilities?.capabilities?.includes('GAS_DETECTION') ||
+        capabilities?.capabilities?.includes('SMOKE_DETECTION');
 
     // Check if device is gas monitoring sensor
     const isGasMonitoring = device?.type?.toLowerCase().includes('gas') ||
-                        device?.type?.toLowerCase().includes('sensor') ||
-                        device?.template_type?.toLowerCase().includes('gas') ||
-                        device?.template_type?.toLowerCase().includes('monitoring') ||
-                        device?.template_type?.toLowerCase().includes('temperature') ||
-                        capabilities?.capabilities?.includes('GAS_MONITORING') ||
-                        capabilities?.capabilities?.includes('TEMPERATURE_MONITORING');
+        device?.type?.toLowerCase().includes('sensor') ||
+        device?.template_type?.toLowerCase().includes('gas') ||
+        device?.template_type?.toLowerCase().includes('monitoring') ||
+        device?.template_type?.toLowerCase().includes('temperature') ||
+        capabilities?.capabilities?.includes('GAS_MONITORING') ||
+        capabilities?.capabilities?.includes('TEMPERATURE_MONITORING');
 
     // Fire Alert Socket - only for fire/smoke detectors with valid data
     const canConnectFireSocket = isFireDetector && device && device.serial_number && accountId;
@@ -96,18 +97,18 @@ export default function DynamicDeviceDetail({ device }) {
     });
 
     // LED Socket hook để lấy LED modes từ socket - only with valid data
-    const canConnectLEDSocket = device?.serial_number && accountId && 
-                               (deviceTypeHelpers.isLEDDevice(device) ||
-                                capabilities?.capabilities?.includes('LIGHT_CONTROL'));
-    const { 
-        ledCapabilities, 
+    const canConnectLEDSocket = device?.serial_number && accountId &&
+        (deviceTypeHelpers.isLEDDevice(device) ||
+            capabilities?.capabilities?.includes('LIGHT_CONTROL'));
+    const {
+        ledCapabilities,
         isConnected: isLEDConnected,
         applyPreset: socketApplyPreset,
-        setEffect: socketSetEffect 
+        setEffect: socketSetEffect
     } = useLEDSocket(
-        canConnectLEDSocket ? device?.serial_number : null, 
-        canConnectLEDSocket ? accountId : null, 
-        { 
+        canConnectLEDSocket ? device?.serial_number : null,
+        canConnectLEDSocket ? accountId : null,
+        {
             autoConnect: canConnectLEDSocket
         }
     );
@@ -124,13 +125,13 @@ export default function DynamicDeviceDetail({ device }) {
                 user: selectedUser,
                 permission: permissionLevel
             });
-            
+
             // Refresh shared users list to potentially show pending requests
             setRefreshSharedUsers(prev => prev + 1);
-            
+
             // Show success message (you can implement toast notification here)
             console.log(`✅ Yêu cầu chia sẻ quyền ${permissionLevel} đã được gửi đến ${selectedUser.name}`);
-            
+
             return { success: true };
         } catch (error) {
             console.error('❌ Failed to handle share device callback:', error);
@@ -142,10 +143,10 @@ export default function DynamicDeviceDetail({ device }) {
     const handleRemoveSharedUser = async (deviceId, userId) => {
         try {
             console.log(`🗑️ Removing user ${userId} from device ${deviceId}`);
-            
+
             // Mock API call - replace with real implementation
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
+
             console.log('✅ User removed successfully');
             setRefreshSharedUsers(prev => prev + 1);
             return { success: true };
@@ -181,7 +182,7 @@ export default function DynamicDeviceDetail({ device }) {
     // Render specialized device controls
     const renderSpecializedControl = () => {
         // Door Control    
-        
+
         if (deviceTypeHelpers.isDoorDevice(device, capabilities)) {
             return (
                 <DoorControl
@@ -208,7 +209,7 @@ export default function DynamicDeviceDetail({ device }) {
 
         // Light Control
         if (deviceTypeHelpers.isLightDevice(device, capabilities)) {
-            
+
 
             return (
                 <LightControl
@@ -220,7 +221,7 @@ export default function DynamicDeviceDetail({ device }) {
                     ledModes={ledModes}
                     onToggle={async (on) => {
                         try {
-                            await handlePowerToggle(on);
+                            handlePowerToggle(on);
                         } catch (error) {
                             console.error('Failed to toggle light:', error);
                         }
@@ -280,11 +281,6 @@ export default function DynamicDeviceDetail({ device }) {
 
     return (
         <div className="space-y-6">
-            {/* 1. Bảo mật thiết bị */}
-            <DeviceSecuritySection device={device} />
-
-            {/* 2. Chia sẻ thiết bị */}
-            <DeviceShareSection device={device} />
 
             {/* Quick Alert Mute - Show when there's an active fire alert */}
             {fireAlert && (
@@ -316,7 +312,7 @@ export default function DynamicDeviceDetail({ device }) {
                 />
             ) : (
                 /* Status Display for non-fire detectors */
-                <StatusDisplay 
+                <StatusDisplay
                     device={device}
                     capabilities={capabilities}
                     currentValues={currentValues}
@@ -351,13 +347,13 @@ export default function DynamicDeviceDetail({ device }) {
             )}
 
             {/* Stats Grid */}
-            <StatsGrid 
+            <StatsGrid
                 capabilities={capabilities}
                 currentValues={currentValues}
             />
 
             {/* Device Security Actions */}
-            <DeviceSecurityActions 
+            <DeviceSecurityActions
                 device={device}
                 onSecurityUpdate={handleSecurityUpdate}
             />
@@ -375,7 +371,7 @@ export default function DynamicDeviceDetail({ device }) {
                         <p className="text-sm text-slate-600">
                             Chia sẻ thiết bị với người dùng khác để họ có thể xem hoặc điều khiển thiết bị.
                         </p>
-                        <DeviceShareModal 
+                        <DeviceShareModal
                             device={device}
                             onShareDevice={handleShareDevice}
                         />
@@ -384,14 +380,14 @@ export default function DynamicDeviceDetail({ device }) {
             </Card>
 
             {/* Shared Users List */}
-            <SharedUsersList 
+            <SharedUsersList
                 device={device}
                 onRemoveSharedUser={handleRemoveSharedUser}
                 refreshSharedUsers={refreshSharedUsers}
             />
 
             {/* Capabilities Info */}
-            <DeviceCapabilitiesInfo 
+            <DeviceCapabilitiesInfo
                 device={device}
                 capabilities={capabilities}
             />
@@ -399,15 +395,15 @@ export default function DynamicDeviceDetail({ device }) {
             {/* Fire Alert Debug Section - Only show for fire detectors */}
             {isFireDetector && (
                 <Card>
-                    <CardContent className="p-6">
+                    <CardContent className="p-6 ">
                         <h3 className="text-lg font-semibold mb-4 flex items-center">
                             <Settings className="w-5 h-5 mr-2" />
                             Fire Alert Debug
                         </h3>
-                        
+
                         <div className="space-y-4">
                             {/* Connection Status */}
-                            <div className="p-3 bg-gray-50 rounded-lg">
+                            <div className="p-3 bg-gray-50 rounded-lg ">
                                 <div className="text-sm">
                                     <div>Socket Connected: {fireSocketConnected ? '✅' : '❌'}</div>
                                     <div>Device Connected: {fireDeviceConnected ? '✅' : '❌'}</div>
@@ -416,8 +412,8 @@ export default function DynamicDeviceDetail({ device }) {
                                 </div>
                                 {fireSensorData && (
                                     <div className="mt-2 text-xs text-gray-600">
-                                        Gas: {fireSensorData.gas || fireSensorData.ppm || 0} PPM | 
-                                        Temp: {fireSensorData.temp || 0}°C | 
+                                        Gas: {fireSensorData.gas || fireSensorData.ppm || 0} PPM |
+                                        Temp: {fireSensorData.temp || 0}°C |
                                         Hum: {fireSensorData.hum || 0}%
                                     </div>
                                 )}

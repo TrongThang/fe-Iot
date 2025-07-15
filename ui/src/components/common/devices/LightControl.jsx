@@ -4,8 +4,8 @@ import { Card, CardContent } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Slider } from '../../ui/slider';
 import { Switch } from '../../ui/switch';
-import { 
-    Lightbulb, 
+import {
+    Lightbulb,
     Palette,
     Settings,
     Music,
@@ -22,22 +22,22 @@ import {
     Sparkles
 } from 'lucide-react';
 
-const LightControl = ({ 
+const LightControl = ({
     isOn = false,
     brightness = 75,
     color = "#ffffff",
     colorMode = "manual",
     serialNumber = null,
     ledModes = {}, // Danh sách LED modes nhận từ socket
-    onToggle = () => {},
-    onBrightnessChange = () => {},
-    onColorChange = () => {},
-    onColorModeChange = () => {},
-    disabled = false 
+    onToggle = () => { },
+    onBrightnessChange = () => { },
+    onColorChange = () => { },
+    onColorModeChange = () => { },
+    disabled = false
 }) => {
     const [selectedPreset, setSelectedPreset] = useState(colorMode);
     const [apiError, setApiError] = useState(null);
-    
+
     // Sync selectedPreset với colorMode prop khi thay đổi từ bên ngoài
     useEffect(() => {
         setSelectedPreset(colorMode);
@@ -116,13 +116,13 @@ const LightControl = ({
         });
 
         const fallback = getFallbackPresets();
-        
+
         // Nếu có modes từ socket, sử dụng chúng
         if (ledModes && Object.keys(ledModes).length > 0) {
             const socketModes = {
                 manual: fallback.manual // Luôn có manual mode
             };
-            
+
             // Thêm modes từ socket với icons
             Object.entries(ledModes).forEach(([key, mode]) => {
                 socketModes[key] = {
@@ -130,11 +130,11 @@ const LightControl = ({
                     icon: getPresetIcon(key)
                 };
             });
-            
+
             console.log(`[LightControl] ✅ Using ${Object.keys(ledModes).length} LED modes from socket:`, socketModes);
             return socketModes;
         }
-        
+
         // Fallback khi không có socket modes
         console.log('[LightControl] ⚠️ Using fallback LED presets (no socket modes)');
         return fallback;
@@ -163,10 +163,10 @@ const LightControl = ({
     const handlePresetChange = async (presetKey) => {
         console.log(`🎨 LightControl: Preset change to ${presetKey}`);
         setSelectedPreset(presetKey);
-        
+
         // Color mode chỉ để hiển thị UI, KHÔNG gửi lên API
         onColorModeChange(presetKey);
-        
+
         if (presetKey === 'manual') {
             // Manual mode - chỉ update UI
             if (colorPresets[presetKey]?.color !== color) {
@@ -174,7 +174,7 @@ const LightControl = ({
             }
             return;
         }
-        
+
         // Apply preset - chỉ update local UI, socket sẽ handle preset application
         const preset = colorPresets[presetKey];
         if (preset) {
@@ -187,7 +187,7 @@ const LightControl = ({
                 onBrightnessChange(preset.brightness);
             }
         }
-        
+
         console.log(`✅ LED preset "${presetKey}" applied locally (socket will handle device communication)`);
     };
 
@@ -211,7 +211,7 @@ const LightControl = ({
 
     // Convert hex to hue for color picker
     const hexToHue = (hex) => {
-        const r = parseInt(hex.slice(1, 3), 16) / 255;
+        const r = parseInt(hex.slice(1, 3), 16) / 25
         const g = parseInt(hex.slice(3, 5), 16) / 255;
         const b = parseInt(hex.slice(5, 7), 16) / 255;
 
@@ -273,22 +273,20 @@ const LightControl = ({
                         <div className="relative w-full h-32 flex items-center justify-center mb-6">
                             <div className="relative">
                                 {/* Light Bulb */}
-                                <div 
-                                    className={`w-16 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${
-                                        isOn ? 'shadow-2xl scale-110' : 'shadow-md'
-                                    }`}
+                                <div
+                                    className={`w-16 h-20 rounded-full flex items-center justify-center transition-all duration-300 ${isOn ? 'shadow-2xl scale-110' : 'shadow-md'
+                                        }`}
                                     style={{
                                         backgroundColor: isOn ? currentColor : '#f1f5f9',
-                                        boxShadow: isOn 
-                                            ? `0 0 30px ${currentColor}40, 0 0 60px ${currentColor}20` 
+                                        boxShadow: isOn
+                                            ? `0 0 30px ${currentColor}40, 0 0 60px ${currentColor}20`
                                             : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                                         opacity: isOn ? (brightness / 100) * 0.9 + 0.1 : 0.5
                                     }}
                                 >
-                                    <Lightbulb 
-                                        className={`w-8 h-8 transition-all duration-300 ${
-                                            isOn ? 'text-white drop-shadow-lg' : 'text-slate-400'
-                                        }`}
+                                    <Lightbulb
+                                        className={`w-8 h-8 transition-all duration-300 ${isOn ? 'text-white drop-shadow-lg' : 'text-slate-400'
+                                            }`}
                                     />
                                 </div>
 
@@ -337,7 +335,7 @@ const LightControl = ({
                                 </p>
                             </div>
                         </div>
-                        
+
                         <Switch
                             checked={isOn}
                             onCheckedChange={handleToggle}
@@ -374,25 +372,24 @@ const LightControl = ({
                                     <span className="text-sm font-medium">Chế độ LED</span>
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-2">
                                 {Object.keys(colorPresets).length > 0 ? (
                                     Object.entries(colorPresets).map(([key, preset]) => {
                                         const IconComponent = preset.icon;
                                         const isSelected = selectedPreset === key;
-                                        
+
                                         return (
                                             <Button
                                                 key={key}
                                                 variant={isSelected ? "default" : "outline"}
                                                 onClick={() => handlePresetChange(key)}
                                                 disabled={disabled}
-                                                className={`h-16 flex-col space-y-1 relative overflow-hidden ${
-                                                    isSelected ? 'ring-2 ring-blue-500' : ''
-                                                }`}
+                                                className={`h-16 flex-col space-y-1 relative overflow-hidden ${isSelected ? 'ring-2 ring-blue-500' : ''
+                                                    }`}
                                                 title={preset.description}
                                             >
-                                                <div 
+                                                <div
                                                     className="absolute inset-0 opacity-20"
                                                     style={{ backgroundColor: preset.color }}
                                                 />
@@ -470,7 +467,7 @@ const LightControl = ({
                             {/* Quick Color Buttons */}
                             <div className="grid grid-cols-6 gap-2">
                                 {[
-                                    '#FF0000', '#FF8000', '#FFFF00', 
+                                    '#FF0000', '#FF8000', '#FFFF00',
                                     '#00FF00', '#00FFFF', '#0000FF',
                                     '#8000FF', '#FF00FF', '#FFFFFF',
                                     '#FFB366', '#87CEEB', '#DDA0DD'
@@ -479,7 +476,7 @@ const LightControl = ({
                                         key={quickColor}
                                         variant="outline"
                                         className="h-8 w-full p-0 border-2"
-                                        style={{ 
+                                        style={{
                                             backgroundColor: quickColor,
                                             borderColor: color === quickColor ? '#3b82f6' : '#e2e8f0'
                                         }}
@@ -507,7 +504,7 @@ const LightControl = ({
                                 </span>
                             </div>
                         </div>
-                        
+
                         {/* Debug info (remove in production) */}
                         {process.env.NODE_ENV === 'development' && serialNumber && (
                             <div className="mt-2 text-xs text-slate-400">

@@ -1,14 +1,12 @@
-import { useEffect, useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     AlertCircle,
     CheckCircle,
@@ -24,19 +22,11 @@ import {
     Settings,
     FileText,
     UserCheck,
-    Loader,
     Loader2,
     X,
-} from "lucide-react"
-import axiosPublic from "@/apis/clients/public.client"
-import Swal from "sweetalert2"
-import { toast } from "sonner"
-
-const mockStaff = [
-    { id: 201, name: "Nguyễn Văn A", email: "nguyen.a@company.com" },
-    { id: 202, name: "Lê Văn C", email: "le.c@company.com" },
-    { id: 203, name: "Phạm Thị D", email: "pham.d@company.com" },
-]
+} from "lucide-react";
+import { toast } from "sonner";
+import axiosPrivate from "@/apis/clients/private.client";
 
 const statusConfig = {
     rejected: {
@@ -62,120 +52,120 @@ const statusConfig = {
 };
 
 const priorityConfig = {
-    1: {
-        label: "Cao",
-        className: "bg-red-200 text-red-900 border-red-300",
-    },
-    2: {
-        label: "Trung bình",
-        className: "bg-orange-200 text-orange-900 border-orange-300",
-    },
-    3: {
-        label: "Thấp",
-        className: "bg-blue-200 text-blue-900 border-blue-300",
-    },
+    1: { label: "Cao", className: "bg-red-200 text-red-900 border-red-300" },
+    2: { label: "Trung bình", className: "bg-orange-200 text-orange-900 border-orange-300" },
+    3: { label: "Thấp", className: "bg-blue-200 text-blue-900 border-blue-300" },
 };
 
 export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTicket, fetchTicket }) {
-    const [ticket, setTicket] = useState(selectedTicket)
-    const [isEditing, setIsEditing] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const [ticket, setTicket] = useState(selectedTicket);
+    const [isEditing, setIsEditing] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [editForm, setEditForm] = useState({
         status: ticket.status,
         priority: ticket.priority,
         assigned_to: ticket.assigned_to,
         resolve_solution: ticket.resolve_solution || "",
-    })
+    });
 
     const fetchTicketById = async () => {
         try {
-            const response = await axiosPublic.get(`/tickets/detail/${ticket?.ticket_id}`)
+            const response = await axiosPrivate.get(`/tickets/detail/${ticket?.ticket_id}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("employeeToken")}`,
+                },
+            });
             if (response?.status_code === 200) {
-                setTicket(response?.data?.data[0])
+                setTicket(response?.data?.data[0]);
             }
         } catch (error) {
-            console.error("Error fetching tickets:", error)
-            throw (error)
+            console.error("Error fetching tickets:", error);
+            throw error;
         }
-    }
+    };
 
     useEffect(() => {
         fetchTicketById();
-    }, [selectedTicket])
-
+    }, [selectedTicket]);
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString("vi-VN")
-    }
+        return new Date(dateString).toLocaleString("vi-VN");
+    };
 
     const formatDateShort = (dateString) => {
-        return new Date(dateString).toLocaleDateString("vi-VN")
-    }
+        return new Date(dateString).toLocaleDateString("vi-VN");
+    };
 
     const getStatusBadge = (status) => {
-        const config = statusConfig[status]
-        const Icon = config?.icon
+        const config = statusConfig[status] || statusConfig.pending;
+        const Icon = config?.icon;
         return (
             <Badge className={`flex items-center gap-1 ${config?.className}`}>
                 <Icon className="w-3 h-3" />
                 {config?.label}
             </Badge>
-        )
-    }
+        );
+    };
 
     const getPriorityBadge = (priority) => {
-        const config = priorityConfig[priority]
-        return <Badge className={config?.className}>{config?.label}</Badge>
-    }
+        const config = priorityConfig[priority] || priorityConfig[1];
+        return <Badge className={config?.className}>{config?.label}</Badge>;
+    };
 
     const handleStatusChange = async (status) => {
-        setLoading(true)
-        try{
+        setLoading(true);
+        try {
             const updatedForm = { ...editForm, status };
-            console.log("updateform", updatedForm)
-            const response = await axiosPublic.put(`/tickets/${ticket?.ticket_id}/status`, updatedForm)
-            console.log("res", response)
+            const response = await axiosPrivate.put(`tickets/${ticket?.ticket_id}/status`, updatedForm, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("employeeToken")}`,
+                },
+            });
+            console.log("res", response);
 
-            if(response?.status_code === 200) {
-                toast.success("Thành công", {description: "Cập nhật trạng thái thành công"})
-                setIsEditing(false)
+            if (response?.status_code === 200) {
+                toast.success("Thành công", { description: "Cập nhật trạng thái thành công" });
+                setIsEditing(false);
                 fetchTicket();
                 fetchTicketById();
-                setEditForm((prev) => ({ ...prev, status: response.data.status}))
+                setEditForm((prev) => ({ ...prev, status: response.data.status }));
+            } else {
+                toast.error("Cập nhật thất bại", { description: response?.message });
             }
-            else{
-                toast.error("Cập nhật thất bại", {description: response?.message})
-            }
-        }catch (error) {
-            console.log("Error update status ticket:", error)
-            throw(error)
-        }finally {
-            setLoading(false)
+        } catch (error) {
+            console.log("Error update status ticket:", error);
+            throw error;
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
     const handleConfirm = async (ticketId) => {
-        setLoading(true)
-        try{
-            const response = await axiosPublic.put(`/tickets/${ticket?.ticket_id}/confirm`)
-            if(response.status_code === 200) {
-                toast.success("Thành công", {description: "Duyệt yêu cầu thành công"})
-                setIsEditing(false)
-                await fetchTicket()
-                await fetchTicketById()
-                setEditForm((prev) => ({ ...prev, status: response.data.status }))
+        setLoading(true);
+        try {
+            const response = await axiosPrivate.put(`/tickets/${ticketId}/confirm`, {}, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("employeeToken")}`,
+                },
+            });
+            console.log("res", response);
+            if (response.status_code === 200) {
+                toast.success("Thành công", { description: "Duyệt yêu cầu thành công" });
+                setIsEditing(false);
+                await fetchTicket();
+                await fetchTicketById();
+                setEditForm((prev) => ({ ...prev, status: response.data.status }));
+            } else {
+                toast.error("Lỗi", { description: `${response.message}` });
             }
-            else{
-                toast.error("Lỗi", {description: `${response.message}`})
-            }
-        }catch (error) {
-            console.log("Error update status ticket:", error)
-            toast.error("Lỗi khi duyệt yêu cầu. Vui lòng thử lại", {description: `${error.message}`})
-            throw(error)
-        }finally {
-            setLoading(false)
+        } catch (error) {
+            console.log("Error update status ticket:", error);
+            toast.error("Lỗi khi duyệt yêu cầu. Vui lòng thử lại", { description: `${error.message}` });
+            throw error;
+        } finally {
+            setLoading(false);
         }
-    }
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -201,42 +191,41 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            {ticket?.status === "pending" 
-                            ? (
+                            {ticket?.status === "pending" ? (
                                 <Button
                                     variant="default"
                                     size="sm"
                                     onClick={() => handleConfirm(ticket.ticket_id)}
-                                    disable={loading}
-                                    >
+                                    disabled={loading}
+                                >
                                     {loading ? (
                                         <span className="flex items-center justify-center">
                                             <Loader2 size={18} className="mr-2 animate-spin" />
                                         </span>
-                                    ) : ("Duyệt")}
+                                    ) : (
+                                        "Duyệt"
+                                    )}
                                 </Button>
-                            ) 
-                            : ticket?.status === "in_progress" ? (
+                            ) : ticket?.status === "in_progress" ? (
                                 <>
                                     <Button
-                                    variant="success"
-                                    size="sm"
-                                    onClick={() => {handleStatusChange("resolved")}}
+                                        variant="success"
+                                        size="sm"
+                                        onClick={() => handleStatusChange("resolved")}
                                     >
-                                    Chấp nhận
+                                        Chấp nhận
                                     </Button>
                                     <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => {handleStatusChange("rejected")}}
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => handleStatusChange("rejected")}
                                     >
-                                    Từ chối
+                                        Từ chối
                                     </Button>
                                 </>
                             ) : (
                                 <X onClick={() => onOpenChange(false)} className="cursor-pointer" />
                             )}
-                            
                         </div>
                     </div>
                 </DialogHeader>
@@ -264,7 +253,7 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                                             </Avatar>
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium text-sm truncate">{ticket?.user_name}</p>
-                                                <p className="text-xs text-muted-foreground truncate">{ticket?.user_department}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{ticket?.user_department || "Chưa có"}</p>
                                             </div>
                                         </div>
                                         <div className="space-y-2 text-xs">
@@ -306,11 +295,15 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                                             </div>
                                             <div className="flex items-start gap-2">
                                                 <MapPin className="w-3 h-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                                <span className="flex-1">{ticket?.space_name} - {ticket?.house_name} - {ticket?.group_name}</span>
+                                                <span className="flex-1">
+                                                    Nhóm: {ticket?.group_name || "Chưa có nhóm"}
+                                                    <br /> Nhà: {ticket?.house_name}
+                                                    <br /> Không gian: {ticket?.space_name}
+                                                </span>
                                             </div>
                                             <div>
                                                 <span className="text-muted-foreground">Mua:</span>
-                                                <span className="ml-2">{formatDateShort(ticket?.device_info?.purchase_date)}</span>
+                                                <span className="ml-2">{formatDateShort(ticket?.created_at)}</span>
                                             </div>
                                         </div>
                                     </CardContent>
@@ -325,25 +318,43 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent>
-                                            <div className="space-y-3">
-                                                <div className="space-y-2 text-xs">
-                                                    <div className="flex items-center gap-2">
-                                                        <UserCheck className="w-3 h-3 text-muted-foreground" />
-                                                        <span className="text-muted-foreground">Người xử lý:</span>
-                                                    </div>
-                                                    <p className="text-sm font-medium ml-5">{ticket?.assigned_name || "Chưa phân công"}</p>
-                                                    {ticket?.resolved_at && (
-                                                        <>
-                                                            <div className="flex items-center gap-2 mt-3">
-                                                                <CheckCircle className="w-3 h-3 text-muted-foreground" />
-                                                                <span className="text-muted-foreground">Giải quyết:</span>
-                                                            </div>
-                                                            <p className="text-sm ml-5">{formatDate(ticket?.resolved_at)}</p>
-                                                        </>
-                                                    )}
+                                        <div className="space-y-3">
+                                            <div className="space-y-2 text-xs">
+                                                <div className="flex items-center gap-2">
+                                                    <UserCheck className="w-3 h-3 text-muted-foreground" />
+                                                    <span className="text-muted-foreground">Người xử lý:</span>
                                                 </div>
-                                                <Separator />
+                                                <p className="text-sm font-medium ml-5">{ticket?.assigned_name || "Chưa phân công"}</p>
+                                                {ticket?.resolved_at ? (
+                                                    <>
+                                                        <div className="flex items-center gap-2 mt-3">
+                                                            <CheckCircle className="w-3 h-3 text-muted-foreground" />
+                                                            <span className="text-muted-foreground">Giải quyết:</span>
+                                                        </div>
+                                                        <p className="text-sm ml-5">{formatDate(ticket?.resolved_at)}</p>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-sm ml-5 text-muted-foreground">Chưa giải quyết</p>
+                                                )}
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <Mail className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                                    <span className="truncate">{ticket?.assigned_email || "Chưa có"}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Phone className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                                    <span>{ticket?.assigned_phone || "Chưa có"}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Hash className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                                    <span>ID: {ticket?.assigned_to || "Chưa có"}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <Calendar className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                                    <span>Cập nhật: {formatDateShort(ticket?.updated_at)}</span>
+                                                </div>
                                             </div>
+                                            <Separator />
+                                        </div>
                                     </CardContent>
                                 </Card>
                             </div>
@@ -363,6 +374,7 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                                     <div className="bg-muted/50 rounded-lg p-4">
                                         <p className="text-sm leading-relaxed">{ticket?.description}</p>
                                     </div>
+                                    <p className="text-sm text-muted-foreground">Loại: {ticket?.ticket_type_name || "Chưa xác định"}</p>
                                 </div>
 
                                 {/* Solution */}
@@ -374,7 +386,7 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                                         </h3>
                                         <Textarea
                                             placeholder="Mô tả giải pháp đã áp dụng..."
-                                            value={editForm?.resolve_solution}
+                                            value={editForm?.resolve_solution || "Chưa có giải pháp"}
                                             onChange={(e) => setEditForm((prev) => ({ ...prev, resolve_solution: e.target.value }))}
                                             rows={4}
                                             className="resize-none"
@@ -383,14 +395,14 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                                     </div>
                                 )}
                                 {/* Evidence */}
-                                {ticket?.evidence && ticket?.evidence?.length > 0 && (
+                                {ticket?.evidence && (ticket?.evidence?.images?.length > 0 || ticket?.evidence?.logs?.length > 0) && (
                                     <div className="space-y-3">
                                         <h3 className="font-medium flex items-center gap-2">
                                             <Camera className="w-4 h-4" />
-                                            Hình ảnh minh chứng ({ticket?.evidence?.length})
+                                            Hình ảnh minh chứng ({ticket?.evidence?.images?.length + ticket?.evidence?.logs?.length})
                                         </h3>
                                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-                                            {ticket?.evidence?.map((item, index) => (
+                                            {ticket?.evidence?.images?.map((item, index) => (
                                                 <div key={index} className="group relative">
                                                     <img
                                                         src={item?.url || "/placeholder.svg"}
@@ -398,6 +410,14 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                                                         className="w-full h-24 object-cover rounded-lg border group-hover:opacity-80 transition-opacity cursor-pointer"
                                                     />
                                                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 rounded-lg transition-colors" />
+                                                    <p className="text-xs text-muted-foreground mt-1 truncate">{item.name}</p>
+                                                </div>
+                                            ))}
+                                            {ticket?.evidence?.logs?.map((item, index) => (
+                                                <div key={index} className="group relative">
+                                                    <div className="w-full h-24 bg-muted/50 rounded-lg border flex items-center justify-center">
+                                                        <FileText className="w-10 h-10 text-muted-foreground" />
+                                                    </div>
                                                     <p className="text-xs text-muted-foreground mt-1 truncate">{item.name}</p>
                                                 </div>
                                             ))}
@@ -410,5 +430,5 @@ export default function TicketDetailDialogAdmin({ open, onOpenChange, selectedTi
                 </div>
             </DialogContent>
         </Dialog>
-    )
+    );
 }

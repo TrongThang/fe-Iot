@@ -47,7 +47,7 @@ export default function AddSpacePopup({ open, onOpenChange, onSave, houseId }) {
                 icon_color: spaceData.icon.color,
             };
 
-            const response = await fetch("http://localhost:7777/api/spaces", {
+            const response = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/spaces", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -28,6 +28,7 @@ import SearchCustomerInfo from "@/pages/Admin/search/searchCustomerInfo";
 import DashboardAdmin from "@/pages/Admin/Dashboard/dashboard";
 import CustomerShare from "@/pages/Admin/customer_manager/customerShareList";
 import FCMTestPage from "@/pages/User/FCMTestPage";
+import LoginAdmin from "@/pages/Admin/auth/Login_admin";
 
 export const router = createBrowserRouter([
     {
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
     {
         path: '/login',
         element: <Login />
+    },
+    {
+        path: 'admin/login',
+        element: <LoginAdmin />
     },
     {
         path: '/register',
@@ -54,6 +59,7 @@ export const router = createBrowserRouter([
                 path: '',
                 element: <DashboardAdmin />
             },
+
             {
                 path: 'tickets',
                 element: <AdminTicketsDashboard />

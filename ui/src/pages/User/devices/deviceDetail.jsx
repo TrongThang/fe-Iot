@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
 import { Lightbulb, Flame, Thermometer, Palette, Zap, AlertTriangle, Droplets, Wind } from "lucide-react"
-import { useEffect } from "react"
 import RealtimeSensorDisplay from "@/components/common/devices/RealtimeSensorDisplay"
 
 // Light Detail Component
@@ -133,7 +132,7 @@ export function SmokeDetectorDetail({ device }) {
 			</Card>
 
 			{/* Real-time Sensor Display */}
-			<RealtimeSensorDisplay 
+			<RealtimeSensorDisplay
 				deviceSerial={device.serial_number || device.serialNumber}
 				deviceName={device.name || device.device_name}
 			/>
@@ -191,10 +190,10 @@ export function TemperatureDetail({ device }) {
 						<Badge
 							variant={tempStatus === "normal" ? "default" : "outline"}
 							className={`mt-2 ${tempStatus === "hot"
-									? "text-red-600 border-red-300"
-									: tempStatus === "cold"
-										? "text-blue-600 border-blue-300"
-										: ""
+								? "text-red-600 border-red-300"
+								: tempStatus === "cold"
+									? "text-blue-600 border-blue-300"
+									: ""
 								}`}
 						>
 							{tempStatus === "hot" ? "Nóng" : tempStatus === "cold" ? "Lạnh" : "Bình thường"}
@@ -209,10 +208,10 @@ export function TemperatureDetail({ device }) {
 					<CardContent className="p-4 text-center">
 						<Droplets
 							className={`w-8 h-8 mx-auto mb-2 ${humidityStatus === "high"
-									? "text-blue-600"
-									: humidityStatus === "low"
-										? "text-orange-500"
-										: "text-green-500"
+								? "text-blue-600"
+								: humidityStatus === "low"
+									? "text-orange-500"
+									: "text-green-500"
 								}`}
 						/>
 						<div className="text-lg font-semibold">{device.humidity}%</div>
@@ -220,10 +219,10 @@ export function TemperatureDetail({ device }) {
 						<Badge
 							variant="outline"
 							className={`mt-1 text-xs ${humidityStatus === "high"
-									? "text-blue-600 border-blue-300"
-									: humidityStatus === "low"
-										? "text-orange-600 border-orange-300"
-										: "text-green-600 border-green-300"
+								? "text-blue-600 border-blue-300"
+								: humidityStatus === "low"
+									? "text-orange-600 border-orange-300"
+									: "text-green-600 border-green-300"
 								}`}
 						>
 							{humidityStatus === "high" ? "Cao" : humidityStatus === "low" ? "Thấp" : "Tốt"}

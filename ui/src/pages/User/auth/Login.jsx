@@ -56,14 +56,12 @@ export default function Login() {
         const userAgent = navigator.userAgent;
         return `${userAgent.substring(0, 30)}`;
     };
-
     // Hàm xử lý đăng nhập
     const handleLogin = async (e) => {
         e.preventDefault()
         setLoading(true)
 
         try {
-
             const payload = {
                 username,
                 password,
@@ -76,23 +74,29 @@ export default function Login() {
             // Gửi yêu cầu đến API
             const response = await axiosPublic.post(`/auth/login`, payload)
 
+            if (response.code === "INVALID_CREDENTIALS") {
+                toast.error("Tên đăng nhập hoặc mật khẩu không đúng. Vui lòng thử lại.")
+                return
+            }
             // Xử lý phản hồi
-            const { accessToken, refreshToken, deviceUuid } = response.data;
+            const { accessToken, refreshToken, deviceUuid } = response;
+
             localStorage.setItem('authToken', accessToken);
-            if(rememberMe && refreshToken) {
+            if (rememberMe && refreshToken) {
                 localStorage.setItem('refreshToken', refreshToken)
             }
 
             await fetchUserInfo(accessToken)
-            setIsAuthenticated(true);
 
+
+            setIsAuthenticated(true);
             const deviceMap = JSON.parse(localStorage.getItem("deviceMap") || "{}");
             deviceMap[username] = deviceUuid;
             localStorage.setItem("deviceMap", JSON.stringify(deviceMap));
 
             // Điều hướng đến trang chính hoặc dashboard
             navigate("/")
-
+            window.location.reload();
             // Hiển thị thông báo thành công
             toast.success("Đăng nhập thành công!")
         } catch (error) {

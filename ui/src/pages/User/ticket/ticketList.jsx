@@ -39,7 +39,7 @@ export default function TicketList() {
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/tickets/user`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/tickets/user`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -63,7 +63,7 @@ export default function TicketList() {
   // Fetch ticket types
   const fetchTicketTypes = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/ticket-types`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/ticket-types`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -434,22 +434,6 @@ export default function TicketList() {
                     }}
                   >
                     Cũ nhất
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSortBy("priority");
-                      setSortOrder("asc");
-                    }}
-                  >
-                    Ưu tiên cao nhất
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSortBy("updated_at");
-                      setSortOrder("desc");
-                    }}
-                  >
-                    Cập nhật gần đây
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

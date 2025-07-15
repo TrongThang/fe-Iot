@@ -26,7 +26,7 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
     // Fetch all spaces for a house (used when spaceId is undefined)
     const fetchSpaces = async (currentHouseId) => {
         try {
-            const res = await fetch(`http://localhost:7777/api/spaces/house/${currentHouseId}`, {
+            const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/spaces/house/${currentHouseId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -51,7 +51,7 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
     // Fetch specific space details for spaceId (used when spaceId is defined)
     const fetchSpace = async (spaceId) => {
         try {
-            const res = await fetch(`http://localhost:7777/api/spaces/${spaceId}`, {
+            const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/spaces/${spaceId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -86,7 +86,7 @@ export default function DeviceConnectionDialog({ open, onOpenChange, onConnect, 
         setIsConnecting(true)
 
         try {
-            const res = await fetch("http://localhost:7777/api/devices/link", {
+            const res = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/devices/link", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
