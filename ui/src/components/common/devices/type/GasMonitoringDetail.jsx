@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Zap, Thermometer, Wind, Droplets, Settings, AlertTriangle } from "lucide-react";
+import { Zap, Thermometer, Wind, Droplets, Settings, AlertTriangle, Flame } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -9,18 +9,57 @@ import RealtimeSensorDisplay from "../RealtimeSensorDisplay";
 import { useSocketContext } from "@/contexts/SocketContext";
 import socketService from "@/lib/socket";
 
-export default function GasMonitoringDetail({ device }) {
+export default function GasMonitoringDetail({ device, sensorType = 'gas' }) {
+    // Dynamic labels based on sensor type - MUST BE FIRST
+    const labels = sensorType === 'smoke' ? {
+        title: 'Cảm biến báo khói & cháy',
+        gasLabel: 'Khói',
+        gasUnit: 'PPM',
+        statusPrefix: 'KHÓI'
+    } : {
+        title: 'Cảm biến môi trường',
+        gasLabel: 'Khí Gas',
+        gasUnit: 'PPM', 
+        statusPrefix: 'GAS'
+    };
+
+    console.log('🌬️ GasMonitoringDetail component rendered for device:', device?.name, {
+        deviceType: device?.type,
+        sensorType,
+        serialNumber: device?.serial_number,
+        deviceId: device?.id || device?.device_id,
+        thresholds: sensorType === 'smoke' ? 'Fire/Smoke Detection' : 'Gas/Environmental Monitoring',
+        expectedInterface: labels.title
+    });
+    
     const { isConnected, sendDeviceCommand } = useSocketContext();
     const [isMonitoring, setIsMonitoring] = useState(device.power_status || true);
-    const [gasThreshold, setGasThreshold] = useState(device.gas_threshold || 300);
-    const [sensitivity, setSensitivity] = useState(device.sensitivity || 50);
-    const [humidityThreshold, setHumidityThreshold] = useState(device.humidity_threshold || 80);
-    const [tempThreshold, setTempThreshold] = useState(device.temp_threshold || 35);
+    
+    // Dynamic thresholds based on sensor type
+    const defaultThresholds = sensorType === 'smoke' ? {
+        gas: 1000,  // PPM for smoke detectors (higher threshold)
+        ppm: 1000,  // Same as gas for smoke
+        temp: 45,   // Higher temp threshold for fire detection
+        humidity: 85,
+        sensitivity: 75
+    } : {
+        gas: 300,   // PPM for gas sensors (lower threshold)
+        ppm: 300,   
+        temp: 35,   // Normal room temp threshold
+        humidity: 80,
+        sensitivity: 50
+    };
+    
+    const [gasThreshold, setGasThreshold] = useState(device.gas_threshold || defaultThresholds.gas);
+    const [sensitivity, setSensitivity] = useState(device.sensitivity || defaultThresholds.sensitivity);
+    const [humidityThreshold, setHumidityThreshold] = useState(device.humidity_threshold || defaultThresholds.humidity);
+    const [tempThreshold, setTempThreshold] = useState(device.temp_threshold || defaultThresholds.temp);
     const [alarmEnabled, setAlarmEnabled] = useState(device.alarm_enabled || true);
 
     // Current sensor values (will be updated via real-time)
     const [currentValues, setCurrentValues] = useState({
         gas: device.gas || device.ppm || 0,
+        ppm: device.ppm || device.gas || 0, // For smoke detectors, ppm might be the main value
         temperature: device.temp || device.temperature || 25,
         humidity: device.humidity || device.hum || 45,
         smoke_level: device.smoke_level || 0
@@ -28,12 +67,44 @@ export default function GasMonitoringDetail({ device }) {
 
     const deviceSerial = device.serial_number || device.serialNumber;
 
-    // Status calculation
+    // Status calculation - dynamic based on sensor type
     const getGasStatus = (value) => {
-        if (value >= gasThreshold * 3) return { status: 'critical', color: 'red', text: 'CỰC NGUY HIỂM' };
-        if (value >= gasThreshold * 2) return { status: 'danger', color: 'orange', text: 'NGUY HIỂM' };
-        if (value >= gasThreshold) return { status: 'warning', color: 'yellow', text: 'CẢNH BÁO' };
-        return { status: 'safe', color: 'green', text: 'AN TOÀN' };
+        const thresholdMultipliers = sensorType === 'smoke' ? {
+            critical: 2,   // Smoke detection is more critical
+            danger: 1.5,
+            warning: 1
+        } : {
+            critical: 3,   // Gas detection has more gradual levels
+            danger: 2,
+            warning: 1
+        };
+        
+        if (value >= gasThreshold * thresholdMultipliers.critical) {
+            return { 
+                status: 'critical', 
+                color: 'red', 
+                text: sensorType === 'smoke' ? 'CHÁY!' : 'CỰC NGUY HIỂM' 
+            };
+        }
+        if (value >= gasThreshold * thresholdMultipliers.danger) {
+            return { 
+                status: 'danger', 
+                color: 'orange', 
+                text: sensorType === 'smoke' ? 'NGUY HIỂM CHÁY' : 'NGUY HIỂM' 
+            };
+        }
+        if (value >= gasThreshold * thresholdMultipliers.warning) {
+            return { 
+                status: 'warning', 
+                color: 'yellow', 
+                text: sensorType === 'smoke' ? 'PHÁT HIỆN KHÓI' : 'CẢNH BÁO GAS' 
+            };
+        }
+        return { 
+            status: 'safe', 
+            color: 'green', 
+            text: sensorType === 'smoke' ? 'SẠCH' : 'AN TOÀN' 
+        };
     };
 
     const getTempStatus = (value) => {
@@ -49,7 +120,17 @@ export default function GasMonitoringDetail({ device }) {
         return { status: 'normal', color: 'green', text: 'BÌNH THƯỜNG' };
     };
 
-    const gasStatus = getGasStatus(currentValues.gas);
+    // Calculate current statuses - use ppm for smoke detectors, gas for gas sensors
+    const gasValue = sensorType === 'smoke' ? (currentValues.ppm || currentValues.gas) : currentValues.gas;
+    const gasStatus = getGasStatus(gasValue);
+    
+    console.log('📊 Gas value calculation:', {
+        sensorType,
+        currentValues,
+        gasValue,
+        gasStatus,
+        threshold: gasThreshold
+    });
     const tempStatus = getTempStatus(currentValues.temperature);
     const humidityStatus = getHumidityStatus(currentValues.humidity);
 
@@ -117,23 +198,57 @@ export default function GasMonitoringDetail({ device }) {
                 )}>
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription className="font-medium">
-                        {gasStatus.status === 'critical' ? '🔥 KHẨN CẤP! Nồng độ khí gas cực kỳ nguy hiểm!' :
-                            gasStatus.status === 'danger' ? '⚠️ NGUY HIỂM! Nồng độ khí gas cao!' :
-                                gasStatus.status === 'warning' ? '⚠️ CẢNH BÁO! Phát hiện khí gas!' :
-                                    tempStatus.status === 'critical' ? '🌡️ KHẨN CẤP! Nhiệt độ quá cao!' : ''}
+                        {gasStatus.status === 'critical' ? 
+                            `🔥 KHẨN CẤP! ${labels.statusPrefix} cực kỳ nguy hiểm!` :
+                            gasStatus.status === 'danger' ? 
+                                `⚠️ NGUY HIỂM! ${labels.statusPrefix} cao!` :
+                                gasStatus.status === 'warning' ? 
+                                    `⚠️ CẢNH BÁO! Phát hiện ${labels.gasLabel.toLowerCase()}!` :
+                                    tempStatus.status === 'critical' ? 
+                                        '🌡️ KHẨN CẤP! Nhiệt độ quá cao!' : ''}
                     </AlertDescription>
                 </Alert>
             )}
 
+            {/* Connection Status Debug */}
+            <Card className={cn(
+                "border-2",
+                isConnected ? "border-green-200 bg-green-50" : "border-orange-200 bg-orange-50"
+            )}>
+                <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <div className={cn(
+                                "w-3 h-3 rounded-full",
+                                isConnected ? "bg-green-500 animate-pulse" : "bg-orange-500"
+                            )}></div>
+                            <div>
+                                <h3 className="font-medium text-slate-900">Kết nối Real-time</h3>
+                                <p className="text-sm text-slate-600">Serial: {deviceSerial || 'N/A'}</p>
+                                <p className="text-xs text-slate-500">Type: {device?.type || 'N/A'}</p>
+                                <p className="text-xs text-slate-500">Sensor: {labels.title}</p>
+                            </div>
+                        </div>
+                        <Badge className={cn(
+                            isConnected 
+                                ? "bg-green-100 text-green-700 border-green-200"
+                                : "bg-orange-100 text-orange-700 border-orange-200"
+                        )}>
+                            {isConnected ? 'Đang kết nối' : 'Mất kết nối'}
+                        </Badge>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* Real-time Sensor Display */}
             <RealtimeSensorDisplay
                 deviceSerial={deviceSerial}
-                deviceName={device.name || device.device_name || 'Gas Monitoring Device'}
+                deviceName={device.name || device.device_name || labels.title}
             />
 
             {/* Current Readings */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Gas Level */}
+                {/* Gas/Smoke Level */}
                 <Card className={cn(
                     "border-2",
                     gasStatus.color === 'red' ? "border-red-500 bg-red-50" :
@@ -142,9 +257,13 @@ export default function GasMonitoringDetail({ device }) {
                                 "border-green-500 bg-green-50"
                 )}>
                     <CardContent className="p-4 text-center">
-                        <Zap className={`w-8 h-8 mx-auto mb-2 text-${gasStatus.color}-600`} />
-                        <div className="text-2xl font-bold">{currentValues.gas}</div>
-                        <div className="text-sm text-gray-600">PPM</div>
+                        {sensorType === 'smoke' ? (
+                            <Flame className={`w-8 h-8 mx-auto mb-2 text-${gasStatus.color}-600`} />
+                        ) : (
+                            <Zap className={`w-8 h-8 mx-auto mb-2 text-${gasStatus.color}-600`} />
+                        )}
+                        <div className="text-2xl font-bold">{gasValue}</div>
+                        <div className="text-sm text-gray-600">{labels.gasUnit}</div>
                         <Badge
                             variant={gasStatus.status === 'safe' ? 'default' : 'destructive'}
                             className="mt-1 text-xs"

@@ -19,6 +19,12 @@ import {
   WifiOff,
   AlertTriangle,
   Unlink,
+  DoorOpen,
+  Droplets,
+  Shield,
+  Settings,
+  Zap,
+  Wind,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -69,13 +75,213 @@ export default function DeviceManagement({
 
   const navigate = useNavigate();
 
+  // Device type mapping based on categories data from database
+  const getDeviceTypeFromCategory = (deviceTypeId, deviceTypeName, deviceTypeParentName, capabilities) => {
+    // Categories mapping based on database structure
+    const categoryMapping = {
+      // Electronics & Camera
+      1: 'camera', // electronics
+      18: 'camera', // camera-an-ninh
+      
+      // LED categories
+      9: 'light', // led
+      11: 'led-rgb', // led-rgb
+      12: 'led-white', // led-white  
+      13: 'led-single', // led-single
+      
+      // Sensor categories
+      14: 'sensor', // sensor
+      15: 'smoke', // sensor-smoke-fire
+      25: 'sensor', // sensors
+      
+      // Door categories
+      19: 'door', // cua-thong-minh
+      20: 'door-roller', // cua-cuon
+      21: 'door-sliding', // cua-truot
+      22: 'door-swing', // cua-canh
+      
+      // Hub categories
+      23: 'hub', // hub
+      24: 'hub-door', // hub-cua
+      
+      // Controllers
+      26: 'controller', // thiet-bi-dieu-khien
+      
+      // Security  
+      27: 'security', // thiet-bi-an-ninh
+    };
+
+    // Get base type from category mapping
+    let baseType = categoryMapping[deviceTypeId] || 'device';
+    
+    // Enhanced type detection based on parent categories and names
+    if (!baseType || baseType === 'device') {
+      // Fallback to name-based detection
+      const lowerName = (deviceTypeName || deviceTypeParentName || '').toLowerCase();
+      console.log('🔄 Fallback name-based detection for:', {
+        deviceTypeId,
+        deviceTypeName,
+        deviceTypeParentName,
+        lowerName,
+        currentBaseType: baseType
+      });
+      
+      if (lowerName.includes('cảm biến')) {
+        if (lowerName.includes('khói') || lowerName.includes('cháy') || lowerName.includes('báo cháy')) {
+          baseType = 'smoke';
+        } else if (lowerName.includes('nhiệt độ')) {
+          baseType = 'temperature';
+        } else if (lowerName.includes('môi trường') || lowerName.includes('gas') || lowerName.includes('khí') || 
+                   lowerName.includes('chất lượng không khí') || lowerName.includes('air quality')) {
+          baseType = 'gas-sensor';
+        } else {
+          baseType = 'sensor';
+        }
+      } else if (lowerName.includes('camera')) {
+        baseType = 'camera';
+      } else if (lowerName.includes('đèn') || lowerName.includes('led')) {
+        if (lowerName.includes('rgb')) {
+          baseType = 'led-rgb';
+        } else if (lowerName.includes('white') || lowerName.includes('trắng')) {
+          baseType = 'led-white';
+        } else {
+          baseType = 'light';
+        }
+      } else if (lowerName.includes('cửa')) {
+        if (lowerName.includes('cuốn')) {
+          baseType = 'door-roller';
+        } else if (lowerName.includes('trượt')) {
+          baseType = 'door-sliding';
+        } else if (lowerName.includes('cánh')) {
+          baseType = 'door-swing';
+        } else {
+          baseType = 'door';
+        }
+      } else if (lowerName.includes('hub')) {
+        baseType = 'hub';
+      } else if (lowerName.includes('bơm')) {
+        baseType = 'pump';
+      }
+    }
+
+    // Merge capabilities to enhance device type
+    if (capabilities) {
+      try {
+        const caps = typeof capabilities === 'string' ? JSON.parse(capabilities) : capabilities;
+        
+        // Add capability-based type enhancement
+        if (caps.pump_control || caps.water_flow) {
+          baseType = baseType === 'device' ? 'pump' : baseType + '-pump';
+        }
+        if (caps.rgb_control) {
+          baseType = baseType.includes('led') ? 'led-rgb' : baseType;
+        }
+        if (caps.temperature_sensor) {
+          baseType = baseType === 'sensor' ? 'temperature' : baseType;
+        }
+        if (caps.smoke_detection || caps.fire_detection) {
+          baseType = baseType === 'sensor' ? 'smoke' : baseType;
+        }
+        if (caps.gas_detection || caps.air_quality) {
+          baseType = baseType === 'sensor' ? 'gas-sensor' : baseType;
+        }
+        if (caps.door_control) {
+          baseType = baseType === 'device' ? 'door' : baseType;
+        }
+      } catch (error) {
+        console.warn('Error parsing capabilities:', error);
+      }
+    }
+
+    console.log('✅ Final device type mapping result:', {
+      deviceTypeId,
+      deviceTypeName,
+      deviceTypeParentName,
+      finalType: baseType,
+      hasCapabilities: !!capabilities
+    });
+    
+    return baseType;
+  };
+
+  // Get device type display name
+  const getDeviceTypeDisplayName = (type, deviceTypeName, deviceTypeParentName) => {
+         const typeNames = {
+       'camera': 'Camera',
+       'light': 'Đèn LED',
+       'led-rgb': 'Đèn LED RGB',
+       'led-white': 'Đèn LED Trắng',
+       'led-single': 'Đèn LED Đơn',
+       'smoke': 'Cảm biến báo khói',
+       'sensor-smoke-fire': 'Cảm biến báo khói & cháy',
+       'gas-sensor': 'Cảm biến môi trường',
+       'temperature': 'Cảm biến nhiệt độ',
+       'sensor': 'Cảm biến',
+       'door': 'Cửa thông minh',
+       'door-roller': 'Cửa cuốn',
+       'door-sliding': 'Cửa trượt',
+       'door-swing': 'Cửa cánh',
+       'pump': 'Máy bơm nước',
+       'hub': 'Hub điều khiển',
+       'hub-door': 'Hub cửa',
+       'controller': 'Thiết bị điều khiển',
+       'security': 'Thiết bị an ninh',
+       'device': 'Thiết bị'
+     };
+
+    return typeNames[type] || deviceTypeName || deviceTypeParentName || 'Thiết bị';
+  };
+
+  // Get device capabilities display
+  const getDeviceCapabilities = (device) => {
+    if (!device.device_base_capabilities) return [];
+
+    try {
+      const capabilities = typeof device.device_base_capabilities === 'string' 
+        ? JSON.parse(device.device_base_capabilities) 
+        : device.device_base_capabilities;
+
+             const capabilityLabels = {
+         'power_control': 'Điều khiển nguồn',
+         'brightness_control': 'Điều chỉnh độ sáng',
+         'color_control': 'Điều khiển màu sắc',
+         'rgb_control': 'Điều khiển RGB',
+         'temperature_sensor': 'Cảm biến nhiệt độ',
+         'humidity_sensor': 'Cảm biến độ ẩm',
+         'gas_detection': 'Phát hiện khí gas',
+         'air_quality': 'Chất lượng không khí',
+         'smoke_detection': 'Phát hiện khói',
+         'fire_detection': 'Phát hiện lửa',
+         'door_control': 'Điều khiển cửa',
+         'lock_control': 'Điều khiển khóa',
+         'pump_control': 'Điều khiển bơm',
+         'water_flow': 'Cảm biến lưu lượng nước',
+         'motion_detection': 'Phát hiện chuyển động',
+         'recording': 'Ghi hình',
+         'live_streaming': 'Phát trực tiếp',
+         'night_vision': 'Chế độ ban đêm',
+         'security_monitoring': 'Giám sát an ninh',
+         'alert_system': 'Hệ thống cảnh báo'
+       };
+
+      return Object.keys(capabilities)
+        .filter(key => capabilities[key] === true || capabilities[key] === 1)
+        .map(key => capabilityLabels[key] || key)
+        .filter(label => label);
+    } catch (error) {
+      console.warn('Error parsing device capabilities:', error);
+      return [];
+    }
+  };
+
   const fetchDevice = async () => {
     try {
       setIsLoading(true);
       
       // Gọi song song cả hai API để lấy owned devices và shared devices
+      // Sử dụng API with-components để lấy đầy đủ thông tin device_type_id và capabilities
       const [ownedDevicesResponse, sharedDevicesResponse] = await Promise.allSettled([
-        axiosPublic.get(`devices/account`),
+        axiosPublic.get(`devices/account/with-components`),
         deviceApi.getSharedDevices({ search: '' })
       ]);
 
@@ -87,7 +293,14 @@ export default function DeviceManagement({
         // Đánh dấu ownership = 'mine' cho devices của user
         const ownedDevicesWithOwnership = ownedDevices.map(device => ({
           ...device,
-          ownership: 'mine'
+          ownership: 'mine',
+          // Enhanced type detection using device_type_id and capabilities
+          type: getDeviceTypeFromCategory(
+            device.device_type_id, 
+            device.device_type_name,
+            device.device_type_parent_name,
+            device.device_base_capabilities
+          )
         }));
         allDevices = [...allDevices, ...ownedDevicesWithOwnership];
       } else {
@@ -114,10 +327,13 @@ export default function DeviceManagement({
             name: device.device_name || device.name || 'Unknown Device',
             id: device.device_id || device.id || device.permission_id, // Fallback to permission_id if no device_id
             serial_number: device.device_serial || device.serial_number,
-            type: device.category_name?.toLowerCase().includes('cảm biến') ? 'smoke' : 
-                  device.category_name?.toLowerCase().includes('camera') ? 'camera' :
-                  device.category_name?.toLowerCase().includes('đèn') ? 'light' :
-                  device.category_name?.toLowerCase().includes('nhiệt độ') ? 'temperature' : 'device',
+            // Enhanced type detection using device_type_id
+            type: getDeviceTypeFromCategory(
+              device.device_type_id,
+              device.device_type_name || device.category_name,
+              device.device_type_parent_name,
+              device.device_base_capabilities
+            ),
             // Thêm các field cần thiết với giá trị mặc định
             power_status: device.power_status ?? true, // Default to true if not provided
             status: device.status || 'active',
@@ -127,6 +343,10 @@ export default function DeviceManagement({
             room: device.room || 'Shared Room',
             device_type_parent_name: device.template_device_name || device.category_name || 'Unknown',
             device_type_parent_image: device.device_type_parent_image || '/img/default-device.png',
+            // Copy device type info
+            device_type_id: device.device_type_id,
+            device_type_name: device.device_type_name || device.category_name,
+            device_base_capabilities: device.device_base_capabilities,
             // Thông tin về permission type
             permission_type: device.permission_type
           };
@@ -271,10 +491,34 @@ export default function DeviceManagement({
         return <Camera {...iconProps} />;
       case "light":
         return <Lightbulb {...iconProps} />;
+      case "led-rgb":
+        return <Zap {...iconProps} />;
+      case "led-white":
+      case "led-single":
+        return <Lightbulb {...iconProps} />;
       case "smoke":
+      case "sensor-smoke-fire":
         return <Flame {...iconProps} />;
       case "temperature":
         return <Thermometer {...iconProps} />;
+      case "gas-sensor":
+        return <Wind {...iconProps} />;
+      case "sensor":
+        return <Thermometer {...iconProps} />;
+      case "door":
+      case "door-roller":
+      case "door-sliding":
+      case "door-swing":
+        return <DoorOpen {...iconProps} />;
+      case "pump":
+        return <Droplets {...iconProps} />;
+      case "hub":
+      case "hub-door":
+        return <Wifi {...iconProps} />;
+      case "controller":
+        return <Settings {...iconProps} />;
+      case "security":
+        return <Shield {...iconProps} />;
       default:
         return <Smartphone {...iconProps} />;
     }
@@ -286,10 +530,35 @@ export default function DeviceManagement({
         return "from-blue-500 to-blue-600";
       case "light":
         return "from-amber-500 to-amber-600";
+      case "led-rgb":
+        return "from-purple-500 to-pink-600";
+      case "led-white":
+        return "from-amber-400 to-yellow-500";
+      case "led-single":
+        return "from-amber-500 to-amber-600";
       case "smoke":
+      case "sensor-smoke-fire":
         return "from-red-500 to-red-600";
       case "temperature":
         return "from-blue-500 to-blue-600";
+      case "gas-sensor":
+        return "from-green-500 to-teal-600";
+      case "sensor":
+        return "from-blue-500 to-blue-600";
+      case "door":
+      case "door-roller":
+      case "door-sliding":
+      case "door-swing":
+        return "from-green-500 to-green-600";
+      case "pump":
+        return "from-cyan-500 to-cyan-600";
+      case "hub":
+      case "hub-door":
+        return "from-indigo-500 to-indigo-600";
+      case "controller":
+        return "from-orange-500 to-orange-600";
+      case "security":
+        return "from-red-600 to-red-700";
       default:
         return "from-slate-500 to-slate-600";
     }
@@ -507,8 +776,12 @@ export default function DeviceManagement({
 											onToggle={handleToggle}
 											onEdit={handleEditDevice}
 											onDelete={handleDeleteDevice}
+											onUnlink={handleUnlinkSharedDevice}
+											getDeviceIcon={getDeviceIcon}
 											getDeviceColor={getDeviceColor}
 											getDeviceStatusColor={getDeviceStatusColor}
+											getDeviceTypeDisplayName={getDeviceTypeDisplayName}
+											getDeviceCapabilities={getDeviceCapabilities}
 											isCompact={selectedDevice && selectedDevice.type !== "camera"}
 										/>
 									</TabsContent>
@@ -522,8 +795,12 @@ export default function DeviceManagement({
 											onToggle={handleToggle}
 											onEdit={handleEditDevice}
 											onDelete={handleDeleteDevice}
+											onUnlink={handleUnlinkSharedDevice}
+											getDeviceIcon={getDeviceIcon}
 											getDeviceColor={getDeviceColor}
 											getDeviceStatusColor={getDeviceStatusColor}
+											getDeviceTypeDisplayName={getDeviceTypeDisplayName}
+											getDeviceCapabilities={getDeviceCapabilities}
 											isCompact={selectedDevice && selectedDevice.type !== "camera"}
 										/>
 									</TabsContent>
@@ -537,8 +814,12 @@ export default function DeviceManagement({
 											onToggle={handleToggle}
 											onEdit={handleEditDevice}
 											onDelete={handleDeleteDevice}
+											onUnlink={handleUnlinkSharedDevice}
+											getDeviceIcon={getDeviceIcon}
 											getDeviceColor={getDeviceColor}
 											getDeviceStatusColor={getDeviceStatusColor}
+											getDeviceTypeDisplayName={getDeviceTypeDisplayName}
+											getDeviceCapabilities={getDeviceCapabilities}
 											isCompact={selectedDevice && selectedDevice.type !== "camera"}
 										/>
 									</TabsContent>

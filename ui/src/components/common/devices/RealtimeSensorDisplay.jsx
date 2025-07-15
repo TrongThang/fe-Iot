@@ -72,9 +72,16 @@ const RealtimeSensorDisplay = ({ deviceSerial, deviceName }) => {
 
         const connectDevice = async () => {
             try {
+                console.log(`🔌 Attempting to connect to device: ${deviceSerial} with account: ${accountId}`);
                 const success = await socketService.connectToDevice(deviceSerial, accountId);
                 console.log('🔌 Device connection result:', success);
                 setIsRealtimeConnected(success);
+                
+                if (success) {
+                    console.log(`✅ Successfully connected to device ${deviceSerial}, setting up listeners...`);
+                } else {
+                    console.log(`❌ Failed to connect to device ${deviceSerial}`);
+                }
             } catch (error) {
                 console.error('❌ Failed to connect to device:', error);
                 setIsRealtimeConnected(false);
@@ -174,6 +181,17 @@ const RealtimeSensorDisplay = ({ deviceSerial, deviceName }) => {
 
             // IoT API alarm format: { serialNumber, alarmActive, temperature, gasValue, severity, alarm_type }
             if (alertData.serialNumber === deviceSerial && alertData.alarmActive) {
+                // UPDATE SENSOR DATA from alert
+                setSensorData(prev => ({
+                    ...prev,
+                    temperature: alertData.temperature !== undefined ? alertData.temperature : prev.temperature,
+                    gas: alertData.gasValue !== undefined ? alertData.gasValue : (alertData.gas !== undefined ? alertData.gas : prev.gas),
+                    humidity: alertData.humidity !== undefined ? alertData.humidity : prev.humidity,
+                    smoke_level: alertData.smoke_level !== undefined ? alertData.smoke_level : prev.smoke_level,
+                    flame_detected: alertData.flame_detected !== undefined ? alertData.flame_detected : prev.flame_detected,
+                    lastUpdate: new Date().toISOString()
+                }));
+
                 const newAlert = {
                     id: Date.now(),
                     type: alertData.alarm_type || 'alarm',
@@ -183,10 +201,13 @@ const RealtimeSensorDisplay = ({ deviceSerial, deviceName }) => {
                     timestamp: new Date().toISOString()
                 };
 
+                // Set alert
+                setAlerts(prev => ({ ...prev, [alertData.alarm_type || 'alarm']: newAlert }));
+
                 // Auto-dismiss after 30 seconds for non-critical alerts
                 if (alertData.severity !== 'critical') {
                     setTimeout(() => {
-                        setAlerts(prev => ({ ...prev, [alertData.alarm_type]: null }));
+                        setAlerts(prev => ({ ...prev, [alertData.alarm_type || 'alarm']: null }));
                     }, 30000);
                 }
             }
@@ -195,15 +216,35 @@ const RealtimeSensorDisplay = ({ deviceSerial, deviceName }) => {
         const handleEmergencyAlert = (alertData) => {
             console.log('🚨 Emergency alert received:', alertData);
 
-            if (alertData.serialNumber === deviceSerial) {
+            if (alertData.serialNumber === deviceSerial || !alertData.serialNumber) {
+                // UPDATE SENSOR DATA from emergency alert
+                const alertSensorData = alertData.data || alertData;
+                setSensorData(prev => ({
+                    ...prev,
+                    temperature: alertSensorData.temperature !== undefined ? alertSensorData.temperature : prev.temperature,
+                    gas: alertSensorData.gasValue !== undefined ? alertSensorData.gasValue : 
+                         (alertSensorData.gas !== undefined ? alertSensorData.gas : prev.gas),
+                    humidity: alertSensorData.humidity !== undefined ? alertSensorData.humidity : prev.humidity,
+                    smoke_level: alertSensorData.smoke_level !== undefined ? alertSensorData.smoke_level : prev.smoke_level,
+                    flame_detected: alertSensorData.flame_detected !== undefined ? alertSensorData.flame_detected : 
+                                  (alertData.type === 'fire' ? true : prev.flame_detected),
+                    lastUpdate: new Date().toISOString()
+                }));
+
                 const newAlert = {
                     id: Date.now(),
                     type: alertData.type || 'emergency',
                     severity: alertData.severity || 'critical',
-                    message: alertData.message || getAlertMessage(alertData.data),
-                    data: alertData.data || alertData,
+                    message: alertData.message || getAlertMessage(alertSensorData),
+                    data: alertSensorData,
                     timestamp: new Date().toISOString()
                 };
+
+                // Set emergency alert
+                setAlerts(prev => ({ ...prev, [alertData.type || 'emergency']: newAlert }));
+
+                console.log('🚨 Emergency alert set:', newAlert);
+                console.log('📊 Updated sensor data from emergency alert');
             }
         };
 
@@ -214,7 +255,7 @@ const RealtimeSensorDisplay = ({ deviceSerial, deviceName }) => {
 
         const handleSmokeAlert = (alertData) => {
             console.log('💨 Smoke alert received:', alertData);
-            handleEmergencyAlert({ ...alertData, type: 'smoke' });
+            handleEmergencyAlert({ ...alertData, type: 'smoke', severity: 'danger' });
         };
 
         // Register event listeners - theo IoT API events

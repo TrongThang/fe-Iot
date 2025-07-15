@@ -57,21 +57,59 @@ export default function DynamicDeviceDetail({ device }) {
     } = useDeviceControls(device, currentValues, setCurrentValues);
 
     // Check if device is smoke/fire detector
-    const isFireDetector = device?.type?.toLowerCase().includes('smoke') || 
+    const isFireDetector = device?.type === 'smoke' ||
+                        device?.type?.toLowerCase().includes('smoke') || 
                         device?.type?.toLowerCase().includes('fire') ||
                         device?.template_type?.toLowerCase().includes('smoke') ||
                         device?.template_type?.toLowerCase().includes('fire') ||
-                        capabilities?.capabilities?.includes('GAS_DETECTION') ||
-                        capabilities?.capabilities?.includes('SMOKE_DETECTION');
+                        capabilities?.capabilities?.includes('SMOKE_DETECTION') ||
+                        capabilities?.capabilities?.includes('FIRE_DETECTION');
 
-    // Check if device is gas monitoring sensor
-    const isGasMonitoring = device?.type?.toLowerCase().includes('gas') ||
-                        device?.type?.toLowerCase().includes('sensor') ||
-                        device?.template_type?.toLowerCase().includes('gas') ||
-                        device?.template_type?.toLowerCase().includes('monitoring') ||
-                        device?.template_type?.toLowerCase().includes('temperature') ||
-                        capabilities?.capabilities?.includes('GAS_MONITORING') ||
-                        capabilities?.capabilities?.includes('TEMPERATURE_MONITORING');
+    // Check if device is gas monitoring sensor - ENHANCED criteria
+    const isGasMonitoring = !isFireDetector && ( // Explicitly exclude fire detectors first
+                        device?.type === 'gas-sensor' ||
+                        (device?.type?.toLowerCase().includes('gas') && !device?.type?.toLowerCase().includes('smoke')) ||
+                        (device?.template_type?.toLowerCase().includes('gas') && !device?.type?.toLowerCase().includes('smoke')) ||
+                        (device?.name?.toLowerCase().includes('môi trường') && !device?.name?.toLowerCase().includes('báo')) ||
+                        (device?.device_type_name?.toLowerCase().includes('môi trường')) ||
+                        (device?.device_type_parent_name?.toLowerCase().includes('môi trường')) ||
+                        capabilities?.category?.toLowerCase().includes('environmental') ||
+                        capabilities?.capabilities?.includes('GAS_DETECTION') ||
+                        capabilities?.capabilities?.includes('AIR_QUALITY'));
+
+    // Debug logs for device type analysis
+    console.log('🔍 Device type analysis for:', device?.name, {
+        deviceType: device?.type,
+        templateType: device?.template_type,
+        deviceTypeName: device?.device_type_name,
+        deviceTypeParentName: device?.device_type_parent_name,
+        deviceTypeId: device?.device_type_id,
+        isFireDetector,
+        isGasMonitoring,
+        capabilities: capabilities?.capabilities,
+        category: capabilities?.category,
+        serialNumber: device?.serial_number,
+        renderDecision: isFireDetector ? 'FireDetectorInterface' : 
+                       isGasMonitoring ? 'GasMonitoringDetail' : 
+                       'StatusDisplay + StatsGrid'
+    });
+    
+    // Additional gas monitoring debug
+    if (device?.name?.toLowerCase().includes('môi trường')) {
+        console.log('🌬️ Environmental device detected:', {
+            name: device.name,
+            hasEnvironmentalInName: device?.name?.toLowerCase().includes('môi trường'),
+            hasGasInCapabilities: capabilities?.capabilities?.includes('GAS_DETECTION'),
+            hasAirQualityInCapabilities: capabilities?.capabilities?.includes('AIR_QUALITY'),
+            categoryIsEnvironmental: capabilities?.category?.toLowerCase().includes('environmental'),
+            finalIsGasMonitoring: isGasMonitoring
+        });
+        
+        if (!isGasMonitoring) {
+            console.warn('⚠️ WARNING: Environmental device not classified as gas monitoring device!');
+            console.warn('This device should probably render GasMonitoringDetail instead of StatusDisplay');
+        }
+    }
 
     // Fire Alert Socket - only for fire/smoke detectors with valid data
     const canConnectFireSocket = isFireDetector && device && device.serial_number && accountId;
@@ -271,11 +309,6 @@ export default function DynamicDeviceDetail({ device }) {
         );
     }
 
-    // If this is a gas monitoring device, show specialized component
-    if (isGasMonitoring) {
-        return <GasMonitoringDetail device={device} />;
-    }
-
     return (
         <div className="space-y-6">
             {/* Quick Alert Mute - Show when there's an active fire alert */}
@@ -288,30 +321,27 @@ export default function DynamicDeviceDetail({ device }) {
                 />
             )}
 
-            {/* Fire Detector Interface - Show for fire/smoke detectors */}
-            {isFireDetector ? (
-                <FireDetectorInterface
-                    device={device}
-                    currentAlert={fireAlert}
-                    isAlerting={isFireAlerting}
-                    alertLevel={fireAlertLevel}
-                    sensorData={fireSensorData}
-                    lastUpdate={new Date()}
-                    isConnected={fireSocketConnected}
-                    isDeviceConnected={fireDeviceConnected}
-                    onAcknowledgeAlert={handleAcknowledgeFireAlert}
-                    onClearAlert={handleClearFireAlert}
-                    onToggleSound={handleToggleSound}
-                    isSoundEnabled={soundEnabled}
-                    onToggleNotifications={handleToggleNotifications}
-                    isNotificationsEnabled={notificationsEnabled}
+            {/* Specialized Device Interfaces - Render based on device type */}
+            {(isFireDetector || isGasMonitoring) ? (
+                // Gas/Smoke Monitoring Interface - Show comprehensive sensor data for both gas and smoke detectors
+                <GasMonitoringDetail 
+                    device={device} 
+                    sensorType={isFireDetector ? 'smoke' : 'gas'}
                 />
             ) : (
-                <StatusDisplay 
-                    device={device}
-                    capabilities={capabilities}
-                    currentValues={currentValues}
-                />
+                // Default Status Display for other devices
+                <>
+                    <StatusDisplay 
+                        device={device}
+                        capabilities={capabilities}
+                        currentValues={currentValues}
+                    />
+                    <StatsGrid 
+                        device={device}
+                        capabilities={capabilities}
+                        currentValues={currentValues}
+                    />
+                </>
             )}
 
             {renderSpecializedControl()}

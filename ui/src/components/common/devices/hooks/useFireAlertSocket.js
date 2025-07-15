@@ -9,7 +9,7 @@ const ALERT_THRESHOLDS = {
         critical: 3000    // PPM
     },
     temperature: {
-        warning: 40,      // Celsius
+        warning: 45,      // Celsius
         danger: 50,       // Celsius
         critical: 60      // Celsius
     },
