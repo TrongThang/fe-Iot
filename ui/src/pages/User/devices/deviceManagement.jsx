@@ -18,6 +18,7 @@ import {
   Wifi,
   WifiOff,
   AlertTriangle,
+  Unlink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -35,10 +36,12 @@ import RealTimeDeviceControl from "@/components/common/devices/RealTimeDeviceCon
 import { useSocketContext } from "@/contexts/SocketContext";
 import axiosPublic from "@/apis/clients/public.client";
 import { toast } from "sonner"; // Added for error feedback
+import { deviceApi } from "@/apis/modules/deviceApi"; // Import deviceApi
+import { useNavigate } from "react-router-dom";
 
 export default function DeviceManagement({
   spaceId = "1",
-  spaceName = "Phòng khách",
+  spaceName = "Danh sách thiết bị",
   spaceType = "living_room",
   onBack = () => {},
 }) {
@@ -64,14 +67,83 @@ export default function DeviceManagement({
 		dismissEmergencyAlert
 	} = useSocketContext()
 
- 
+  const navigate = useNavigate();
 
   const fetchDevice = async () => {
     try {
       setIsLoading(true);
-      const response = await axiosPublic.get(`devices/account`);
-      const deviceData = Array.isArray(response) ? response : [];
-      setDevices(deviceData);
+      
+      // Gọi song song cả hai API để lấy owned devices và shared devices
+      const [ownedDevicesResponse, sharedDevicesResponse] = await Promise.allSettled([
+        axiosPublic.get(`devices/account`),
+        deviceApi.getSharedDevices({ search: '' })
+      ]);
+
+      let allDevices = [];
+
+      // Xử lý owned devices
+      if (ownedDevicesResponse.status === 'fulfilled') {
+        const ownedDevices = Array.isArray(ownedDevicesResponse.value) ? ownedDevicesResponse.value : [];
+        // Đánh dấu ownership = 'mine' cho devices của user
+        const ownedDevicesWithOwnership = ownedDevices.map(device => ({
+          ...device,
+          ownership: 'mine'
+        }));
+        allDevices = [...allDevices, ...ownedDevicesWithOwnership];
+      } else {
+        console.error("Error fetching owned devices:", ownedDevicesResponse.reason);
+        toast.error("Không thể tải thiết bị của bạn. Vui lòng thử lại.");
+      }
+
+      // Xử lý shared devices  
+      if (sharedDevicesResponse.status === 'fulfilled') {
+        const sharedDevicesData = sharedDevicesResponse.value?.data || sharedDevicesResponse.value;
+        const sharedDevices = Array.isArray(sharedDevicesData) ? sharedDevicesData : [];
+        
+        console.log('🔍 Raw shared devices response:', sharedDevicesResponse.value);
+        console.log('🔍 Extracted shared devices data:', sharedDevices);
+        
+        // Đánh dấu ownership = 'shared' cho devices được chia sẻ
+        const sharedDevicesWithOwnership = sharedDevices.map(device => {
+          console.log('🔍 Processing shared device:', device);
+          
+          const mappedDevice = {
+            ...device,
+            ownership: 'shared',
+            // Map các field từ shared device response về format chuẩn dựa trên API response thực tế
+            name: device.device_name || device.name || 'Unknown Device',
+            id: device.device_id || device.id || device.permission_id, // Fallback to permission_id if no device_id
+            serial_number: device.device_serial || device.serial_number,
+            type: device.category_name?.toLowerCase().includes('cảm biến') ? 'smoke' : 
+                  device.category_name?.toLowerCase().includes('camera') ? 'camera' :
+                  device.category_name?.toLowerCase().includes('đèn') ? 'light' :
+                  device.category_name?.toLowerCase().includes('nhiệt độ') ? 'temperature' : 'device',
+            // Thêm các field cần thiết với giá trị mặc định
+            power_status: device.power_status ?? true, // Default to true if not provided
+            status: device.status || 'active',
+            group: device.group || 0, // Default group for filter compatibility
+            house: device.house || 0, // Default house for filter compatibility
+            group_name: device.group_name || '', // Không hiển thị group name mặc định cho shared device
+            room: device.room || 'Shared Room',
+            device_type_parent_name: device.template_device_name || device.category_name || 'Unknown',
+            device_type_parent_image: device.device_type_parent_image || '/img/default-device.png',
+            // Thông tin về permission type
+            permission_type: device.permission_type
+          };
+          
+          console.log('🔍 Mapped shared device:', mappedDevice);
+          return mappedDevice;
+        });
+        
+        console.log('🔍 All shared devices after mapping:', sharedDevicesWithOwnership);
+        allDevices = [...allDevices, ...sharedDevicesWithOwnership];
+      } else {
+        console.error("Error fetching shared devices:", sharedDevicesResponse.reason);
+        toast.error("Không thể tải thiết bị được chia sẻ. Vui lòng thử lại.");
+      }
+
+      console.log('🔍 Final allDevices:', allDevices);
+      setDevices(allDevices);
     } catch (error) {
       console.error("Error fetching devices:", error);
       toast.error(error.message || "Đã xảy ra lỗi khi tải danh sách thiết bị. Vui lòng thử lại.");
@@ -135,6 +207,14 @@ export default function DeviceManagement({
   };
 
   const handleToggle = (e, deviceId) => {
+    const device = devices.find(d => d.id === deviceId);
+    
+    // Kiểm tra quyền: chỉ cho phép toggle nếu là thiết bị của mình hoặc shared device có quyền CONTROL
+    if (device?.ownership === "shared" && device?.permission_type === 'VIEW') {
+      toast.error("Bạn chỉ có quyền xem thiết bị này, không thể điều khiển.");
+      return;
+    }
+
     setDevices(
       devices.map((device) =>
         device.id === deviceId
@@ -144,11 +224,15 @@ export default function DeviceManagement({
     );
   };
 
-  const handleAddDevice = () => {
-    alert("Thêm thiết bị mới");
-  };
-
   const handleDeleteDevice = (deviceId) => {
+    const device = devices.find(d => d.id === deviceId);
+    
+    // Chỉ cho phép xóa thiết bị của mình
+    if (device?.ownership === "shared") {
+      toast.error("Bạn không thể xóa thiết bị được chia sẻ.");
+      return;
+    }
+
     setDevices(devices.filter((device) => device.id !== deviceId));
     if (selectedDevice?.id === deviceId) {
       setSelectedDevice(null);
@@ -156,7 +240,28 @@ export default function DeviceManagement({
   };
 
   const handleEditDevice = (deviceId) => {
+    const device = devices.find(d => d.id === deviceId);
+    
+    // Kiểm tra quyền: chỉ cho phép edit nếu là thiết bị của mình hoặc shared device có quyền CONTROL
+    if (device?.ownership === "shared" && device?.permission_type === 'VIEW') {
+      toast.error("Bạn chỉ có quyền xem thiết bị này, không thể chỉnh sửa.");
+      return;
+    }
+
     alert(`Chỉnh sửa thiết bị ID: ${deviceId}`);
+  };
+
+  const handleUnlinkSharedDevice = async (device) => {
+    if (device.ownership !== "shared") return;
+    try {
+      // Gọi API unlink
+      await deviceApi.unlinkSharedDevice(device.serial_number);
+      toast.success("Đã gỡ thiết bị được chia sẻ thành công!");
+      setDevices(devices.filter((d) => d.id !== device.id));
+      if (selectedDevice?.id === device.id) setSelectedDevice(null);
+    } catch (err) {
+      toast.error("Gỡ thiết bị thất bại: " + (err?.message || "Lỗi không xác định"));
+    }
   };
 
   const getDeviceIcon = (type) => {
@@ -215,16 +320,31 @@ export default function DeviceManagement({
   };
 
   const filteredDevices = devices.filter((device) => {
-    const matchesSearch = device.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesGroup = filterOptions.group === 0 || device.group === filterOptions.group;
-    const matchesHouse = filterOptions.house === 0 || device.house === filterOptions.house;
+    const matchesSearch = device.name && device.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGroup = filterOptions.group === 0 || (device.group !== undefined && device.group === filterOptions.group);
+    const matchesHouse = filterOptions.house === 0 || (device.house !== undefined && device.house === filterOptions.house);
     const matchesStatus =
       filterOptions.status === "all" ||
       (filterOptions.status === "active" && device.power_status) ||
       (filterOptions.status === "inactive" && !device.power_status);
 
+    // Debug shared devices filter
+    if (device.ownership === 'shared') {
+      console.log('🔍 Filtering shared device:', device.name, {
+        matchesSearch,
+        matchesGroup,
+        matchesHouse,
+        matchesStatus,
+        device_group: device.group,
+        device_house: device.house,
+        filterOptions
+      });
+    }
+
     return matchesSearch && matchesGroup && matchesHouse && matchesStatus;
   });
+
+  console.log('🔍 Filtered devices:', filteredDevices.length, 'of', devices.length);
 
   const devicesByOwnership = filteredDevices.reduce((acc, device) => {
     if (!acc[device.ownership]) {
@@ -335,7 +455,7 @@ export default function DeviceManagement({
           >
             <div className="p-4">
               <div className="mb-6 space-y-4">
-                <div className="relative">
+              <div className="relative flex items-center gap-2">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                   <Input
                     placeholder="Tìm kiếm thiết bị..."
@@ -343,61 +463,15 @@ export default function DeviceManagement({
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 h-11 border-slate-200"
                   />
-                </div>
-
-                <div
-                  className={cn(
-                    "flex flex-wrap gap-2",
-                    selectedDevice && selectedDevice.type !== "camera" && "hidden md:flex",
-                  )}
-                >
-                  <div className="relative flex-1 min-w-[150px]">
-                    <select
-                      className="w-full h-10 pl-3 pr-10 text-sm border border-slate-200 rounded-md appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={filterOptions.group}
-                      onChange={(e) => setFilterOptions({ ...filterOptions, group: Number(e.target.value) })}
-                    >
-                      <option value={0}>Tất cả nhóm</option>
-                      <option value={1}>Nhóm 1</option>
-                      <option value={2}>Nhóm 2</option>
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                      size={16}
-                    />
-                  </div>
-
-                  <div className="relative flex-1 min-w-[150px]">
-                    <select
-                      className="w-full h-10 pl-3 pr-10 text-sm border border-slate-200 rounded-md appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={filterOptions.house}
-                      onChange={(e) => setFilterOptions({ ...filterOptions, house: Number(e.target.value) })}
-                    >
-                      <option value={0}>Tất cả nhà</option>
-                      <option value={1}>Nhà 1</option>
-                      <option value={2}>Nhà 2</option>
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                      size={16}
-                    />
-                  </div>
-
-                  <div className="relative flex-1 min-w-[150px]">
-                    <select
-                      className="w-full h-10 pl-3 pr-10 text-sm border border-slate-200 rounded-md appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      value={filterOptions.status}
-                      onChange={(e) => setFilterOptions({ ...filterOptions, status: e.target.value })}
-                    >
-                      <option value="all">Tất cả trạng thái</option>
-                      <option value="active">Đang hoạt động</option>
-                      <option value="inactive">Đã tắt</option>
-                    </select>
-                    <ChevronDown
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                      size={16}
-                    />
-                  </div>
+                  <Button
+                    onClick={() => {
+                      navigate("/device-links");
+                    }}
+                    variant="outline"
+                    className="border-slate-200 bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:from-blue-800 hover:to-blue-900"
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Sự kiện liên kết
+                  </Button>
                 </div>
               </div>
 
@@ -523,6 +597,13 @@ export default function DeviceManagement({
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Xóa thiết bị
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleUnlinkSharedDevice(selectedDevice)}
+                              className="text-red-600"
+                            >
+                              <Unlink className="h-4 w-4 mr-2" />
+                              Gỡ thiết bị được chia sẻ
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

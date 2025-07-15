@@ -17,6 +17,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import CreateTicketDialog from "./Add-ticket-popup";
 import TicketDetailDialog from "./ticketDetails";
 import { toast } from "sonner";
+import Swal from "sweetalert2";
+import axiosPrivate from "@/apis/clients/private.client";
 
 export default function TicketList() {
   const [tickets, setTickets] = useState([]);
@@ -39,7 +41,7 @@ export default function TicketList() {
   const fetchTickets = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/tickets/user`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}tickets/user`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -63,7 +65,7 @@ export default function TicketList() {
   // Fetch ticket types
   const fetchTicketTypes = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/ticket-types`, {
+      const res = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}ticket-types`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -143,7 +145,7 @@ export default function TicketList() {
               toast.dismiss(t);
               try {
                 const response = await fetch(
-                  `https://iothomeconnectapiv2-production.up.railway.app/api/tickets/${ticketId}/cancel`,
+                  `${process.env.REACT_APP_SMART_NET_IOT_API_URL}tickets/${ticketId}/cancel`,
                   {
                     method: "PUT",
                     headers: {
@@ -182,7 +184,7 @@ export default function TicketList() {
     if (result.isConfirmed) {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/tickets/${ticketId}/cancel`,
+          `${process.env.REACT_APP_SMART_NET_IOT_API_URL}tickets/${ticketId}/cancel`,
           {
             method: "PUT",
             headers: {
@@ -594,6 +596,45 @@ function TicketListContent({
   getDeviceIcon,
   getTimeAgo,
 }) {
+  const accessToken = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+
+  // Hàm xử lý xác nhận hoặc từ chối chia sẻ
+  const handleApproveShare = async (ticketId, isApproved) => {
+    const actionText = isApproved ? 'xác nhận chia sẻ thiết bị' : 'từ chối chia sẻ thiết bị';
+    const confirmButtonText = isApproved ? 'Xác nhận' : 'Từ chối';
+    const confirmButtonColor = isApproved ? '#22c55e' : '#ef4444';
+  
+    const result = await Swal.fire({
+      title: `Bạn có chắc muốn ${actionText}?`,
+      text: 'Hành động này sẽ được gửi lên hệ thống.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText,
+      confirmButtonColor,
+      cancelButtonText: 'Hủy',
+      reverseButtons: true,
+    });
+  
+    if (result.isConfirmed) {
+      try {
+        const res = await axiosPrivate.post(`permissions/approve-share-permission`, {
+          ticketId,
+          isApproved,
+        });
+
+        if (res.success) {
+          toast.success(isApproved ? 'Đã xác nhận chia sẻ thiết bị.' : 'Đã từ chối chia sẻ thiết bị.');
+          window.location.reload();
+        } else {
+          const data = await res.json();
+          throw new Error(data.message || 'Có lỗi xảy ra');
+        }
+      } catch (error) {
+        toast.error(error.message || 'Có lỗi xảy ra khi xử lý yêu cầu.');
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       {tickets.map((ticket) => (
@@ -657,6 +698,33 @@ function TicketListContent({
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
+              {/* Nếu là ticket chia sẻ quyền (id=3) và đang pending thì hiển thị nút xác nhận/từ chối */}
+              {ticket.ticket_type_id === 3 && ticket.status === 'pending' && (
+                <>
+                  <Button
+                    variant="success"
+                    size="sm"
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleApproveShare(ticket.ticket_id, true);
+                    }}
+                    className="text-white bg-green-600 h-auto p-1 border border-green-200"
+                  >
+                    Xác nhận chia sẻ
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleApproveShare(ticket.ticket_id, false);
+                    }}
+                    className="text-white bg-red-600 h-auto p-1 border border-red-200"
+                  >
+                    Từ chối chia sẻ
+                  </Button>
+                </>
+              )}
             </div>
             <div className="flex items-center space-x-3 text-xs text-muted-foreground">
               <Button
@@ -667,7 +735,7 @@ function TicketListContent({
               >
                 <Eye className="h-4 w-4" />
               </Button>
-              {["pending", "in_progress", "approved"].includes(ticket.status) && (
+              {['pending', 'in_progress', 'approved'].includes(ticket.status) && (
                 <Button
                   variant="ghost"
                   size="sm"

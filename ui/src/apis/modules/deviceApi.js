@@ -9,6 +9,7 @@ const deviceEndpoints = {
     deviceDetail: (serialNumber) => `devices/${serialNumber}`,
     deviceList: 'devices/account',
     deviceListWithComponents: 'devices/account/with-components',            // GET - get devices with components
+    sharedDevices: 'permissions/get-device-shared-for-customer',            // GET - get shared devices for user
     searchUser: 'customer-search',                                  // GET - search users for sharing
     createTicket: 'tickets',                                        // POST - create share permission ticket
     getSharedUsers: (serialNumber) => `permissions/get-shared-users/${serialNumber}`,
@@ -112,6 +113,19 @@ export const deviceApi = {
             return response;
         } catch (error) {
             console.error('Error in getDevicesWithComponents:', error);
+            throw error;
+        }
+    },
+
+    // Lấy danh sách thiết bị được chia sẻ cho user
+    getSharedDevices: async (params = {}) => {
+        try {
+            console.log('API Call: getSharedDevices with params:', params);
+            const response = await publicClient.get(deviceEndpoints.sharedDevices, { params });
+            console.log('API Response - getSharedDevices:', response);
+            return response;
+        } catch (error) {
+            console.error('Error in getSharedDevices:', error);
             throw error;
         }
     },
@@ -257,7 +271,12 @@ export const deviceApi = {
             console.error('Error in getDeviceComponents:', error);
             throw error;
         }
-    }
+    },
+
+    unlinkSharedDevice: async (serialNumber) => {
+        const response = await publicClient.delete(`permissions/recipient/${serialNumber}`);
+        return response;
+    },
 };
 
 export default deviceApi; 

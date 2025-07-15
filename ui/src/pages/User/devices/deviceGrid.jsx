@@ -8,6 +8,9 @@ import {
     Smartphone,
     Wifi,
     WifiOff,
+    Users,
+    Eye,
+    Settings
 } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
@@ -95,6 +98,7 @@ export default function DeviceGrid({
                                 )}
                                 <Switch
                                     checked={device.power_status}
+                                    disabled={device.ownership === "shared" && device.permission_type === 'VIEW'}
                                     onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
                                     onClick={(e) => e.stopPropagation()}
                                     className="data-[state=checked]:bg-green-500"
@@ -112,7 +116,12 @@ export default function DeviceGrid({
                                     </div>
                                     <div>
                                         <h3 className="font-medium text-slate-900">{device.name}</h3>
-                                        <p className="text-sm text-white overflow-hidden whitespace-nowrap badge bg-blue-300 rounded-full px-2 py-1">{device.device_type_parent_name}</p>
+                                            <p
+                                                className="text-sm text-white overflow-hidden badge bg-blue-300 rounded-full px-2 py-1 w-fit"
+                                                title={device.device_type_parent_name}
+                                            >
+                                                {device.device_type_parent_name}
+                                            </p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -127,6 +136,7 @@ export default function DeviceGrid({
                                     )}
                                     <Switch
                                         checked={device.power_status}
+                                        disabled={device.ownership === "shared" && device.permission_type === 'VIEW'}
                                         onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
                                         onClick={(e) => e.stopPropagation()}
                                         className="data-[state=checked]:bg-green-500"
@@ -136,36 +146,67 @@ export default function DeviceGrid({
 
                             <div className="flex justify-between items-center">
                                 <div className="flex items-center gap-2">
-                                    <div className="text-xs text-slate-500">{device.group_name}</div>
-                                    {device.ownership === "shared" && (
-                                        <Badge variant="outline" className="text-xs px-1 py-0.5 bg-blue-50 text-blue-600 border-blue-200">
-                                            {device.owner}
-                                        </Badge>
+                                    {device.ownership === "shared" ? (
+                                        <div className="flex items-center gap-1">
+                                            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-orange-50 text-orange-600 border-orange-200 flex items-center gap-1">
+                                                <Users size={10} />
+                                                Được chia sẻ
+                                            </Badge>
+                                            {device.permission_type && (
+                                                <Badge variant="outline" className={cn(
+                                                    "text-xs px-2 py-0.5 flex items-center gap-1",
+                                                    device.permission_type === 'CONTROL' 
+                                                        ? "bg-green-50 text-green-600 border-green-200"
+                                                        : "bg-blue-50 text-blue-600 border-blue-200"
+                                                )}>
+                                                    {device.permission_type === 'CONTROL' ? (
+                                                        <>
+                                                            <Settings size={10} />
+                                                            Điều khiển
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Eye size={10} />
+                                                            Chỉ xem
+                                                        </>
+                                                    )}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="text-xs text-slate-500">{device.group_name || 'Thiết bị của tôi'}</div>
                                     )}
                                 </div>
                                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-lg hover:bg-slate-100"
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            onEdit(device.id)
-                                        }}
-                                    >
-                                        <Edit size={14} className="text-slate-600" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600"
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            onDelete(device.id)
-                                        }}
-                                    >
-                                        <Trash2 size={14} className="text-slate-600 hover:text-red-600" />
-                                    </Button>
+                                    {/* Chỉ hiển thị nút edit/delete cho thiết bị của mình hoặc shared device có quyền CONTROL */}
+                                    {(device.ownership === "mine" || device.permission_type === 'CONTROL') && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 rounded-lg hover:bg-slate-100"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onEdit(device.id)
+                                            }}
+                                        >
+                                            <Edit size={14} className="text-slate-600" />
+                                        </Button>
+                                    )}
+                                    
+                                    {/* Chỉ hiển thị nút delete cho thiết bị của mình */}
+                                    {device.ownership === "mine" && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 rounded-lg hover:bg-red-50 hover:text-red-600"
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                onDelete(device.id)
+                                            }}
+                                        >
+                                            <Trash2 size={14} className="text-slate-600 hover:text-red-600" />
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
                         </>

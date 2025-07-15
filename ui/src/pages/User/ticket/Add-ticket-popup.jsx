@@ -51,7 +51,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
   // Fetch user devices
   const fetchDevice = async () => {
     try {
-      const response = await fetch("http://localhost:7777/api/devices/account", {
+      const response = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}devices/account`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -76,7 +76,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
   // Fetch ticket types
   const fetchTicketType = async () => {
     try {
-      const response = await fetch("http://localhost:7777/api/ticket-types", {
+      const response = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}ticket-types`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -114,7 +114,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
   // Fetch users for assigned_to dropdown
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:7777/api/accounts", {
+      const response = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}accounts`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -322,7 +322,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
       };
       console.log("JSON Body to send:", body);
 
-      const response = await fetch("http://localhost:7777/api/tickets", {
+      const response = await fetch(`${process.env.REACT_APP_SMART_NET_IOT_API_URL}tickets`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
