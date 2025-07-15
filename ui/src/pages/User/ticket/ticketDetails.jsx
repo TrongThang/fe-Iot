@@ -41,12 +41,10 @@ export default function TicketDetailDialog({
   const [comments, setComments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch comments from API or use fallback
   useEffect(() => {
     const fetchComments = async () => {
       setIsLoading(true);
       try {
-        // Replace with actual API call when available
         const response = await fetch(
           `${process.env.REACT_APP_SMART_NET_IOT_API_URL}/api/tickets/${ticket?.ticket_id}/comments`,
           {
@@ -60,7 +58,6 @@ export default function TicketDetailDialog({
           const data = await response.json();
           setComments(data.data?.comments || []);
         } else {
-          // Fallback to hardcoded comments if API fails
         }
       } catch (error) {
         console.error("Failed to fetch comments:", error);
@@ -79,7 +76,6 @@ export default function TicketDetailDialog({
     }
   }, [ticket?.ticket_id]);
 
-  // Handle adding a new comment
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
 
@@ -125,11 +121,9 @@ export default function TicketDetailDialog({
     });
 
     if (result) {
-      // Không cần xử lý thêm vì toast.custom tự xử lý logic
     }
   };
 
-  // Handle rating selection
   const handleRating = (rating) => {
     setSelectedRating(rating);
     toast.success(`Bạn đã đánh giá ${rating} sao.`, {
@@ -138,7 +132,6 @@ export default function TicketDetailDialog({
     });
   };
 
-  // Render star rating
   const renderStars = (interactive = false) => {
     return (
       <div className="flex items-center space-x-1">
@@ -150,7 +143,7 @@ export default function TicketDetailDialog({
             className={cn(
               "transition-colors duration-200",
               interactive ? "hover:text-yellow-400 cursor-pointer" : "cursor-default",
-              star <= selectedRating ? "text-yellow-400" : "text-slate-300"
+              star <= selectedRating ? "text-yellow-400" : "text-gray-300"
             )}
             aria-label={interactive ? `Đánh giá ${star} sao` : `Đã đánh giá ${star} sao`}
           >
@@ -161,21 +154,19 @@ export default function TicketDetailDialog({
     );
   };
 
-  // Get file icon based on type
   const getFileIcon = (type) => {
     switch (type) {
       case "pdf":
-        return <FileText className="h-4 w-4 text-red-500" />;
+        return <FileText className="h-4 w-4 text-red-600" />;
       case "image":
-        return <Camera className="h-4 w-4 text-blue-500" />;
+        return <Camera className="h-4 w-4 text-blue-600" />;
       case "video":
-        return <Video className="h-4 w-4 text-purple-500" />;
+        return <Video className="h-4 w-4 text-purple-600" />;
       default:
-        return <Paperclip className="h-4 w-4 text-slate-500" />;
+        return <Paperclip className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  // Copy ticket ID to clipboard
   const copyTicketId = () => {
     navigator.clipboard.writeText(`#${ticket?.ticket_id || "N/A"}`);
     toast.success("Đã sao chép mã ticket vào clipboard.", {
@@ -184,62 +175,59 @@ export default function TicketDetailDialog({
     });
   };
 
-  // Render skeleton UI while loading or if ticket is missing
   if (!ticket || isLoading) {
     return (
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-lg overflow-hidden max-h-screen">
+      <div className="bg-white rounded-lg overflow-hidden max-h-screen">
         <div className="p-6 space-y-6">
           <div className="flex items-center justify-between">
-            <Skeleton className="h-8 w-1/2 bg-white/10" />
-            <Skeleton className="h-8 w-8 rounded-full bg-white/10" />
+            <Skeleton className="h-8 w-1/2 bg-gray-200" />
+            <Skeleton className="h-8 w-8 rounded-full bg-gray-200" />
           </div>
-          <Separator className="bg-white/10" />
+          <Separator className="bg-gray-200" />
           <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-12 bg-white/10 rounded-xl" />
-            <Skeleton className="h-12 bg-white/10 rounded-xl" />
+            <Skeleton className="h-12 bg-gray-200 rounded-xl" />
+            <Skeleton className="h-12 bg-gray-200 rounded-xl" />
           </div>
-          <Skeleton className="h-16 bg-white/10 rounded-xl" />
-          <Skeleton className="h-32 bg-white/10 rounded-2xl" />
-          <Skeleton className="h-32 bg-white/10 rounded-2xl" />
-          <Skeleton className="h-48 bg-white/10 rounded-2xl" />
+          <Skeleton className="h-16 bg-gray-200 rounded-xl" />
+          <Skeleton className="h-32 bg-gray-200 rounded-2xl" />
+          <Skeleton className="h-32 bg-gray-200 rounded-2xl" />
+          <Skeleton className="h-48 bg-gray-200 rounded-2xl" />
         </div>
       </div>
     );
   }
 
-  // Fallback for device icon
-  const deviceIcon = ticket.device?.type ? getDeviceIcon(ticket.device.type) : <Smartphone className="h-6 w-6 text-slate-500" />;
+  const deviceIcon = ticket.device?.type ? getDeviceIcon(ticket.device.type) : <Smartphone className="h-6 w-6 text-gray-500" />;
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white rounded-lg overflow-hidden max-h-screen flex flex-col">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur-sm p-4 border-b border-white/10">
+    <div className="bg-white rounded-lg overflow-hidden max-h-screen flex flex-col">
+      <div className="sticky top-0 z-10 bg-white/90 p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">{getStatusIcon(ticket.status)}</div>
             <div>
               <div className="flex items-center space-x-2 mb-1">
-                <h2 className="text-2xl font-bold">
+                <h2 className="text-2xl font-bold text-gray-900">
                   #{ticket.ticket_id} - {ticket.ticket_type_name}
                 </h2>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={copyTicketId}
-                  className="text-blue-300 hover:text-white hover:bg-white/20 h-auto p-2 transition-all duration-200"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-gray-100 h-auto p-2 transition-all duration-200"
                   aria-label="Sao chép mã ticket"
                 >
                   <Copy className="h-5 w-5" />
                 </Button>
               </div>
-              <p className="text-blue-400 text-sm">Tạo lúc: {getTimeAgo(ticket.created_at)}</p>
+              <p className="text-gray-600 text-sm">Tạo lúc: {getTimeAgo(ticket.created_at)}</p>
             </div>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200"
+            className="text-gray-900 hover:bg-gray-100 rounded-full p-2 transition-all duration-200"
             aria-label="Đóng dialog"
           >
             <X className="h-6 w-6" />
@@ -247,24 +235,22 @@ export default function TicketDetailDialog({
         </div>
       </div>
 
-      {/* Scrollable Content */}
       <ScrollArea className="flex-1 overflow-auto">
         <div className="p-6 space-y-8">
-          <Separator className="bg-white/10" />
+          <Separator className="bg-gray-200" />
 
-          {/* Status and Priority */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10 hover:border-blue-500 transition-all duration-200">
+            <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-blue-500 transition-all duration-200">
               <div className="flex items-center justify-between">
-                <span className="text-blue-200 font-medium text-sm">Trạng thái</span>
+                <span className="text-gray-600 font-medium text-sm">Trạng thái</span>
                 <Badge variant="outline" className={cn("text-sm font-semibold px-4 py-1.5", getStatusColor(ticket.status))}>
                   {getStatusText(ticket.status)}
                 </Badge>
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10 hover:border-blue-500 transition-all duration-200">
+            <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-blue-500 transition-all duration-200">
               <div className="flex items-center justify-between">
-                <span className="text-blue-200 font-medium text-sm">Mức độ</span>
+                <span className="text-gray-600 font-medium text-sm">Mức độ</span>
                 <Badge variant="outline" className={cn("text-sm font-semibold px-4 py-1.5", getPriorityColor(ticket.priority))}>
                   {getPriorityText(ticket.priority)}
                 </Badge>
@@ -272,11 +258,10 @@ export default function TicketDetailDialog({
             </div>
           </div>
 
-          {/* Progress Indicator */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-xl p-5 border border-white/10 hover:border-blue-500 transition-all duration-200">
+          <div className="bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-blue-500 transition-all duration-200">
             <div className="flex items-center justify-between text-sm mb-3">
-              <span className="text-blue-200 font-medium">Tiến độ xử lý</span>
-              <span className="text-white font-semibold">
+              <span className="text-gray-600 font-medium">Tiến độ xử lý</span>
+              <span className="text-gray-900 font-semibold">
                 {ticket.status === "pending" && "Chờ xử lý"}
                 {ticket.status === "in_progress" && "Đang xử lý"}
                 {ticket.status === "approved" && "Đã duyệt"}
@@ -284,74 +269,71 @@ export default function TicketDetailDialog({
                 {ticket.status === "rejected" && "Bị từ chối"}
               </span>
             </div>
-            <div className="w-full bg-white/10 rounded-full h-3">
+            <div className="w-full bg-gray-200 rounded-full h-3">
               <div
                 className={cn(
                   "h-3 rounded-full transition-all duration-500",
-                  ticket.status === "pending" && "bg-blue-500 w-1/4",
-                  ticket.status === "in_progress" && "bg-amber-500 w-1/2",
-                  ticket.status === "approved" && "bg-orange-500 w-3/4",
-                  ticket.status === "resolved" && "bg-emerald-500 w-full",
-                  ticket.status === "rejected" && "bg-red-500 w-[5%]"
+                  ticket.status === "pending" && "bg-blue-600 w-1/4",
+                  ticket.status === "in_progress" && "bg-amber-600 w-1/2",
+                  ticket.status === "approved" && "bg-orange-600 w-3/4",
+                  ticket.status === "resolved" && "bg-emerald-600 w-full",
+                  ticket.status === "rejected" && "bg-red-600 w-[5%]"
                 )}
               />
             </div>
           </div>
 
-          {/* Problem Description */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-blue-500 transition-all duration-200">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <MessageSquare className="h-6 w-6 mr-2 text-blue-400" />
+          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:border-blue-500 transition-all duration-200">
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
+              <MessageSquare className="h-6 w-6 mr-2 text-blue-600" />
               Mô tả vấn đề
             </h3>
-            <div className="bg-white/5 rounded-xl p-5">
-              <p className="text-white text-lg leading-relaxed">{ticket.description || "Không có mô tả."}</p>
+            <div className="bg-white rounded-xl p-5">
+              <p className="text-gray-900 text-lg leading-relaxed">{ticket.description || "Không có mô tả."}</p>
             </div>
           </div>
 
-          {/* Device Information */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-blue-500 transition-all duration-200">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <Settings className="h-6 w-6 mr-2 text-blue-400" />
+          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:border-blue-500 transition-all duration-200">
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
+              <Settings className="h-6 w-6 mr-2 text-blue-600" />
               Thông tin thiết bị
             </h3>
-            <div className="bg-white/5 rounded-xl p-5">
+            <div className="bg-white rounded-xl p-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <span className="text-blue-200 font-medium text-lg">Mã thiết bị</span>
-                  <p className="font-mono text-base text-white">{ticket.device_serial || "N/A"}</p>
+                  <span className="text-gray-600 font-medium text-lg">Mã thiết bị</span>
+                  <p className="font-mono text-base text-gray-900">{ticket.device_serial || "N/A"}</p>
                 </div>
               </div>
             </div>
           </div>
-          {/* Resolution */}
+
           {ticket.resolution && (
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-blue-500 transition-all duration-200">
-              <h3 className="text-xl font-semibold mb-4 flex items-center">
-                <CheckCircle className="h-6 w-6 mr-2 text-emerald-400" />
+            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:border-blue-500 transition-all duration-200">
+              <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
+                <CheckCircle className="h-6 w-6 mr-2 text-emerald-600" />
                 Giải pháp đã thực hiện
               </h3>
-              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5">
-                <p className="text-white text-lg leading-relaxed">{ticket.resolution}</p>
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5">
+                <p className="text-gray-900 text-lg leading-relaxed">{ticket.resolution}</p>
               </div>
             </div>
           )}
 
-          {/* Rating Section */}
           {ticket.status === "resolved" && (
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-blue-500 transition-all duration-200">
-              <h3 className="text-xl font-semibold mb-4 flex items-center">
+            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:border-blue-500 transition-all duration-200">
+              <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
                 <Star className="h-6 w-6 mr-2 text-yellow-600" />
                 Đánh giá dịch vụ
               </h3>
-              <div className="bg-white/5 rounded-xl p-5">
-                <p className="text-blue-200 text-base mb-4">
+              <div className="bg-white rounded-xl p-5">
+                <p className="text-gray-600 text-base mb-4">
                   {ticket.rating ? "Cảm ơn bạn đã đánh giá!" : "Hãy đánh giá chất lượng dịch vụ hỗ trợ:"}
                 </p>
                 <div className="flex items-center space-x-4">
                   {renderStars(!ticket.rating)}
                   {selectedRating > 0 && (
-                    <span className="text-base text-yellow-400 font-medium">
+                    <span className="text-base text-yellow-600 font-medium">
                       {selectedRating === 1 && "Rất không hài lòng"}
                       {selectedRating === 2 && "Không hài lòng"}
                       {selectedRating === 3 && "Bình thường"}
@@ -364,36 +346,35 @@ export default function TicketDetailDialog({
             </div>
           )}
 
-          {/* Comments Section */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-blue-500 transition-all duration-200">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
-              <MessageSquare className="h-6 w-6 mr-2 text-blue-400" />
+          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 hover:border-blue-500 transition-all duration-200">
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-gray-900">
+              <MessageSquare className="h-6 w-6 mr-2 text-blue-600" />
               Trao đổi với kỹ thuật viên ({comments.length})
             </h3>
             <div className="space-y-4 mb-6">
               {isLoading ? (
                 <>
-                  <Skeleton className="h-24 bg-white/10 rounded-xl" />
-                  <Skeleton className="h-24 bg-white/10 rounded-xl" />
+                  <Skeleton className="h-24 bg-gray-200 rounded-xl" />
+                  <Skeleton className="h-24 bg-gray-200 rounded-xl" />
                 </>
               ) : comments.length === 0 ? (
-                <p className="text-blue-200 text-center">Chưa có bình luận nào.</p>
+                <p className="text-gray-600 text-center">Chưa có bình luận nào.</p>
               ) : (
                 comments.map((comment) => (
-                  <div key={comment.id} className="bg-white/5 rounded-xl p-5 hover:bg-white/10 transition-all duration-200">
+                  <div key={comment.id} className="bg-white rounded-xl p-5 hover:bg-gray-50 transition-all duration-200">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-3">
                         <div
                           className={cn(
                             "w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold",
                             comment.author_type === "technician"
-                              ? "bg-blue-500/20 text-blue-400"
-                              : "bg-emerald-500/20 text-emerald-400"
+                              ? "bg-blue-100 text-blue-600"
+                              : "bg-emerald-100 text-emerald-600"
                           )}
                         >
                           {comment.author.charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-semibold text-lg text-white">{comment.author}</span>
+                        <span className="font-semibold text-lg text-gray-900">{comment.author}</span>
                         <Badge
                           variant="secondary"
                           className={cn(
@@ -406,9 +387,9 @@ export default function TicketDetailDialog({
                           {comment.author_type === "technician" ? "Kỹ thuật viên" : "Bạn"}
                         </Badge>
                       </div>
-                      <span className="text-sm text-blue-200">{getTimeAgo(comment.created_at)}</span>
+                      <span className="text-sm text-gray-600">{getTimeAgo(comment.created_at)}</span>
                     </div>
-                    <p className="text-white text-lg leading-relaxed mb-4">{comment.content}</p>
+                    <p className="text-gray-900 text-lg leading-relaxed mb-4">{comment.content}</p>
                     {comment.attachments.length > 0 && (
                       <div className="space-y-2">
                         {comment.attachments.map((attachment, index) => (
@@ -418,11 +399,11 @@ export default function TicketDetailDialog({
                               href={attachment.url || "#"}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-300 hover:text-blue-100 transition-colors duration-200"
+                              className="text-blue-600 hover:text-blue-700 transition-colors duration-200"
                             >
                               {attachment.name}
                             </a>
-                            <span className="text-blue-200">({attachment.size})</span>
+                            <span className="text-gray-600">({attachment.size})</span>
                           </div>
                         ))}
                       </div>

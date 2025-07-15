@@ -48,7 +48,7 @@ export default function AddHousePopup({ open, onOpenChange, onSave, groupId }) {
         icon_color_id: houseData.icon.colorId,
       };
 
-      const response = await fetch("http://localhost:7777/api/houses", {
+      const response = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/houses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

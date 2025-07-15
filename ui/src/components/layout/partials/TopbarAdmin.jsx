@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bell,
   Calendar,
@@ -14,8 +15,6 @@ import {
   Thermometer,
   Lightbulb,
   Shield,
-  Wifi,
-  WifiOff,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -26,24 +25,17 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Link } from "react-router-dom";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TopbarAdmin = () => {
   const { isOpen, toggle } = useSidebar();
+  const { employee, logoutEmployee } = useAuth();
   const [notifications, setNotifications] = useState(3);
-  const [isOnline, setIsOnline] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-
-  // Mock IoT status data
-  const iotStatus = {
-    temperature: "24°C",
-    connectedDevices: 12,
-    activeDevices: 8,
-    securityStatus: "Bảo mật",
-  };
-
-  // Notification data for SmartHome
+  const navigate = useNavigate();
+  // Mock notification data (có thể thay bằng API call)
   const notificationItems = [
     {
       id: 1,
@@ -52,29 +44,19 @@ const TopbarAdmin = () => {
       time: "2 phút trước",
       type: "warning",
       icon: Thermometer,
-    },
-    {
-      id: 2,
-      title: "Thiết bị kết nối",
-      message: "Đèn LED phòng ngủ đã được kết nối",
-      time: "5 phút trước",
-      type: "success",
-      icon: Lightbulb,
-    },
-    {
-      id: 3,
-      title: "Bảo mật",
-      message: "Phát hiện chuyển động tại cửa chính",
-      time: "10 phút trước",
-      type: "alert",
-      icon: Shield,
-    },
+    }
   ];
 
-  // User data
-  const username = "Nguyễn Văn A";
-  const email = "nguyenvana@smarthome.com";
-  const role = "Quản trị viên";
+  const handleLogout = async () => {
+    try {
+      await logoutEmployee(); // Gọi hàm logout từ useAuth
+      toast.success("Đăng xuất thành công!");
+      navigate("/admin/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      toast.error("Đăng xuất thất bại. Vui lòng thử lại.");
+    }
+  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -99,9 +81,8 @@ const TopbarAdmin = () => {
 
   return (
     <header
-      className={`fixed top-0 right-0 h-24 z-40 bg-gradient-to-b from-blue-900 to-blue-950 shadow-lg transition-all duration-300 ${
-        isOpen ? "left-[232px]" : "left-16"
-      }`}
+      className={`fixed top-0 right-0 h-24 z-40 bg-gradient-to-b from-blue-900 to-blue-950 shadow-lg transition-all duration-300 ${isOpen ? "left-[232px]" : "left-16"
+        }`}
     >
       <div className="flex items-center justify-between h-full px-4 md:px-8">
         {/* Left Side - Sidebar Toggle & Search */}
@@ -155,15 +136,14 @@ const TopbarAdmin = () => {
                       className="flex items-start p-4 gap-3 cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
                     >
                       <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          item.type === "warning"
-                            ? "bg-orange-100"
-                            : item.type === "success"
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${item.type === "warning"
+                          ? "bg-orange-100"
+                          : item.type === "success"
                             ? "bg-green-100"
                             : item.type === "alert"
-                            ? "bg-red-100"
-                            : "bg-blue-100"
-                        }`}
+                              ? "bg-red-100"
+                              : "bg-blue-100"
+                          }`}
                       >
                         <IconComponent className={`w-5 h-5 ${getNotificationColor(item.type)}`} />
                       </div>
@@ -177,9 +157,12 @@ const TopbarAdmin = () => {
                 })}
               </div>
               <div className="p-3 text-center border-t">
-                <Link to="/admin/notifications" className="text-blue-600 font-medium hover:text-blue-800 text-sm">
+                <a
+                  href="/admin/notifications"
+                  className="text-blue-600 font-medium hover:text-blue-800 text-sm"
+                >
                   Xem tất cả thông báo
-                </Link>
+                </a>
               </div>
             </div>
           </div>
@@ -192,8 +175,8 @@ const TopbarAdmin = () => {
                   <User className="w-4 h-4 text-white" />
                 </div>
                 <div className="hidden md:flex flex-col items-start">
-                  <span className="text-sm font-semibold text-white">{username}</span>
-                  <span className="text-xs text-blue-200">{role}</span>
+                  <span className="text-sm font-semibold text-white">{employee?.username}</span>
+                  <span className="text-xs text-blue-200">{employee?.role?.name}</span>
                 </div>
                 <ChevronDown className="w-4 h-4 hidden md:block text-white" />
               </button>
@@ -206,56 +189,25 @@ const TopbarAdmin = () => {
                   <User className="w-10 h-10 text-white" />
                 </div>
                 <div className="text-center">
-                  <div className="font-bold text-lg text-gray-800">{username}</div>
-                  <div className="text-sm text-gray-600">{email}</div>
+                  <div className="font-bold text-lg text-gray-800">{employee?.username}</div>
+                  <div className="text-sm text-gray-600">{employee?.username}</div>
                   <div className="mt-2 bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-0.5 rounded-full inline-block">
-                    {role}
+                    {employee?.role?.name ? (employee.role.name === "admin" ? "Quản trị viên" : employee.role.name) : "Quản trị viên"}
                   </div>
                 </div>
               </div>
 
               {/* Menu Items */}
               <div className="p-2 bg-white">
-                <DropdownMenuItem asChild>
-                  <a
-                    href="/profile"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
-                  >
-                    <User className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-gray-700 text-sm">Hồ sơ của tôi</span>
-                  </a>
-                </DropdownMenuItem>
 
                 <DropdownMenuItem asChild>
-                  <a
-                    href="/calendar"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
-                  >
-                    <Calendar className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-gray-700 text-sm">Lịch điều khiển</span>
-                  </a>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem asChild>
-                  <a
-                    href="/settings"
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-50 transition-colors w-full"
-                  >
-                    <Settings className="w-5 h-5 text-blue-600" />
-                    <span className="font-medium text-gray-700 text-sm">Cài đặt hệ thống</span>
-                  </a>
-                </DropdownMenuItem>
-
-                <div className="h-px bg-gray-200 my-2"></div>
-
-                <DropdownMenuItem asChild>
-                  <a
-                    href="/logout"
+                  <button
+                    onClick={handleLogout}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-red-50 text-red-600 transition-colors w-full"
                   >
                     <LogOut className="w-5 h-5" />
                     <span className="font-medium text-sm">Đăng xuất</span>
-                  </a>
+                  </button>
                 </DropdownMenuItem>
               </div>
             </DropdownMenuContent>

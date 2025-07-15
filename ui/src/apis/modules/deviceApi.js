@@ -15,7 +15,7 @@ const deviceEndpoints = {
     getSharedUsers: (serialNumber) => `permissions/get-shared-users/${serialNumber}`,
     lockDevice: (deviceId, serialNumber) => `customer-search/devices/${deviceId}/${serialNumber}/lock`,    // PUT - lock device
     unlockDevice: (deviceId, serialNumber) => `customer-search/devices/${deviceId}/${serialNumber}/unlock`, // PUT - unlock device
-    
+
     // Door control endpoints (dựa theo IoT_HomeConnect_API_v2)
     toggleDoor: (serialNumber) => `doors/${serialNumber}/toggle`,                                            // POST - toggle door open/close
     getDoorStatus: (serialNumber) => `doors/${serialNumber}/status`,                                         // GET - get door status
@@ -51,7 +51,7 @@ export const deviceApi = {
                 serial_number: serialNumber,
                 updates: [controlData] // Convert single control to array format
             };
-            
+
             const response = await publicClient.post(deviceEndpoints.bulkUpdate(serialNumber), bulkData);
             console.log('API Response - updateDeviceControl:', response);
             return response;
@@ -64,12 +64,12 @@ export const deviceApi = {
     // Bulk update nhiều controls cùng lúc
     bulkUpdateDeviceControls: async (serialNumber, controlsArray) => {
         try {
-            
+
             const bulkData = {
                 serial_number: serialNumber,
                 updates: controlsArray
             };
-            
+
             const response = await publicClient.post(deviceEndpoints.bulkUpdate(serialNumber), bulkData);
             return response;
         } catch (error) {
@@ -134,15 +134,15 @@ export const deviceApi = {
     toggleDevicePower: async (deviceId, powerStatus, serialNumber) => {
         try {
             console.log('API Call: toggleDevicePower with deviceId:', deviceId, 'powerStatus:', powerStatus);
-            
+
             // Format data for toggle API
             const toggleData = {
                 power_status: powerStatus,
                 serial_number: serialNumber
             };
-            
+
             const response = await publicClient.put(deviceEndpoints.toggle(deviceId), toggleData);
-            
+
             return response;
         } catch (error) {
             console.error('Error in toggleDevicePower:', error);
@@ -208,18 +208,18 @@ export const deviceApi = {
     },
 
     // Door control APIs (dựa theo IoT_HomeConnect_API_v2)
-    
+
     // Toggle door open/close
     toggleDoor: async (serialNumber, power_status = true, force = false, timeout = 5000) => {
         try {
             console.log('API Call: toggleDoor with serialNumber:', serialNumber, 'power_status:', power_status);
-            
+
             const doorData = {
                 power_status,
                 force,
                 timeout
             };
-            
+
             const response = await publicClient.post(deviceEndpoints.toggleDoor(serialNumber), doorData);
             console.log('API Response - toggleDoor:', response);
             return response;

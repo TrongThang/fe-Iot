@@ -26,7 +26,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
 import axiosPrivate from "@/apis/clients/private.client"
 import StatisticsChart from "@/components/common/StatisticsChart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -46,45 +45,43 @@ export default function IoTDashboard() {
     const [selectedSpaceForStats, setSelectedSpaceForStats] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const fetchData = async () => {
+        setLoading(true)
+        setError(null)
+        try {
+            console.log('Fetching data...')
+            const [cardResponse, statisticResponse, devicesResponse] = await Promise.all([
+                axiosPrivate.get('statistic/card'),
+                axiosPrivate.get('statistic'),
+                axiosPrivate.get('devices/account')
+            ])
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true)
-            setError(null)
-            try {
-                console.log('Fetching data...')
-                const [cardResponse, statisticResponse, devicesResponse] = await Promise.all([
-                    axiosPrivate.get('statistic/card'),
-                    axiosPrivate.get('statistic'),
-                    axiosPrivate.get('devices/account')
-                ])
+            console.log('Card response:', cardResponse)
+            console.log('Statistic response:', statisticResponse)
+            console.log('Devices response:', devicesResponse)
 
-                console.log('Card response:', cardResponse)
-                console.log('Statistic response:', statisticResponse)
-                console.log('Devices response:', devicesResponse)
-
-                if (cardResponse.success) {
-                    setSystemStats(cardResponse.data)
-                }
-                if (statisticResponse.success) {
-                    setSpaceEnvironmentalData(statisticResponse.data || [])
-                    if (statisticResponse.data && statisticResponse.data.length > 0) {
-                        setSelectedSpaceForStats(statisticResponse.data[0].space_id.toString())
-                    }
-                }
-                if (devicesResponse.success) {
-                    setDevices(devicesResponse.data || [])
-                    console.log('Devices set:', devicesResponse.data)
-                }
-            } catch (error) {
-                console.error('Error fetching data:', error)
-                setError('Không thể tải dữ liệu. Vui lòng thử lại sau.')
-            } finally {
-                setLoading(false)
+            if (cardResponse.success) {
+                setSystemStats(cardResponse.data)
             }
+            if (statisticResponse.success) {
+                setSpaceEnvironmentalData(statisticResponse.data || [])
+                if (statisticResponse.data && statisticResponse.data.length > 0) {
+                    setSelectedSpaceForStats(statisticResponse.data[0].space_id.toString())
+                }
+            }
+            if (devicesResponse.success) {
+                setDevices(devicesResponse.data || [])
+                console.log('Devices set:', devicesResponse.data)
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error)
+            setError('Không thể tải dữ liệu. Vui lòng thử lại sau.')
+        } finally {
+            setLoading(false)
         }
+    }
+    useEffect(() => {
         fetchData()
-
         const timeInterval = setInterval(() => {
             setCurrentTime(new Date())
         }, 60000)

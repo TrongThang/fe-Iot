@@ -61,17 +61,17 @@ export default function DeviceManagement({
     status: "all",
   });
 
-	const [devices, setDevices] = useState([])
-	
-	// Socket context for real-time device communication
-	const { 
-		user, 
-		isConnected, 
-		connectToDevice,
-		disconnectFromDevice,
-		emergencyAlerts,
-		dismissEmergencyAlert
-	} = useSocketContext()
+  const [devices, setDevices] = useState([]);
+  
+  // Socket context for real-time device communication
+  const { 
+    user, 
+    isConnected, 
+    connectToDevice,
+    disconnectFromDevice,
+    emergencyAlerts,
+    dismissEmergencyAlert
+  } = useSocketContext();
 
   const navigate = useNavigate();
 
@@ -377,28 +377,22 @@ export default function DeviceManagement({
     fetchDevice();
   }, []);
 
-	// Global socket connection DISABLED - use device-specific connections
-	// Device connections will be handled by individual device components
-	useEffect(() => {
-		if (user) {
-			console.log('👤 User authenticated, ready for device-specific connections:', user.id || user.account_id);
-			console.log('💡 Global socket connection disabled - devices will connect individually');
-		}
-	}, [user])
+  useEffect(() => {
+    if (user) {
+      console.log("👤 User authenticated, ready for device-specific connections:", user.id || user.account_id);
+      console.log("💡 Global socket connection disabled - devices will connect individually");
+    }
+  }, [user]);
 
-  // Handle emergency alerts
   useEffect(() => {
     if (emergencyAlerts.length > 0) {
       emergencyAlerts.forEach((alert) => {
         console.log("🚨 EMERGENCY ALERT:", alert);
-        // Show emergency notification (using toast for consistency)
         toast.error(`Cảnh báo khẩn cấp: ${alert.message}`);
-        // Note: Removed auto-dismiss timeout to avoid time-related logic
       });
     }
   }, [emergencyAlerts, dismissEmergencyAlert]);
 
-  // Enable real-time monitoring for selected device
   useEffect(() => {
     if (selectedDevice && user && isConnected && enableRealTime) {
       console.log("🔴 Starting real-time monitoring for:", selectedDevice.serial_number);
@@ -442,6 +436,15 @@ export default function DeviceManagement({
           : device,
       ),
     );
+    
+    // Sync selectedDevice if it matches the toggled device
+    if (selectedDevice && selectedDevice.id === deviceId) {
+      setSelectedDevice((prev) => ({
+        ...prev,
+        power_status: !prev.power_status,
+        status: !prev.power_status ? "active" : "inactive",
+      }));
+    }
   };
 
   const handleDeleteDevice = (deviceId) => {
@@ -634,7 +637,7 @@ export default function DeviceManagement({
         camera={selectedDevice}
         onBack={() => setSelectedDevice(null)}
         onUpdateCamera={(updatedCamera) => {
-          setDevices(devices.map((d) => (d.id === updatedCamera.id ? { ...d, ...updatedCamera } : d)));
+          setDevices(devices.map((d) => (d.device_id === updatedCamera.device_id ? { ...d, ...updatedCamera } : d)));
           setSelectedDevice(updatedCamera);
         }}
       />
@@ -652,11 +655,6 @@ export default function DeviceManagement({
               </Button>
 
               <div className="flex items-center space-x-3">
-                <div
-                  className={`w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md`}
-                >
-                  {getSpaceIcon(spaceType)}
-                </div>
                 <div>
                   <h1
                     className={cn(
@@ -664,7 +662,7 @@ export default function DeviceManagement({
                       selectedDevice && selectedDevice.type !== "camera" ? "text-lg md:text-xl" : "text-xl",
                     )}
                   >
-                    {spaceName}
+                    Danh sách thiết bị
                     <span
                       className={cn(
                         "ml-2 text-sm font-normal text-slate-500",
@@ -752,12 +750,6 @@ export default function DeviceManagement({
                       className="bg-gray-100 hover:bg-white data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-colors"
                     >
                       Tất cả ({filteredDevices.length})
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="mine"
-                      className="bg-gray-100 hover:bg-white data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-colors"
-                    >
-                      Của tôi ({myDevices.length})
                     </TabsTrigger>
                     <TabsTrigger
                       value="shared"
@@ -849,16 +841,7 @@ export default function DeviceManagement({
                       <div className="flex items-center space-x-3">
                         <Switch
                           checked={selectedDevice.power_status}
-                          onCheckedChange={(checked) => {
-                            setDevices(
-                              devices.map((device) =>
-                                device.device_id === selectedDevice.device_id
-                                  ? { ...device, power_status: checked, status: checked ? "active" : "inactive" }
-                                  : device,
-                              ),
-                            );
-                            setSelectedDevice({ ...selectedDevice, power_status: checked });
-                          }}
+                          onCheckedChange={(checked) => handleToggle(checked, selectedDevice.device_id)}
                           className="data-[state=checked]:bg-green-500"
                         />
                         <DropdownMenu>
@@ -868,12 +851,12 @@ export default function DeviceManagement({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditDevice(selectedDevice.id)}>
+                            <DropdownMenuItem onClick={() => handleEditDevice(selectedDevice.device_id)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Chỉnh sửa
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => handleDeleteDevice(selectedDevice.id)}
+                              onClick={() => handleDeleteDevice(selectedDevice.device_id)}
                               className="text-red-600"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
@@ -890,18 +873,16 @@ export default function DeviceManagement({
                         </DropdownMenu>
                       </div>
                     </div>
-
                     <Separator className="mb-6" />
-
                     {enableRealTime ? (
                       <RealTimeDeviceControl
-                        key={selectedDevice.id}
+                        key={selectedDevice.device_id}
                         device={selectedDevice}
                         accountId={user?.id || user?.account_id}
                       />
                     ) : (
                       <DynamicDeviceDetail
-                        key={selectedDevice.id} // Force re-render when device changes
+                        key={selectedDevice.device_id} // Force re-render when device changes
                         device={selectedDevice}
                       />
                     )}

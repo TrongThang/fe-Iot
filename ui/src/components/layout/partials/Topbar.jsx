@@ -38,7 +38,6 @@ import axiosPrivate from "@/apis/clients/private.client";
 const Topbar = () => {
   const { isOpen, toggle } = useSidebar();
   const [notifications, setNotifications] = useState([]);
-  const [isOnline, setIsOnline] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

@@ -146,7 +146,7 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
                     )}
 
                     {/* Device Lock Status */}
-                    <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 rounded-lg ">
                         <div className="flex items-center space-x-3">
                             {isLocked ? (
                                 <Lock className="w-5 h-5 text-red-500" />
@@ -157,7 +157,7 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
                                 <p className="font-medium">
                                     {isLocked ? "Thiết bị đã bị khoá" : "Thiết bị đang hoạt động"}
                                 </p>
-                                <p className="text-sm text-slate-600">
+                                <p className="text-sm text-slate-600 ">
                                     {isLocked
                                         ? "Tất cả điều khiển đã bị vô hiệu hoá"
                                         : "Thiết bị có thể được điều khiển bình thường"
@@ -196,19 +196,21 @@ const DeviceSecurityActions = ({ device, onSecurityUpdate }) => {
                             </span>
                         </div>
                         {device?.serial_number && (
-                            <div className="flex items-center justify-between text-sm">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between text-sm gap-1">
                                 <div className="flex items-center space-x-2">
                                     <Shield className="w-4 h-4 text-slate-500" />
                                     <span className="text-slate-600">Serial:</span>
                                 </div>
-                                <span className="font-mono text-xs">{device.serial_number}</span>
+                                <span className="font-mono text-xs break-all text-slate-800 max-w-full sm:max-w-[200px] text-right">
+                                    {device.serial_number}
+                                </span>
                             </div>
                         )}
                     </div>
 
                     {/* Emergency Lock */}
-                    <div className="pt-4 border-t border-slate-200">
-                        <AlertDialog className="bg-white rounded-lg shadow-lg">
+                    <div className="pt-4 border-t border-slate-200 ">
+                        <AlertDialog className="bg-white rounded-lg shadow-lg bg-white">
                             <AlertDialogTrigger asChild>
                                 <Button
                                     variant="destructive"

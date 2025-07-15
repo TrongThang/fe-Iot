@@ -29,7 +29,7 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
             return [];
         }
         try {
-            const res = await fetch(`http://localhost:7777/api/spaces/house/${currentHouseId}`, {
+            const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/spaces/house/${currentHouseId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -59,7 +59,7 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
             return;
         }
         try {
-            const res = await fetch(`http://localhost:7777/api/spaces/${spaceId}`, {
+            const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/spaces/${spaceId}`, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
@@ -92,7 +92,7 @@ export default function EditDeviceDialog({ open, onOpenChange, onEdit, device, h
         }
         setIsEditing(true)
         try {
-            const res = await fetch(`http://localhost:7777/api/devices/${device.device_id}/space`, {
+            const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/devices/${device.device_id}/space`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

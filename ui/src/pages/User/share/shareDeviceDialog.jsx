@@ -33,7 +33,7 @@ export default function DeviceSharingDialog({ deviceId, device, onClose }) {
 
   const fetchUserInfo = async () => {
     try {
-      const response = await fetch('http://localhost:7777/api/auth/getMe', {
+      const response = await fetch('https://iothomeconnectapiv2-production.up.railway.app/api/auth/getMe', {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,

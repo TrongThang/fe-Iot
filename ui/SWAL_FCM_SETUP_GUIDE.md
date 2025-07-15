@@ -83,7 +83,7 @@ REACT_APP_SOCKET_RECONNECT_ATTEMPTS=5
 #### Via API Testing
 ```bash
 # Test fire alert
-curl -X POST http://localhost:7777/api/test/fire-alert \
+curl -X POST https://iothomeconnectapiv2-production.up.railway.app/api/test/fire-alert \
   -H "Content-Type: application/json" \
   -d '{"alertType": "fire", "severity": "critical"}'
 ```

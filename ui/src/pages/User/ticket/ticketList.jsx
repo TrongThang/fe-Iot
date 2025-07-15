@@ -437,22 +437,6 @@ export default function TicketList() {
                   >
                     Cũ nhất
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSortBy("priority");
-                      setSortOrder("asc");
-                    }}
-                  >
-                    Ưu tiên cao nhất
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSortBy("updated_at");
-                      setSortOrder("desc");
-                    }}
-                  >
-                    Cập nhật gần đây
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

@@ -28,7 +28,7 @@ export default function HouseTab({ houses, setHouses, isAddHousePopupOpen, setIs
 
   const fetchSpaces = async (houseId) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/spaces/house/${houseId}`, {
+      const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/spaces/house/${houseId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -59,7 +59,7 @@ export default function HouseTab({ houses, setHouses, isAddHousePopupOpen, setIs
         return
       }
 
-      const res = await fetch(`http://localhost:7777/api/houses/group/${groupId}`, {
+      const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/houses/group/${groupId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -132,7 +132,7 @@ export default function HouseTab({ houses, setHouses, isAddHousePopupOpen, setIs
           return
         }
 
-        const res = await fetch(`http://localhost:7777/api/houses/${houseId}`, {
+        const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/houses/${houseId}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",

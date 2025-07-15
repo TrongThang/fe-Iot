@@ -62,7 +62,7 @@ const SharedUsersList = ({ device, onUpdateSharedUser, onRemoveSharedUser, refre
         try {
             const response = await deviceApi.getSharedUsers(device.serial_number);
             console.log("📋 Shared users API response:", response);
-            
+
             if (response && response.data && Array.isArray(response.data)) {
                 // Map API response to component format
                 const formattedUsers = response.data.map(user => ({
@@ -82,7 +82,7 @@ const SharedUsersList = ({ device, onUpdateSharedUser, onRemoveSharedUser, refre
                     customer_email: user.customer_email,
                     customer_image: user.customer_image
                 }));
-                
+
                 console.log("✅ Formatted shared users:", formattedUsers);
                 setSharedUsers(formattedUsers);
             } else {
@@ -224,22 +224,22 @@ const SharedUsersList = ({ device, onUpdateSharedUser, onRemoveSharedUser, refre
                                                         {user.customer_email || user.email}
                                                     </p>
 
-                                                                                        <div className="flex items-center space-x-4 text-xs text-slate-500">
-                                        {permissionConfig[user.permission_level] && (
-                                            <Badge 
-                                                variant="outline" 
-                                                className={`${permissionConfig[user.permission_level].color} text-xs`}
-                                            >
-                                                <PermissionIcon className="w-3 h-3 mr-1" />
-                                                {permissionConfig[user.permission_level].label}
-                                            </Badge>
-                                        )}
-                                        
-                                        <span className="flex items-center">
-                                            <Calendar className="w-3 h-3 mr-1" />
-                                            {formatDate(user.shared_at)}
-                                        </span>
-                                    </div>
+                                                    <div className="flex items-center space-x-4 text-xs text-slate-500">
+                                                        {permissionConfig[user.permission_level] && (
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={`${permissionConfig[user.permission_level].color} text-xs`}
+                                                            >
+                                                                <PermissionIcon className="w-3 h-3 mr-1" />
+                                                                {permissionConfig[user.permission_level].label}
+                                                            </Badge>
+                                                        )}
+
+                                                        <span className="flex items-center">
+                                                            <Calendar className="w-3 h-3 mr-1" />
+                                                            {formatDate(user.shared_at)}
+                                                        </span>
+                                                    </div>
 
                                                     {user.expires_at && (
                                                         <p className="text-xs text-slate-500 mt-1">
@@ -260,23 +260,23 @@ const SharedUsersList = ({ device, onUpdateSharedUser, onRemoveSharedUser, refre
                                                 </div>
                                             </div>
 
-                                                                        {/* Actions */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                        <MoreVertical className="w-4 h-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem
-                                        onClick={() => setRemoveDialog({ open: true, user })}
-                                        className="text-red-600 focus:text-red-600"
-                                    >
-                                        <UserMinus className="w-4 h-4 mr-2" />
-                                        Xoá quyền truy cập
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                            {/* Actions */}
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                        <MoreVertical className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() => setRemoveDialog({ open: true, user })}
+                                                        className="text-red-600 focus:text-red-600"
+                                                    >
+                                                        <UserMinus className="w-4 h-4 mr-2" />
+                                                        Xoá quyền truy cập
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
 
                                         {index < sharedUsers.length - 1 && (

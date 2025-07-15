@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 // Tạo instance axios
 const axiosPrivate = axios.create({
-    baseURL: process.env.REACT_APP_SMART_NET_IOT_API_URL || "http://localhost:7777/api/",
+    baseURL: process.env.REACT_APP_SMART_NET_IOT_API_URL || "https://iothomeconnectapiv2-production.up.railway.app/api/",
     timeout: 1000000,
     headers: {
         'Accept': 'application/json',

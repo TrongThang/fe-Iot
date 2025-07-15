@@ -57,7 +57,7 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
 
   const fetchDevice = async (spaceId, groupId) => {
     try {
-      const res = await fetch(`http://localhost:7777/api/devices/space/${spaceId}?groupId=${groupId}`, {
+      const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/devices/space/${spaceId}?groupId=${groupId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -77,10 +77,36 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
     }
   }
 
+  const fetchFirmware = async (firmwareId) => {
+    try {
+      const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/firmwares/details/${firmwareId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedDevice((prev) => ({
+          ...prev,
+          firmware_version: data.version,
+          firmware_id: data.firmware_id,
+        }));
+      } else {
+        console.error(`Failed to fetch firmware ${firmwareId}: ${res.status} ${res.statusText}`);
+      }
+    } catch (error) {
+      console.error(`Error fetching firmware ${firmwareId}:`, error);
+    }
+  }
   // Simulate loading data  
   useEffect(() => {
     if (spaceId && id) {
       fetchDevice(spaceId, id)
+    }
+    if (selectedDevice?.firmware_id) {
+      fetchFirmware(selectedDevice.firmware_id)
     }
     const timer = setTimeout(() => {
       setIsLoading(false)
@@ -200,7 +226,7 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
 
     if (result.isConfirmed) {
       try {
-        const res = await fetch(`http://localhost:7777/api/devices/${deviceId}?groupId=${id}`, {
+        const res = await fetch(`https://iothomeconnectapiv2-production.up.railway.app/api/devices/${deviceId}?groupId=${id}`, {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
@@ -290,8 +316,6 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
         return "from-gray-500 to-gray-600"
     }
   }
-
-
 
   const getSpaceIcon = (type) => {
     const iconProps = { className: "h-5 w-5 text-white" }
@@ -582,6 +606,8 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
                     setDevices(devices.map((d) => (d.device_id === updatedDevice.device_id ? updatedDevice : d)))
                     setSelectedDevice(updatedDevice)
                   }}
+
+                  houseId={houseId}
                   onEdit={handleDeviceEdit}
                   onDelete={handleDeleteDevice}
                   onLockToggle={handleLockToggle}

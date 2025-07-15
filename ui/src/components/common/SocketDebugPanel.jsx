@@ -126,8 +126,8 @@ const SocketDebugPanel = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-96">
-      <Card className="shadow-xl border-2">
+    <div className="fixed bottom-4 right-4 z-40 w-96 ">
+      <Card className="shadow-xl border-2 bg-white">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center">

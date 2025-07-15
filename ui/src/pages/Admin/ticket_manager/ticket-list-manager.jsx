@@ -19,8 +19,8 @@ import {
     RefreshCw,
 } from "lucide-react"
 import TicketDetailDialogAdmin from "./ticket-details-manager"
-import axiosPublic from "@/apis/clients/public.client"
 import { toast } from "sonner"
+import axios from "axios"
 
 const statusConfig = {
     rejected: {
@@ -73,9 +73,14 @@ export default function AdminTicketsDashboard() {
     const fetchTicket = async () => {
         setLoading(true)
         try {
-            const response = await axiosPublic.get("/tickets")
-            if (response?.status_code === 200) {
-                setTickets(response?.data?.data)
+            const response = await axios.get("https://iothomeconnectapiv2-production.up.railway.app/api/tickets", {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("employeeToken")}`
+                }
+            })
+            if (response.status === 200) {
+                setTickets(response?.data?.data.data)
             } else {
                 toast.error("Lỗi", { description: "Không thể tải danh sách ticket" })
             }
@@ -116,9 +121,9 @@ export default function AdminTicketsDashboard() {
     const getStatusBadge = (status) => {
         const config = statusConfig[status];
         const Icon = config?.icon;
-    
+
         if (!config) return "N/A";
-    
+
         return (
             <Badge className={`flex items-center gap-1 ${config.className}`}>
                 <Icon className="w-3 h-3" />

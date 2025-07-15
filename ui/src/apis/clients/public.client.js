@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const axiosPublic = axios.create({
-    baseURL: process.env.REACT_APP_SMART_NET_IOT_API_URL || "http://localhost:7777/api/", // Địa chỉ API public
+    baseURL: process.env.REACT_APP_SMART_NET_IOT_API_URL || "https://iothomeconnectapiv2-production.up.railway.app/api/", // Địa chỉ API public
     headers: {
         // 'ngrok-skip-browser-warning': 'true',
         'Accept': 'application/json',
@@ -52,7 +52,5 @@ axiosPublic.interceptors.response.use(
         }
     }
 )
-
-
 
 export default axiosPublic
