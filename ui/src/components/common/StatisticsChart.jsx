@@ -23,9 +23,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { 
-    BarChart3, 
-    TrendingUp, 
+import {
+    BarChart3,
+    TrendingUp,
     Calendar,
     Thermometer,
     Droplets,
@@ -78,26 +78,26 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
     // Memoized format function
     const formatTimestamp = useCallback((date, period) => {
         console.log(`🕐 Formatting timestamp:`, { date, period })
-        
+
         if (!date) {
             console.warn(`⚠️ Empty date for formatting`)
             return 'Không có ngày'
         }
-        
+
         const dateObj = new Date(date)
-        
+
         if (isNaN(dateObj.getTime())) {
             console.warn(`⚠️ Invalid date:`, date)
             return 'Ngày không hợp lệ'
         }
-        
+
         let formatted = ''
-        
+
         try {
             switch (period) {
                 case 'daily':
-                    formatted = dateObj.toLocaleDateString('vi-VN', { 
-                        day: '2-digit', 
+                    formatted = dateObj.toLocaleDateString('vi-VN', {
+                        day: '2-digit',
                         month: '2-digit',
                         year: '2-digit'
                     })
@@ -109,8 +109,8 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                     formatted = `Tuần ${weekNumber}/${dateObj.getFullYear()}`
                     break
                 case 'monthly':
-                    formatted = dateObj.toLocaleDateString('vi-VN', { 
-                        month: '2-digit', 
+                    formatted = dateObj.toLocaleDateString('vi-VN', {
+                        month: '2-digit',
                         year: 'numeric'
                     })
                     break
@@ -124,7 +124,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
             console.error(`❌ Error formatting date:`, err)
             formatted = 'Lỗi định dạng'
         }
-        
+
         console.log(`✅ Formatted timestamp: "${formatted}"`)
         return formatted
     }, [])
@@ -143,14 +143,14 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
     // Unified data fetching
     const fetchData = useCallback(async (type) => {
         if (!spaceId) return
-        
+
         setLoading(true)
         setError(null)
         setStatisticsData([])
 
         try {
             let endpoint, params
-            
+
             switch (type) {
                 case 'space-stats':
                     endpoint = `statistic/space/${spaceId}/statistics`
@@ -171,13 +171,13 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
 
             console.log(`🔄 Fetching ${type} from ${endpoint}...`, { params })
             const result = await makeAPICall(endpoint, params)
-            
+
             console.log(`📥 Raw API response for ${type}:`, result)
             console.log(`📥 Response type:`, typeof result, Array.isArray(result))
-            
+
             // SỬA: Kiểm tra response format
             let actualData = null
-            
+
             if (Array.isArray(result)) {
                 // API trả về array trực tiếp
                 console.log(`📊 Direct array response`)
@@ -193,7 +193,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
             } else {
                 console.log(`❌ Unknown response format:`, result)
             }
-            
+
             if (type === 'devices') {
                 console.log(`📱 Setting devices:`, actualData)
                 setDevicesInSpace(actualData || [])
@@ -206,19 +206,19 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                 // Xử lý statistics data
                 if (actualData && Array.isArray(actualData) && actualData.length > 0) {
                     console.log(`📊 Processing ${actualData.length} data points...`)
-                    
+
                     const transformedData = actualData.map((item, index) => {
                         console.log(`🔄 Processing item ${index}:`, item)
-                        
+
                         // Kiểm tra cấu trúc data
                         if (!item) {
                             console.warn(`⚠️ Null item at index ${index}`)
                             return null
                         }
-                        
+
                         // Kiểm tra avg_value hoặc data nằm trực tiếp trong item
                         let sensorData = {}
-                        
+
                         if (item.avg_value && typeof item.avg_value === 'object') {
                             console.log(`📊 Using avg_value:`, item.avg_value)
                             sensorData = item.avg_value
@@ -227,13 +227,13 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                             console.log(`📊 Checking for direct sensor data in item`)
                             const directSensorKeys = ['temperature', 'humidity', 'gas', 'power_consumption', 'pressure', 'light', 'motion', 'sound']
                             const foundSensorData = {}
-                            
+
                             directSensorKeys.forEach(key => {
                                 if (item[key] !== undefined && item[key] !== null) {
                                     foundSensorData[key] = item[key]
                                 }
                             })
-                            
+
                             if (Object.keys(foundSensorData).length > 0) {
                                 console.log(`📊 Found direct sensor data:`, foundSensorData)
                                 sensorData = foundSensorData
@@ -241,7 +241,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                                 console.warn(`⚠️ No sensor data found in item ${index}:`, item)
                             }
                         }
-                        
+
                         const transformed = {
                             timestamp: formatTimestamp(item.timestamp, selectedPeriod),
                             rawTimestamp: item.timestamp,
@@ -250,13 +250,13 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                             // Spread sensor data ra ngoài
                             ...sensorData
                         }
-                        
+
                         console.log(`✅ Transformed item ${index}:`, transformed)
                         return transformed
                     }).filter(Boolean)
-                    
+
                     console.log(`📈 Final transformed data (${transformedData.length} items):`, transformedData)
-                    
+
                     if (transformedData.length > 0) {
                         setStatisticsData(transformedData)
                         setError(null)
@@ -334,7 +334,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                         const IconComponent = config?.icon || Shield
                         const metricLabel = config?.label || entry.dataKey
                         const unit = config?.unit || ''
-                        
+
                         return (
                             <div key={index} className="flex items-center space-x-2 text-sm">
                                 <IconComponent className="h-4 w-4" style={{ color: entry.color }} />
@@ -359,7 +359,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
     // Chart rendering functions
     const getMetricsToShow = useCallback(() => {
         if (statisticsData.length === 0) return []
-        return Object.keys(statisticsData[0]).filter(key => 
+        return Object.keys(statisticsData[0]).filter(key =>
             !['timestamp', 'rawTimestamp', 'total_samples', 'active_devices'].includes(key)
         )
     }, [statisticsData])
@@ -414,7 +414,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
             data: statisticsData,
             hasData: statisticsData.length > 0
         })
-        
+
         if (statisticsData.length === 0) {
             return (
                 <div className="flex items-center justify-center h-64 text-slate-500">
@@ -422,14 +422,14 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                         <BarChart3 className="h-12 w-12 mx-auto mb-4 text-slate-300" />
                         <h3 className="text-lg font-medium text-slate-700 mb-2">Không có dữ liệu</h3>
                         <p className="text-sm mb-4">
-                            {statsMode === 'space' 
+                            {statsMode === 'space'
                                 ? 'Không gian này chưa có dữ liệu thống kê'
                                 : 'Thiết bị này chưa có dữ liệu thống kê'
                             }
                         </p>
-                        
+
                         <div className="space-y-3">
-                            <Button 
+                            <Button
                                 onClick={() => {
                                     console.log(`🔄 Manual refresh for:`, { spaceId, statsMode, selectedDevice, selectedPeriod })
                                     fetchData(statsMode === 'space' ? 'space-stats' : 'device-stats')
@@ -440,7 +440,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                                 <RefreshCw className="h-4 w-4 mr-2" />
                                 Thử lại
                             </Button>
-                            
+
                             {/* Debug panel */}
                             <details className="text-xs">
                                 <summary className="cursor-pointer text-blue-600">Debug Info</summary>
@@ -463,7 +463,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
 
         const metricsToShow = getMetricsToShow()
         console.log(`📈 Metrics available:`, metricsToShow)
-        
+
         if (metricsToShow.length === 0) {
             return (
                 <div className="flex items-center justify-center h-64 text-slate-500">
@@ -507,9 +507,9 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
         return (
             <ChartComponent {...commonProps}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis 
-                    dataKey="timestamp" 
-                    stroke="#64748b" 
+                <XAxis
+                    dataKey="timestamp"
+                    stroke="#64748b"
                     fontSize={12}
                     angle={-45}
                     textAnchor="end"
@@ -562,7 +562,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                         </div>
                     </div>
                 )}
-                
+
                 <div>
                     <h4 className="font-semibold text-slate-900 mb-3">Thông số môi trường hiện tại</h4>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -601,17 +601,17 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                             )
                         })}
                     </div>
-                    
+
                     <div className="mt-4 p-3 bg-white rounded-lg border">
                         <div className="flex justify-between text-sm text-slate-600 mb-2">
                             <span>Tỷ lệ thiết bị hoạt động</span>
                             <span>{displayData.total_devices > 0 ? Math.round((displayData.active_devices / displayData.total_devices) * 100) : 0}%</span>
                         </div>
                         <div className="w-full bg-slate-200 rounded-full h-3">
-                            <div 
+                            <div
                                 className="bg-emerald-500 h-3 rounded-full transition-all duration-300"
-                                style={{ 
-                                    width: `${displayData.total_devices > 0 ? (displayData.active_devices / displayData.total_devices) * 100 : 0}%` 
+                                style={{
+                                    width: `${displayData.total_devices > 0 ? (displayData.active_devices / displayData.total_devices) * 100 : 0}%`
                                 }}
                             ></div>
                         </div>
@@ -655,13 +655,13 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                                 <p><strong>Loại biểu đồ:</strong> {chartType}</p>
                             </div>
                         </div>
-                        
+
                         <div className="mt-3">
                             <p className="font-medium mb-2">Metrics có sẵn:</p>
                             <div className="flex flex-wrap gap-2">
                                 {Object.keys(statisticsData[0] || {}).map(key => (
-                                    <Badge 
-                                        key={key} 
+                                    <Badge
+                                        key={key}
                                         variant={['timestamp', 'rawTimestamp', 'total_samples', 'active_devices'].includes(key) ? 'secondary' : 'default'}
                                     >
                                         {metricConfig[key]?.label || key}
@@ -699,8 +699,8 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                     <div className="text-center">
                         <RefreshCw className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-2" />
                         <span className="text-slate-600">
-                            {statsMode === 'space' 
-                                ? 'Đang tải dữ liệu thống kê không gian...' 
+                            {statsMode === 'space'
+                                ? 'Đang tải dữ liệu thống kê không gian...'
                                 : 'Đang tải dữ liệu thống kê thiết bị...'
                             }
                         </span>
@@ -716,7 +716,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                         <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-400" />
                         <h3 className="text-lg font-medium text-slate-700 mb-2">Lỗi tải dữ liệu</h3>
                         <p className="text-sm mb-4">{error}</p>
-                        <Button 
+                        <Button
                             onClick={() => fetchData(statsMode === 'space' ? 'space-stats' : 'device-stats')}
                             variant="outline"
                             size="sm"
@@ -756,7 +756,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                             )}
                         </CardTitle>
                         <p className="text-sm text-slate-600 mt-1">
-                            {statsMode === 'space' 
+                            {statsMode === 'space'
                                 ? `Thống kê tổng hợp của không gian ${spaceData?.space_name || `Space ${spaceId}`}`
                                 : `Thống kê chi tiết của thiết bị ${selectedDevice}`
                             }
@@ -765,7 +765,7 @@ const StatisticsChart = ({ spaceId, spaceData, devices = [] }) => {
                             )}
                         </p>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-2">
                         <Select value={viewMode} onValueChange={setViewMode} disabled={!spaceId}>
                             <SelectTrigger className="w-32">

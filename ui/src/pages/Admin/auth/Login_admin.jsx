@@ -41,7 +41,7 @@ export default function LoginAdmin() {
             await fetchEmployeeInfo(accessToken)
             setIsAuthenticated(true);
 
-            navigate("/admin");
+            navigate("/admin/tickets");
             toast.success("Đăng nhập thành công!");
         } catch (error) {
             const errorMessage = error.message || "Đăng nhập thất bại. Vui lòng thử lại.";

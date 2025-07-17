@@ -38,8 +38,8 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
     description: "",
     ticket_type_id: null,
     serial_number: "",
-    assigned_to: "", // Thêm trường assigned_to
-    permission_type: "", // Thêm trường permission_type cho chia sẻ
+    assigned_to: "",
+    permission_type: "",
   });
   const [refreshSharedUsers, setRefreshSharedUsers] = useState(0);
   const [attachments, setAttachments] = useState([]);
@@ -49,8 +49,7 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
   const accessToken = localStorage.getItem("authToken");
-  const userId = localStorage.getItem("user"); // Giả định userId được lưu trong localStorage
-
+  const userId = localStorage.getItem("user");
 
   const fetchDevice = async () => {
     try {
@@ -95,10 +94,16 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
             Number.isInteger(Number(type.ticket_type_id)) &&
             Number(type.ticket_type_id) > 0
         );
-        console.log("Filtered Active Types:", activeTypes);
-        setTicketTypes(activeTypes);
-        if (activeTypes.length === 0) {
-          toast.warning("Hiện không có loại yêu cầu nào khả dụng. Vui lòng liên hệ quản trị viên.", {
+        console.log("Filtered Active Types before exclusion:", activeTypes);
+
+        // Loại bỏ ticket_type_id = 3 và 4
+        const filteredTypes = activeTypes.filter(
+          (type) => type.ticket_type_id !== 3 && type.ticket_type_id !== 4
+        );
+
+        setTicketTypes(filteredTypes);
+        if (filteredTypes.length === 0) {
+          toast.warning("Hiện còn loại yêu cầu nào khả dụng. Vui lòng liên hệ quản trị viên.", {
             duration: 5000,
           });
         }
@@ -184,8 +189,8 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
       setFormData({
         ...formData,
         ticket_type_id: parsedTypeId,
-        assigned_to: "", // Reset assigned_to khi thay đổi ticket type
-        permission_type: "", // Reset permission_type khi thay đổi ticket type
+        assigned_to: "",
+        permission_type: "",
       });
       setErrors({ ...errors, ticket_type_id: null, assigned_to: null });
     } else {
@@ -193,93 +198,9 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
       setErrors({ ...errors, ticket_type_id: "Loại yêu cầu không hợp lệ." });
     }
   };
-
-  const handleShareDevice = async (device, selectedUser, permissionLevel) => {
-    try {
-      console.log(`📤 Share permission request sent for device ${device.serial_number}:`, {
-        user: selectedUser,
-        permission: permissionLevel,
-      });
-
-      const response = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/tickets", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          device_serial: FormData?.serial_number,
-          ticket_type_id: 4, // SHARE_PERMISSION t
-          description: permissionLevel,
-          assigned_to: selectedUser.account_id,
-          permission_type: permissionLevel,
-        }),
-      });
-      console.log("Share Device Response:", response);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to share device: ${response.status}`);
-      }
-
-      setRefreshSharedUsers((prev) => prev + 1);
-      toast.success(`Yêu cầu chia sẻ quyền ${permissionLevel} đã được gửi đến ${selectedUser.name}`, {
-        duration: 5000,
-      });
-
-      return { success: true };
-    } catch (error) {
-      console.error("❌ Failed to handle share device callback:", error);
-      toast.error(error.message || "Không thể chia sẻ thiết bị. Vui lòng thử lại.", {
-        duration: 5000,
-      });
-      throw error;
-    }
-  };
-
-  const handleFranchiseDevice = async (device, selectedUser) => {
-    try {
-      console.log(`📤 Franchise request sent for device ${device.serial_number}:`, {
-        user: selectedUser,
-      });
-
-      const response = await fetch("https://iothomeconnectapiv2-production.up.railway.app/api/tickets", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          device_serial: formData?.serial_number,
-          ticket_type_id: 3, // FRANCHISE
-          description: formData.description,
-          assigned_to: selectedUser?.account_id,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Failed to franchise device: ${response.status}`);
-      }
-
-      toast.success(`Yêu cầu nhượng quyền thiết bị đã được gửi đến ${selectedUser.name}`, {
-        duration: 5000,
-      });
-
-      return { success: true };
-    } catch (error) {
-      console.error("❌ Failed to handle franchise device callback:", error);
-      toast.error(error.message || "Không thể nhượng quyền thiết bị. Vui lòng thử lại.", {
-        duration: 5000,
-      });
-      throw error;
-    }
-  };
-
   const handleFileUpload = (event) => {
     const files = Array.from(event.target.files);
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024;
     const validFiles = files.filter((file) => {
       const isValidType = [
         "image/jpeg",
@@ -504,8 +425,8 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
                               variant="secondary"
                               className={cn(
                                 "text-xs",
-                                device.status === "online"
-                                  ? "bg-emerald-100 text-emerald-700"
+                                device.status === "online" ?
+                                  "bg-emerald-100 text-emerald-700"
                                   : "bg-red-100 text-red-700"
                               )}
                             >
@@ -696,40 +617,6 @@ export default function CreateTicketDialog({ onClose, onTicketCreated }) {
                 </div>
               )}
             </div>
-
-            {(formData.ticket_type_id === 3 || formData.ticket_type_id === 4) && (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold flex items-center">
-                      {formData.ticket_type_id === 3 ? (
-                        <UserMinus className="w-5 h-5 mr-2" />
-                      ) : (
-                        <Share2 className="w-5 h-5 mr-2" />
-                      )}
-                      {formData.ticket_type_id === 3 ? "Chia sẻ thiết bị" : "Nhượng quyền thiết bị"}
-                    </h3>
-                  </div>
-                  <div className="space-y-4">
-                    <p className="text-sm text-slate-600">
-                      {formData.ticket_type_id === 3
-                        ? "Chia sẻ quyền xem hoặc điều khiển thiết bị với người dùng khác."
-                        : "Nhượng quyền thiết bị cho người dùng khác để chuyển giao quyền sở hữu."}
-                    </p>
-                    <DeviceShareModal
-                      device={userDevices}
-                      onShareDevice={formData.ticket_type_id === 3 ? handleFranchiseDevice : handleShareDevice}
-                    />
-                    {formData.ticket_type_id === 4 && formData.serial_number && (
-                      <SharedUsersList
-                        deviceSerial={formData.serial_number}
-                        refreshTrigger={refreshSharedUsers}
-                      />
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
               <h4 className="text-blue-700 font-medium mb-2 flex items-center text-sm sm:text-base">

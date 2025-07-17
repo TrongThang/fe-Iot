@@ -28,7 +28,6 @@ const SidebarAdmin = () => {
   // Function to determine the initial active item based on the current URL
   const getInitialActiveItem = () => {
     const path = window.location.pathname
-    if (path === "/admin") return "dashboard"
     if (path === "/admin/tickets") return "tickets"
     if (path === "/admin/customers") return "customers"
     if (path === "/admin/search-device") return "search-device"
@@ -74,9 +73,8 @@ const SidebarAdmin = () => {
             <Link
               to="/admin"
               onClick={() => handleItemClick("dashboard")}
-              className={`flex items-center gap-3 transition-colors ${
-                activeItem === "dashboard" ? " text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-              } ${!isOpen && "justify-center"}`}
+              className={`flex items-center gap-3 transition-colors ${activeItem === "dashboard" ? " text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                } ${!isOpen && "justify-center"}`}
               title={!isOpen ? "Dashboard" : ""}
             >
               <img src={logo || "/placeholder.svg"} alt="" className="rounded-lg" height={50} width={150} />
@@ -97,39 +95,6 @@ const SidebarAdmin = () => {
       {/* Sidebar Content with Custom Scrollbar */}
       <div className={`py-4 h-[calc(100vh-10px)] overflow-y-auto custom-scrollbar ${isOpen ? "px-3" : "px-2"}`}>
         {/* Overview Section */}
-        <div className="mb-4">
-          {isOpen ? (
-            <button
-              onClick={toggleOverview}
-              className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800/30 transition-colors"
-            >
-              <span className="text-sm font-semibold uppercase tracking-wider">Tổng Quan</span>
-              <ChevronDown
-                className={`w-4 h-4 transition-transform duration-200 ${isOverviewOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-          ) : (
-            <div className="h-px bg-blue-800/50 mx-2 mb-2"></div>
-          )}
-
-          {(isOverviewOpen || !isOpen) && (
-            <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-              <Link
-                to="/admin"
-                onClick={() => handleItemClick("dashboard")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "dashboard"
-                    ? "bg-blue-600 text-white font-medium"
-                    : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
-                title={!isOpen ? "Dashboard" : ""}
-              >
-                <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
-                {isOpen && <span>Dashboard</span>}
-              </Link>
-            </div>
-          )}
-        </div>
 
         {/* Management Section */}
         <div className="mb-4">
@@ -149,12 +114,11 @@ const SidebarAdmin = () => {
 
           {(isManagementOpen || !isOpen) && (
             <div className={`space-y-1 ${isOpen ? "mt-2 pl-2" : ""}`}>
-                <Link
+              <Link
                 to="/admin/tickets"
                 onClick={() => handleItemClick("tickets")}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
-                  activeItem === "tickets" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
-                } ${!isOpen && "justify-center"}`}
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${activeItem === "tickets" ? "bg-blue-600 text-white font-medium" : "text-blue-200 hover:bg-blue-800/40"
+                  } ${!isOpen && "justify-center"}`}
                 title={!isOpen ? "Yêu cầu" : ""}
               >
                 <FileText className="w-4 h-4 flex-shrink-0" />

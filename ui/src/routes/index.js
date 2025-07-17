@@ -25,11 +25,11 @@ import SearchCustomerHouses from "@/pages/Admin/search/searchCustomerHouses";
 import SearchCustomerSpaces from "@/pages/Admin/search/searchCustomerSpaces";
 import SearchCustomerDevices from "@/pages/Admin/search/searchCustomerDevices";
 import SearchCustomerInfo from "@/pages/Admin/search/searchCustomerInfo";
-import DashboardAdmin from "@/pages/Admin/Dashboard/dashboard";
 import CustomerShare from "@/pages/Admin/customer_manager/customerShareList";
 import FCMTestPage from "@/pages/User/FCMTestPage";
 import LoginAdmin from "@/pages/Admin/auth/Login_admin";
 import DeviceLinksPage from "@/pages/User/DeviceLinksPage";
+import AdminWelcome from "@/pages/Admin/Wellcome";
 
 export const router = createBrowserRouter([
     {
@@ -56,11 +56,6 @@ export const router = createBrowserRouter([
         path: '/Admin',
         element: <DefaultLayoutAdmin />,
         children: [
-            {
-                path: '',
-                element: <DashboardAdmin />
-            },
-
             {
                 path: 'tickets',
                 element: <AdminTicketsDashboard />
