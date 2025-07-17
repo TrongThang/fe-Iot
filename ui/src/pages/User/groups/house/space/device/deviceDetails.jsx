@@ -286,18 +286,7 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
 
           <Separator className="bg-gray-200" />
 
-          {mergedDevice.category === "SAFETY" && (
-            <div className="flex justify-end">
-              <Button
-                onClick={() => setIsControlDialogOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
-                disabled={mergedDevice.link_status === "unlinked" || mergedDevice.lock_status === "locked"}
-              >
-                <Settings2 className="h-4 w-4 mr-2" />
-                Điều khiển
-              </Button>
-            </div>
-          )}
+
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
