@@ -77,6 +77,18 @@ messaging.onBackgroundMessage((payload) => {
     });
   }
 
+  // Handle FORCE_LOGOUT
+  if (data?.type === 'FORCE_LOGOUT') {
+    // Gửi message về tất cả client (tab) để xử lý logout
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      clients.forEach(client => {
+        client.postMessage({ type: 'FORCE_LOGOUT' });
+      });
+    });
+    // Có thể show notification nếu muốn
+    return;
+  }
+
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
@@ -88,6 +100,17 @@ self.addEventListener('notificationclick', (event) => {
   const data = notification.data;
   
   event.notification.close();
+
+  if (data?.type === 'FORCE_LOGOUT') {
+    // Xóa token, session, v.v.
+    localStorage.clear();
+    sessionStorage.clear();
+    // Có thể dispatch event nếu app dùng context
+    window.dispatchEvent(new CustomEvent('force-logout'));
+    // Chuyển về trang login
+    window.location.href = '/login';
+    return; // Không xử lý tiếp các loại thông báo khác
+  }
 
   switch (action) {
     case 'emergency_call':

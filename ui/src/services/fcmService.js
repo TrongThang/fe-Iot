@@ -215,13 +215,29 @@ class FCMService {
         if (event.data.type === 'NOTIFICATION_CLICK') {
           this.handleNotificationClick(event.data.data);
         }
+        if (event.data?.type === 'FORCE_LOGOUT') {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.href = '/login';
+        }
       });
     }
   }
 
   handleForegroundMessage(payload) {
     const { notification, data } = payload;
-    
+
+    if (data?.type === 'FORCE_LOGOUT') {
+      // Xóa token, session, v.v.
+      localStorage.clear();
+      sessionStorage.clear();
+      // Có thể dispatch event nếu app dùng context
+      window.dispatchEvent(new CustomEvent('force-logout'));
+      // Chuyển về trang login
+      window.location.href = '/login';
+      return; // Không xử lý tiếp các loại thông báo khác
+    }
+
     // Check if it's an emergency alert
     const isEmergency = data?.severity === 'critical' || 
                         data?.alertType === '1' || 
@@ -300,7 +316,7 @@ class FCMService {
         title = '🔥 CẢNH BÁO CHÁY!';
         text = `Phát hiện cháy tại thiết bị ${data.serialNumber || 'Unknown'}`;
         if (data.temperature) {
-          text += `\n🌡️ Nhiệt độ: ${data.temperature}°C`;
+          text += `\n��️ Nhiệt độ: ${data.temperature}°C`;
         }
         if (data.location) {
           text += `\n📍 Vị trí: ${data.location}`;
