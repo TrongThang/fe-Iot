@@ -407,12 +407,6 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
                         <Activity className="h-3 w-3 mr-1" />
                         {activeDevices}/{totalDevices} hoạt động
                       </Badge>
-                      {unlinkedDevices > 0 && (
-                        <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200 font-medium">
-                          <WifiOff className="h-3 w-3 mr-1" />
-                          {unlinkedDevices} chưa liên kết
-                        </Badge>
-                      )}
                       {lockedDevices > 0 && (
                         <Badge variant="secondary" className="bg-red-100 text-red-700 border-red-200 font-medium">
                           <Lock className="h-3 w-3 mr-1" />
@@ -470,56 +464,6 @@ export default function DeviceList({ spaceId, houseId, spaceName, spaceType, onB
                   >
                     <List className="h-4 w-4" />
                   </Button>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <div className="relative min-w-[160px]">
-                  <select
-                    className="w-full h-11 pl-4 pr-10 text-sm border border-slate-200 rounded-xl appearance-none bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    value={filterOptions.link_status}
-                    onChange={(e) => setFilterOptions({ ...filterOptions, link_status: e.target.value })}
-                  >
-                    <option value="all">Tất cả kết nối</option>
-                    <option value="linked">Đã liên kết</option>
-                    <option value="unlinked">Chưa liên kết</option>
-                  </select>
-                  <ChevronDown
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                    size={16}
-                  />
-                </div>
-
-                <div className="relative min-w-[160px]">
-                  <select
-                    className="w-full h-11 pl-4 pr-10 text-sm border border-slate-200 rounded-xl appearance-none bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    value={filterOptions.power_status}
-                    onChange={(e) => setFilterOptions({ ...filterOptions, power_status: e.target.value })}
-                  >
-                    <option value="all">Tất cả nguồn</option>
-                    <option value="on">Đang bật</option>
-                    <option value="off">Đã tắt</option>
-                  </select>
-                  <ChevronDown
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                    size={16}
-                  />
-                </div>
-
-                <div className="relative min-w-[160px]">
-                  <select
-                    className="w-full h-11 pl-4 pr-10 text-sm border border-slate-200 rounded-xl appearance-none bg-white/80 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    value={filterOptions.lock_status}
-                    onChange={(e) => setFilterOptions({ ...filterOptions, lock_status: e.target.value })}
-                  >
-                    <option value="all">Tất cả khóa</option>
-                    <option value="unlocked">Đã mở khóa</option>
-                    <option value="locked">Đã khóa</option>
-                  </select>
-                  <ChevronDown
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 pointer-events-none"
-                    size={16}
-                  />
                 </div>
               </div>
             </div>
@@ -709,13 +653,13 @@ function DeviceGrid({
                     </Button>
                   )}
 
-                  <Switch
+                  {/* <Switch
                     checked={device.power_status}
                     onCheckedChange={(checked) => onToggle(checked, device.device_id)}
                     onClick={(e) => e.stopPropagation()}
                     disabled={device.link_status === "unlinked" || device.lock_status === "locked"}
                     className="data-[state=checked]:bg-emerald-500"
-                  />
+                  /> */}
                 </div>
               </div>
             </div>
@@ -768,44 +712,23 @@ function DeviceGrid({
                     <Lock className="h-4 w-4" />
                   </Button>
                 )}
-                <Switch
+                {/* <Switch
                   checked={device.power_status}
                   onCheckedChange={(checked) => onToggle(checked, device.device_id)}
                   onClick={(e) => e.stopPropagation()}
                   disabled={device.link_status === "unlinked" || device.lock_status === "locked"}
                   className="data-[state=checked]:bg-emerald-500"
-                />
+                /> */}
               </div>
             </div>
 
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
                 <DeviceLockStatus device={device} size="sm" />
-                {device.link_status === "unlinked" && (
-                  <Badge variant="outline" className="text-xs px-2 py-1 bg-amber-50 text-amber-700 border-amber-200">
-                    Chưa liên kết
-                  </Badge>
-                )}
               </div>
               <span className="text-xs text-slate-500">{device.lastActivity}</span>
             </div>
 
-            <div className="bg-slate-50/80 backdrop-blur-sm rounded-xl p-4 mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-slate-600">Template</span>
-                <span className="text-sm font-medium">{device.template_name}</span>
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-slate-600">Firmware</span>
-                <span className="text-sm font-mono">{device.firmware_version}</span>
-              </div>
-              {device.group_name && (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-slate-600">Nhóm</span>
-                  <span className="text-sm font-medium">{device.group_name}</span>
-                </div>
-              )}
-            </div>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
