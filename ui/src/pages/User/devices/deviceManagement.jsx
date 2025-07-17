@@ -839,11 +839,11 @@ export default function DeviceManagement({
                       </div>
 
                       <div className="flex items-center space-x-3">
-                        <Switch
+                        {/* <Switch
                           checked={selectedDevice.power_status}
                           onCheckedChange={(checked) => handleToggle(checked, selectedDevice.device_id)}
                           className="data-[state=checked]:bg-green-500"
-                        />
+                        /> */}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="rounded-full hover:bg-slate-100">
