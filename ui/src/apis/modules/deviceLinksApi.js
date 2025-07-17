@@ -65,7 +65,8 @@ const deviceLinksApi = {
      */
     updateDeviceLink: async (linkId, updateData) => {
         try {
-            const response = await privateClient.put(`/device-links/${linkId}`, updateData);
+            // Sửa method PUT thành PATCH cho đúng chuẩn BE
+            const response = await privateClient.patch(`/device-links/${linkId}`, updateData);
             return response.data;
         } catch (error) {
             console.error('Error updating device link:', error);
@@ -109,7 +110,8 @@ const deviceLinksApi = {
      */
     getPredefinedOutputValues: async () => {
         try {
-            const response = await privateClient.get('/device-links/output-values');
+            // Sửa endpoint cho đúng chuẩn BE
+            const response = await privateClient.get('/device-links/predefined-output-values');
             return response.data;
         } catch (error) {
             console.error('Error fetching predefined output values:', error);
