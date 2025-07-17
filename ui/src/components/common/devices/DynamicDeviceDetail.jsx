@@ -60,24 +60,24 @@ export default function DynamicDeviceDetail({ device }) {
 
     // Check if device is smoke/fire detector
     const isFireDetector = device?.type === 'smoke' ||
-                        device?.type?.toLowerCase().includes('smoke') || 
-                        device?.type?.toLowerCase().includes('fire') ||
-                        device?.template_type?.toLowerCase().includes('smoke') ||
-                        device?.template_type?.toLowerCase().includes('fire') ||
-                        capabilities?.capabilities?.includes('SMOKE_DETECTION') ||
-                        capabilities?.capabilities?.includes('FIRE_DETECTION');
+        device?.type?.toLowerCase().includes('smoke') ||
+        device?.type?.toLowerCase().includes('fire') ||
+        device?.template_type?.toLowerCase().includes('smoke') ||
+        device?.template_type?.toLowerCase().includes('fire') ||
+        capabilities?.capabilities?.includes('SMOKE_DETECTION') ||
+        capabilities?.capabilities?.includes('FIRE_DETECTION');
 
     // Check if device is gas monitoring sensor - ENHANCED criteria
     const isGasMonitoring = !isFireDetector && ( // Explicitly exclude fire detectors first
-                        device?.type === 'gas-sensor' ||
-                        (device?.type?.toLowerCase().includes('gas') && !device?.type?.toLowerCase().includes('smoke')) ||
-                        (device?.template_type?.toLowerCase().includes('gas') && !device?.type?.toLowerCase().includes('smoke')) ||
-                        (device?.name?.toLowerCase().includes('môi trường') && !device?.name?.toLowerCase().includes('báo')) ||
-                        (device?.device_type_name?.toLowerCase().includes('môi trường')) ||
-                        (device?.device_type_parent_name?.toLowerCase().includes('môi trường')) ||
-                        capabilities?.category?.toLowerCase().includes('environmental') ||
-                        capabilities?.capabilities?.includes('GAS_DETECTION') ||
-                        capabilities?.capabilities?.includes('AIR_QUALITY'));
+        device?.type === 'gas-sensor' ||
+        (device?.type?.toLowerCase().includes('gas') && !device?.type?.toLowerCase().includes('smoke')) ||
+        (device?.template_type?.toLowerCase().includes('gas') && !device?.type?.toLowerCase().includes('smoke')) ||
+        (device?.name?.toLowerCase().includes('môi trường') && !device?.name?.toLowerCase().includes('báo')) ||
+        (device?.device_type_name?.toLowerCase().includes('môi trường')) ||
+        (device?.device_type_parent_name?.toLowerCase().includes('môi trường')) ||
+        capabilities?.category?.toLowerCase().includes('environmental') ||
+        capabilities?.capabilities?.includes('GAS_DETECTION') ||
+        capabilities?.capabilities?.includes('AIR_QUALITY'));
 
     // Debug logs for device type analysis
     console.log('🔍 Device type analysis for:', device?.name, {
@@ -91,11 +91,11 @@ export default function DynamicDeviceDetail({ device }) {
         capabilities: capabilities?.capabilities,
         category: capabilities?.category,
         serialNumber: device?.serial_number,
-        renderDecision: isFireDetector ? 'FireDetectorInterface' : 
-                       isGasMonitoring ? 'GasMonitoringDetail' : 
-                       'StatusDisplay + StatsGrid'
+        renderDecision: isFireDetector ? 'FireDetectorInterface' :
+            isGasMonitoring ? 'GasMonitoringDetail' :
+                'StatusDisplay + StatsGrid'
     });
-    
+
     // Additional gas monitoring debug
     if (device?.name?.toLowerCase().includes('môi trường')) {
         console.log('🌬️ Environmental device detected:', {
@@ -106,7 +106,7 @@ export default function DynamicDeviceDetail({ device }) {
             categoryIsEnvironmental: capabilities?.category?.toLowerCase().includes('environmental'),
             finalIsGasMonitoring: isGasMonitoring
         });
-        
+
         if (!isGasMonitoring) {
             console.warn('⚠️ WARNING: Environmental device not classified as gas monitoring device!');
             console.warn('This device should probably render GasMonitoringDetail instead of StatusDisplay');
@@ -134,11 +134,11 @@ export default function DynamicDeviceDetail({ device }) {
     });
 
     // LED Socket hook để lấy LED modes từ socket - only with valid data
-    const canConnectLEDSocket = device?.serial_number && accountId && 
-                                (deviceTypeHelpers.isLEDDevice(device) ||
-                                capabilities?.capabilities?.includes('LIGHT_CONTROL'));
-    const { 
-        ledCapabilities, 
+    const canConnectLEDSocket = device?.serial_number && accountId &&
+        (deviceTypeHelpers.isLEDDevice(device) ||
+            capabilities?.capabilities?.includes('LIGHT_CONTROL'));
+    const {
+        ledCapabilities,
         isConnected: isLEDConnected,
         applyPreset: socketApplyPreset,
         setEffect: socketSetEffect
@@ -326,23 +326,23 @@ export default function DynamicDeviceDetail({ device }) {
             {/* Specialized Device Interfaces - Render based on device type */}
             {(isFireDetector || isGasMonitoring) ? (
                 // Gas/Smoke Monitoring Interface - Show comprehensive sensor data for both gas and smoke detectors
-                <GasMonitoringDetail 
-                    device={device} 
+                <GasMonitoringDetail
+                    device={device}
                     sensorType={isFireDetector ? 'smoke' : 'gas'}
                 />
             ) : (
                 // Default Status Display for other devices
                 <>
-                    <StatusDisplay 
+                    {/* <StatusDisplay
                         device={device}
                         capabilities={capabilities}
                         currentValues={currentValues}
-                    />
-                    <StatsGrid 
+                    /> */}
+                    {/* <StatsGrid
                         device={device}
                         capabilities={capabilities}
                         currentValues={currentValues}
-                    />
+                    /> */}
                 </>
             )}
 
@@ -413,7 +413,7 @@ export default function DynamicDeviceDetail({ device }) {
             />
 
             {/* Current Value Editor */}
-            <CurrentValueEditor 
+            <CurrentValueEditor
                 device={device}
                 currentValue={device?.current_value}
                 onCurrentValueChange={(updatedCurrentValue) => {
@@ -512,7 +512,7 @@ export default function DynamicDeviceDetail({ device }) {
                     allowOutsideClick={fireAlertLevel !== ALERT_LEVELS.CRITICAL}
                 />
             )}
-            
+
         </div>
     );
 } 

@@ -580,17 +580,6 @@ export default function DeviceManagement({
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
-
-  const getSpaceIcon = (type) => {
-    const iconProps = { className: "h-5 w-5" };
-    switch (type) {
-      case "living_room":
-        return <Home {...iconProps} />;
-      default:
-        return <Home {...iconProps} />;
-    }
-  };
-
   const filteredDevices = devices.filter((device) => {
     const matchesSearch = device.name && device.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesGroup = filterOptions.group === 0 || (device.group !== undefined && device.group === filterOptions.group);

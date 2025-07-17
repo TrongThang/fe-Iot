@@ -6,10 +6,10 @@ import {
   Edit,
   Trash2,
   MoreHorizontal,
-  Lightbulb,
+  Lamp, // Changed from Lightbulb
   Thermometer,
-  Flame,
-  Bell,
+  AlertTriangle, // Changed from Flame
+  Siren, // Changed from Bell
   ArrowUpRight,
   Wifi,
   WifiOff,
@@ -19,10 +19,11 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Cpu,
+  Cpu, // Changed default icon
   Settings2,
   Share2,
   List,
+  DoorOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +40,120 @@ import Swal from "sweetalert2";
 import axiosPublic from "@/apis/clients/public.client";
 import EditDeviceDialog from "./devicePopups/Edit-device-popup";
 
-export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete, houseId, onClose }) {
+// Device type mapping function (adapted from DeviceManagement)
+const getDeviceTypeFromCategory = (deviceTypeId, deviceTypeName, deviceTypeParentName, capabilities) => {
+  const categoryMapping = {
+    // Electronics & Camera
+    1: 'camera',
+    18: 'camera',
+    // LED categories
+    9: 'light',
+    11: 'led-rgb',
+    12: 'led-white',
+    13: 'led-single',
+    // Sensor categories
+    14: 'sensor',
+    15: 'smoke',
+    25: 'sensor',
+    // Door categories
+    19: 'door',
+    20: 'door-roller',
+    21: 'door-sliding',
+    22: 'door-swing',
+    // Hub categories
+    23: 'hub',
+    24: 'hub-door',
+    // Controllers
+    26: 'controller',
+    // Security
+    27: 'security',
+  };
+
+  let baseType = categoryMapping[deviceTypeId] || 'device';
+
+  if (!baseType || baseType === 'device') {
+    const lowerName = (deviceTypeName || deviceTypeParentName || '').toLowerCase();
+    if (lowerName.includes('cảm biến')) {
+      if (lowerName.includes('khói') || lowerName.includes('cháy') || lowerName.includes('báo cháy')) {
+        baseType = 'smoke';
+      } else if (lowerName.includes('nhiệt độ')) {
+        baseType = 'temperature';
+      } else if (
+        lowerName.includes('môi trường') ||
+        lowerName.includes('gas') ||
+        lowerName.includes('khí') ||
+        lowerName.includes('chất lượng không khí') ||
+        lowerName.includes('air quality')
+      ) {
+        baseType = 'gas-sensor';
+      } else {
+        baseType = 'sensor';
+      }
+    } else if (lowerName.includes('camera')) {
+      baseType = 'camera';
+    } else if (lowerName.includes('đèn') || lowerName.includes('led')) {
+      if (lowerName.includes('rgb')) {
+        baseType = 'led-rgb';
+      } else if (lowerName.includes('white') || lowerName.includes('trắng')) {
+        baseType = 'led-white';
+      } else {
+        baseType = 'light';
+      }
+    } else if (lowerName.includes('cửa')) {
+      if (lowerName.includes('cuốn')) {
+        baseType = 'door-roller';
+      } else if (lowerName.includes('trượt')) {
+        baseType = 'door-sliding';
+      } else if (lowerName.includes('cánh')) {
+        baseType = 'door-swing';
+      } else {
+        baseType = 'door';
+      }
+    } else if (lowerName.includes('hub')) {
+      baseType = 'hub';
+    } else if (lowerName.includes('bơm')) {
+      baseType = 'pump';
+    }
+  }
+
+  if (capabilities) {
+    try {
+      const caps = typeof capabilities === 'string' ? JSON.parse(capabilities) : capabilities;
+      if (caps.pump_control || caps.water_flow) {
+        baseType = baseType === 'device' ? 'pump' : baseType + '-pump';
+      }
+      if (caps.rgb_control) {
+        baseType = baseType.includes('led') ? 'led-rgb' : baseType;
+      }
+      if (caps.temperature_sensor) {
+        baseType = baseType === 'sensor' ? 'temperature' : baseType;
+      }
+      if (caps.smoke_detection || caps.fire_detection) {
+        baseType = baseType === 'sensor' ? 'smoke' : baseType;
+      }
+      if (caps.gas_detection || caps.air_quality) {
+        baseType = baseType === 'sensor' ? 'gas-sensor' : baseType;
+      }
+      if (caps.door_control) {
+        baseType = baseType === 'device' ? 'door' : baseType;
+      }
+    } catch (error) {
+      console.warn('Error parsing capabilities:', error);
+    }
+  }
+
+  console.log('✅ DeviceDetail type mapping:', {
+    deviceTypeId,
+    deviceTypeName,
+    deviceTypeParentName,
+    finalType: baseType,
+    hasCapabilities: !!capabilities,
+  });
+
+  return baseType;
+};
+
+export default function DeviceDetail({ device, onDeviceUpdate, onDelete, houseId, onClose }) {
   const [isControlDialogOpen, setIsControlDialogOpen] = useState(false);
   const [isSharingDialogOpen, setIsSharingDialogOpen] = useState(false);
   const [deviceDetail, setDeviceDetail] = useState(null);
@@ -99,22 +213,31 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
     }
   };
 
+  // Determine device type using getDeviceTypeFromCategory
+  const deviceType = device?.type || getDeviceTypeFromCategory(
+    deviceDetail?.device_type_id || device?.device_type_id,
+    deviceDetail?.device_type_name || device?.device_type_name,
+    deviceDetail?.device_type_parent_name || device?.device_type_parent_name,
+    deviceDetail?.capabilities?.merged_capabilities || device?.capabilities || device?.device_base_capabilities
+  );
+
   const mergedDevice = {
     ...device,
     ...deviceDetail,
+    type: deviceType, // Use computed type
+    template_type: deviceType, // Align template_type with type
     firmware_version: deviceDetail?.firmware_version || device?.version || "N/A",
-    template_type:
-      deviceDetail?.capabilities?.runtime?.deviceType === "FIRE_ALARM_SENSOR" ? "smoke" : device?.template_type || "smoke",
     current_value: deviceDetail?.current_value || device?.current_value || {},
     attribute: deviceDetail?.attribute || device?.attribute || {},
     capabilities: deviceDetail?.capabilities?.merged_capabilities || device?.capabilities || {},
-    category: deviceDetail?.capabilities?.category || device?.category || "SAFETY",
+    category: deviceDetail?.capabilities?.category || device?.category || (deviceType.includes('door') ? "DOOR" : "DEVICE"),
   };
 
   const mappedDevice = {
     ...mergedDevice,
     id: mergedDevice?.device_id,
-    type: mergedDevice?.template_type,
+    type: mergedDevice?.type, // Use computed type
+    template_type: mergedDevice?.type, // Ensure consistency
     status: mergedDevice?.link_status === "linked" ? "online" : "offline",
     power: mergedDevice?.power_status,
     brightness: mergedDevice?.current_value?.brightness || 0,
@@ -130,35 +253,49 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
     humidity: mergedDevice?.current_value?.hum || 0,
     battery: mergedDevice?.current_value?.battery || 100,
     buzzer_override: mergedDevice?.current_value?.buzzer_override || false,
+    door_status: mergedDevice?.current_value?.door_status || "closed", // Add door_status
+    lock_status: mergedDevice?.lock_status || mergedDevice?.current_value?.lock_status || "unlocked", // Add lock_status
     supportedFeatures: {
-      color: mergedDevice?.template_type === "light",
-      temperature: mergedDevice?.template_type === "light" || mergedDevice?.template_type === "smoke",
-      effects: mergedDevice?.template_type === "light",
-      gas: mergedDevice?.template_type === "smoke",
-      humidity: mergedDevice?.template_type === "smoke",
+      color: mergedDevice?.type === "light" || mergedDevice?.type === "led-rgb",
+      temperature: mergedDevice?.type === "light" || mergedDevice?.type === "smoke" || mergedDevice?.type === "temperature",
+      effects: mergedDevice?.type === "light" || mergedDevice?.type === "led-rgb",
+      gas: mergedDevice?.type === "smoke" || mergedDevice?.type === "gas-sensor",
+      humidity: mergedDevice?.type === "smoke" || mergedDevice?.type === "gas-sensor",
+      door_control: mergedDevice?.type.includes("door") || mergedDevice?.capabilities?.door_control, // Add door_control
     },
   };
 
-  const getDeviceIcon = (templateType, powerStatus = true) => {
+  const getDeviceIcon = (type, powerStatus = true) => {
     const iconProps = { className: `h-5 w-5 ${powerStatus ? "text-black" : "text-gray-500"}` };
-    switch (templateType) {
+    switch (type) {
       case "light":
-        return <Lightbulb {...iconProps} />;
+      case "led-rgb":
+      case "led-white":
+      case "led-single":
+        return <Lamp {...iconProps} />; // Changed from Lightbulb
       case "smoke":
-        return <Flame {...iconProps} />;
+        return <AlertTriangle {...iconProps} />; // Changed from Flame
       case "temperature":
         return <Thermometer {...iconProps} />;
       case "alarm":
-        return <Bell {...iconProps} />;
+        return <Siren {...iconProps} />; // Changed from Bell
+      case "door":
+      case "door-roller":
+      case "door-sliding":
+      case "door-swing":
+        return <DoorOpen {...iconProps} />;
       default:
-        return <Bell {...iconProps} />;
+        return <Cpu {...iconProps} />; // Changed from Settings
     }
   };
 
-  const getDeviceColor = (templateType, powerStatus = true) => {
+  const getDeviceColor = (type, powerStatus = true) => {
     const opacity = powerStatus ? "" : "/50";
-    switch (templateType) {
+    switch (type) {
       case "light":
+      case "led-rgb":
+      case "led-white":
+      case "led-single":
         return `from-amber-500${opacity} to-orange-500${opacity}`;
       case "smoke":
         return `from-red-500${opacity} to-pink-500${opacity}`;
@@ -166,6 +303,11 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
         return `from-blue-500${opacity} to-cyan-500${opacity}`;
       case "alarm":
         return `from-purple-500${opacity} to-indigo-500${opacity}`;
+      case "door":
+      case "door-roller":
+      case "door-sliding":
+      case "door-swing":
+        return `from-green-500${opacity} to-green-600${opacity}`;
       default:
         return `from-gray-500${opacity} to-gray-500${opacity}`;
     }
@@ -196,6 +338,7 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
         hum: updatedData.humidity,
         battery: updatedData.battery,
         buzzer_override: updatedData.buzzer_override,
+        door_status: updatedData.door_status || mergedDevice.current_value.door_status, // Preserve door_status
       },
       attribute: {
         ...mergedDevice.attribute,
@@ -216,7 +359,7 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
   };
 
   const handleEditClick = () => {
-    console.log("Opening EditDevicePopup for device:", mergedDevice); // Log để kiểm tra
+    console.log("Opening EditDevicePopup for device:", mergedDevice);
     setDeviceToEdit(mergedDevice);
     setIsEditDevicePopupOpen(true);
   };
@@ -240,9 +383,9 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div
-                className={`w-16 h-16 bg-gradient-to-br ${getDeviceColor(mergedDevice.template_type, mergedDevice.power_status)} rounded-2xl flex items-center justify-center shadow-xl`}
+                className={`w-16 h-16 bg-gradient-to-br ${getDeviceColor(mergedDevice.type, mergedDevice.power_status)} rounded-2xl flex items-center justify-center shadow-xl`}
               >
-                {getDeviceIcon(mergedDevice.template_type, mergedDevice.power_status)}
+                {getDeviceIcon(mergedDevice.type, mergedDevice.power_status)}
               </div>
               <div>
                 <h2 className="text-2xl font-bold mb-1 text-gray-900">{mergedDevice.name || "Thiết bị không tên"}</h2>
@@ -258,12 +401,12 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
             </div>
 
             <div className="flex items-center space-x-3">
-              <Switch
+              {/* <Switch
                 checked={mergedDevice.power_status}
                 onCheckedChange={handlePowerToggle}
                 disabled={mergedDevice.link_status === "unlinked" || mergedDevice.lock_status === "locked"}
                 className="data-[state=checked]:bg-emerald-600"
-              />
+              /> */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="text-gray-900 hover:bg-gray-100 rounded-xl">
@@ -285,9 +428,6 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
           </div>
 
           <Separator className="bg-gray-200" />
-
-
-
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="flex items-center justify-between">
@@ -319,8 +459,8 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
           </div>
 
           <DynamicDeviceDetail
-            device={mergedDevice}
-            onDeviceUpdate={onDeviceUpdate}
+            device={mappedDevice}
+            onDeviceUpdate={onDeviceUpdate} // Pass onDeviceUpdate to DynamicDeviceDetail
           />
 
           <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
@@ -340,7 +480,7 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
               <div className="bg-white rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 text-sm">Template</span>
-                  <span className="text-sm">{mergedDevice.device_template_name || "N/A"}</span>
+                  <span className="text-sm">{mergedDevice.device_template_name || mergedDevice.type || "N/A"}</span>
                 </div>
               </div>
 
@@ -433,6 +573,7 @@ export default function DeviceDetail({ device, onDeviceUpdate, onEdit, onDelete,
               onDeviceUpdate={handleControlDialogUpdate}
             />
           )}
+          {/* Removed DoorControlDialog to rely on DynamicDeviceDetail's DoorControl */}
         </DialogContent>
       </Dialog>
 
