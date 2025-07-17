@@ -148,7 +148,7 @@ const DoorControl = ({
                             </div>
                         </div>
 
-                        {/* Lock Control */}
+                        {/* Lock Control
                         <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                             <div className="flex items-center space-x-3">
                                 {isLocked ? (
@@ -172,10 +172,10 @@ const DoorControl = ({
                                 disabled={disabled || isLoading}
                                 className="data-[state=checked]:bg-red-500"
                             />
-                        </div>
+                        </div> */}
 
                         {/* Quick Actions */}
-                        <div className="grid grid-cols-2 gap-3">
+                        {/* <div className="grid grid-cols-2 gap-3">
                             <Button
                                 variant="outline"
                                 onClick={() => handleToggle(!isOpen)}
@@ -207,7 +207,7 @@ const DoorControl = ({
                                     {isLocked ? 'Mở khóa' : 'Khóa cửa'}
                                 </span>
                             </Button>
-                        </div>
+                        </div> */}
 
                         {/* Status Information */}
                         <div className="pt-4 border-t border-slate-200">
@@ -218,12 +218,12 @@ const DoorControl = ({
                                         {isOpen ? 'Mở' : 'Đóng'}
                                     </span>
                                 </div>
-                                <div className="flex justify-between">
+                                {/* <div className="flex justify-between">
                                     <span className="text-slate-600">Khóa:</span>
                                     <span className={`font-medium ${isLocked ? 'text-red-600' : 'text-green-600'}`}>
                                         {isLocked ? 'Có' : 'Không'}
                                     </span>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     </div>

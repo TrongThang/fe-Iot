@@ -108,13 +108,13 @@ export default function DeviceGrid({
                                                 )}
                                             </div>
                                         )}
-                                        <Switch
+                                        {/* <Switch
                                             checked={device.power_status}
                                             disabled={device.ownership === "shared" && device.permission_type === 'VIEW'}
                                             onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
                                             onClick={(e) => e.stopPropagation()}
                                             className="data-[state=checked]:bg-green-500"
-                                        />
+                                        /> */}
                                     </div>
                                 </>
                             ) : (
@@ -141,13 +141,13 @@ export default function DeviceGrid({
                                                     )}
                                                 </div>
                                             )}
-                                            <Switch
+                                            {/* <Switch
                                                 checked={device.power_status}
                                                 disabled={device.ownership === "shared" && device.permission_type === 'VIEW'}
                                                 onCheckedChange={(checked) => onToggle({ target: { checked } }, device.id)}
                                                 onClick={(e) => e.stopPropagation()}
                                                 className="data-[state=checked]:bg-green-500"
-                                            />
+                                            /> */}
                                         </div>
                                     </div>
 
