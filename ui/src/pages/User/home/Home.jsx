@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react"
 import {
-    Activity,
     Thermometer,
     Droplets,
     Lightbulb,
@@ -12,16 +11,9 @@ import {
     Home,
     TrendingDown,
     Power,
-    Eye,
-    Clock,
     MapPin,
-    ChevronDown,
-    ChevronUp,
     Maximize2,
     Minimize2,
-    BarChart3,
-    Settings,
-    Bell,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -40,8 +32,9 @@ export default function IoTDashboard() {
     })
     const [spaceEnvironmentalData, setSpaceEnvironmentalData] = useState([])
     const [devices, setDevices] = useState([])
+    const [countDevice, setCountDevice] = useState(0)
+    const [onlineDevices, setOnlineDevices] = useState(0)
     const [isEnvironmentalExpanded, setIsEnvironmentalExpanded] = useState(true)
-    const [expandedSpaces, setExpandedSpaces] = useState({})
     const [selectedSpaceForStats, setSelectedSpaceForStats] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -60,6 +53,12 @@ export default function IoTDashboard() {
             console.log('Statistic response:', statisticResponse)
             console.log('Devices response:', devicesResponse)
 
+            if (devicesResponse && Array.isArray(devicesResponse)) {
+                console.log('countDevice:', devicesResponse.length)
+            } else {
+                console.log('Devices response data is undefined or not an array:', devicesResponse.data)
+            }
+
             if (cardResponse.success) {
                 setSystemStats(cardResponse.data)
             }
@@ -69,9 +68,14 @@ export default function IoTDashboard() {
                     setSelectedSpaceForStats(statisticResponse.data[0].space_id.toString())
                 }
             }
-            if (devicesResponse.success) {
-                setDevices(devicesResponse.data || [])
-                console.log('Devices set:', devicesResponse.data)
+            console.log('Devices response:', devicesResponse ? true : false)
+            if (devicesResponse) {
+                setDevices(devicesResponse || [])
+                setCountDevice(devicesResponse.length)
+                setOnlineDevices(devicesResponse.filter(device => device.link_status === 'online').length)
+            } else {
+                setDevices([])
+                setCountDevice(0)
             }
         } catch (error) {
             console.error('Error fetching data:', error)
@@ -89,6 +93,13 @@ export default function IoTDashboard() {
         return () => clearInterval(timeInterval)
     }, [])
 
+    /*************  ✨ Windsurf Command ⭐  *************/
+    /**
+     * Gets the color corresponding to a given status
+     * @param {string} status - The status to get the color for
+     * @returns {string} The color string in the format "text-<color>-600 bg-<color>-50 border-<color>-200"
+     */
+    /*******  b8183d87-67f4-4cf5-9b58-8c1cf767a3da  *******/
     const getStatusColor = (status) => {
         switch (status) {
             case "warning":
@@ -131,13 +142,6 @@ export default function IoTDashboard() {
         return "normal"
     }
 
-    const toggleSpaceExpansion = (spaceId) => {
-        setExpandedSpaces(prev => ({
-            ...prev,
-            [spaceId]: !prev[spaceId]
-        }))
-    }
-
     const formatTime = (date) => {
         return date.toLocaleTimeString('vi-VN', {
             hour: '2-digit',
@@ -175,7 +179,7 @@ export default function IoTDashboard() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-blue-100 text-sm font-medium">Tổng thiết bị</p>
-                                    <p className="text-3xl font-bold">{systemStats.totalDevices || 0}</p>
+                                    <p className="text-3xl font-bold">{countDevice || 0}</p>
                                 </div>
                                 <div className="bg-blue-400/30 rounded-xl p-3">
                                     <Power className="h-6 w-6" />
@@ -189,10 +193,10 @@ export default function IoTDashboard() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-emerald-100 text-sm font-medium">Thiết bị online</p>
-                                    <p className="text-3xl font-bold">{systemStats.onlineDevices || 0}</p>
+                                    <p className="text-3xl font-bold">{onlineDevices || 0}</p>
                                     <p className="text-emerald-100 text-xs">
-                                        {systemStats.totalDevices > 0
-                                            ? Math.round((systemStats.onlineDevices / systemStats.totalDevices) * 100)
+                                        {countDevice > 0
+                                            ? Math.round((onlineDevices / countDevice) * 100)
                                             : 0}% hoạt động
                                     </p>
                                 </div>
