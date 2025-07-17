@@ -6,8 +6,11 @@ const deviceLinksApi = {
      * @param {Object} linkData - Dữ liệu liên kết
      * @param {string} linkData.input_device_id - ID thiết bị input
      * @param {string} linkData.output_device_id - ID thiết bị output  
+     * @param {string} linkData.component_id - ID component
      * @param {string} linkData.value_active - Điều kiện kích hoạt
      * @param {string} linkData.logic_operator - Toán tử logic (AND/OR)
+     * @param {string} linkData.output_action - Hành động output (turn_on/turn_off)
+     * @param {string} linkData.output_value - Giá trị output (độ sáng, chế độ cảnh báo)
      * @returns {Promise}
      */
     createDeviceLink: async (linkData) => {
@@ -55,6 +58,9 @@ const deviceLinksApi = {
      * @param {Object} updateData - Dữ liệu cập nhật
      * @param {string} updateData.value_active - Điều kiện kích hoạt mới
      * @param {string} updateData.logic_operator - Toán tử logic mới
+     * @param {string} updateData.component_id - ID component mới
+     * @param {string} updateData.output_action - Hành động output mới
+     * @param {string} updateData.output_value - Giá trị output mới
      * @returns {Promise}
      */
     updateDeviceLink: async (linkId, updateData) => {
@@ -93,6 +99,20 @@ const deviceLinksApi = {
             return response.data;
         } catch (error) {
             console.error('Error testing device link:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Lấy predefined output values
+     * @returns {Promise}
+     */
+    getPredefinedOutputValues: async () => {
+        try {
+            const response = await privateClient.get('/device-links/output-values');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching predefined output values:', error);
             throw error;
         }
     }

@@ -32,6 +32,9 @@ const DeviceLinksManagerV2 = () => {
     const [hasData, setHasData] = useState(false);
     const [componentValues, setComponentValues] = useState({});
     const [showComponentPanel, setShowComponentPanel] = useState(false);
+    const [outputValue, setOutputValue] = useState(''); // Thêm state cho output value
+    const [predefinedOutputValues, setPredefinedOutputValues] = useState({}); // Thêm state cho predefined values
+    const [outputOptions, setOutputOptions] = useState([]); // Thêm state cho checkbox options
     
     // Add state for components
     const [inputComponents, setInputComponents] = useState([]);
@@ -39,8 +42,10 @@ const DeviceLinksManagerV2 = () => {
 
     // Fetch data on component mount
     useEffect(() => {
+        console.log('🚀 Component mounted, fetching data...');
         fetchDeviceLinks();
         fetchDevices();
+        fetchPredefinedOutputValues(); // Thêm fetch predefined values
     }, []);
 
     // Components are now fetched together with devices, no separate fetch needed
@@ -150,7 +155,8 @@ const DeviceLinksManagerV2 = () => {
                     component_id: componentId,
                     value_active: value,
                     logic_operator: 'AND',
-                    output_action: outputAction
+                    output_action: outputAction,
+                    output_value: generateOutputValue() // Sử dụng function tạo output value
                 };
 
                 await deviceLinksApi.createDeviceLink(linkData);
@@ -165,6 +171,8 @@ const DeviceLinksManagerV2 = () => {
             setComponentValues({});
             setInputComponents([]);
             setOutputAction('turn_on');
+            setOutputValue(''); // Reset output value
+            setOutputOptions([]); // Reset checkbox options
             setShowCreateModal(false);
             setShowComponentPanel(false);
         } catch (error) {
@@ -185,12 +193,104 @@ const DeviceLinksManagerV2 = () => {
         }
     };
 
+    const fetchPredefinedOutputValues = async () => {
+        try {
+            console.log('🔍 Calling fetchPredefinedOutputValues...');
+            const response = await deviceLinksApi.getPredefinedOutputValues();
+            console.log('✅ API Response:', response);
+            console.log('📊 Response data:', response.data);
+            setPredefinedOutputValues(response.data || {});
+            console.log('💾 State set to:', response.data || {});
+        } catch (error) {
+            console.error('❌ Error fetching predefined output values:', error);
+            console.error('Error details:', error.response?.data || error.message);
+            setPredefinedOutputValues({});
+        }
+    };
+
+    // Function để xử lý checkbox selection
+    const handleOutputOptionChange = (option, checked) => {
+        setOutputOptions(prev => {
+            if (checked) {
+                return [...prev, option];
+            } else {
+                return prev.filter(item => item !== option);
+            }
+        });
+    };
+
+    // Function để tạo output value từ options và custom values
+    const generateOutputValue = () => {
+        const result = [];
+        
+        // Thêm các checkbox options
+        if (outputOptions.includes('alert')) {
+            result.push('alert');
+        }
+        
+        if (outputOptions.includes('brightness_control')) {
+            // Nếu có giá trị custom brightness, dùng nó
+            if (outputValue && outputValue.trim() !== '') {
+                result.push(`brightness:${outputValue}`);
+            } else {
+                result.push('brightness_control');
+            }
+        }
+        
+        // Nếu có output value mà không có checkbox nào, chỉ dùng output value
+        if (result.length === 0 && outputValue && outputValue.trim() !== '') {
+            result.push(outputValue);
+        }
+        
+        return JSON.stringify(result);
+    };
+
+    // Function để parse output_value array và format hiển thị
+    const parseOutputValue = (outputValueString) => {
+        if (!outputValueString || outputValueString.trim() === '') {
+            return null;
+        }
+        
+        try {
+            // Thử parse JSON array
+            const outputArray = JSON.parse(outputValueString);
+            if (Array.isArray(outputArray) && outputArray.length > 0) {
+                return outputArray.map(item => {
+                    if (item === 'alert') {
+                        return '🚨 Cảnh báo';
+                    } else if (item === 'brightness_control') {
+                        return '💡 Điều khiển độ sáng';
+                    } else if (item.startsWith('brightness:')) {
+                        const value = item.split(':')[1];
+                        return `💡 Độ sáng: ${value} lux`;
+                    } else {
+                        return `⚙️ ${item}`;
+                    }
+                }).join(', ');
+            }
+        } catch (error) {
+            // Nếu không phải JSON, hiển thị như string thường
+            console.log('Output value không phải JSON array:', outputValueString);
+        }
+        
+        // Fallback: hiển thị string thường với format cũ
+        if (outputValueString.includes('alert')) {
+            return `🚨 ${outputValueString.replace('_', ' ')}`;
+        } else if (!isNaN(outputValueString)) {
+            return `💡 ${outputValueString}%`;
+        } else {
+            return `⚙️ ${outputValueString}`;
+        }
+    };
+
     const openCreateModal = async () => {
         setSelectedInputDevice(null);
         setSelectedOutputDevice(null);
         setComponentValues({});
         setInputComponents([]);
         setOutputAction('turn_on');
+        setOutputValue(''); // Reset output value
+        setOutputOptions([]); // Reset checkbox options
         setShowComponentPanel(false);
         
         // Fetch devices with their components in one call
@@ -324,6 +424,11 @@ const DeviceLinksManagerV2 = () => {
                                             </h4>
                                             <p className="text-sm text-red-600">
                                                 {link.output_action === 'turn_on' ? 'Bật thiết bị' : 'Tắt thiết bị'}
+                                                {link.output_value && link.output_value.trim() !== '' && (
+                                                    <span className="block text-xs">
+                                                        {parseOutputValue(link.output_value)}
+                                                    </span>
+                                                )}
                                             </p>
                                         </div>
                                     </div>
@@ -556,12 +661,18 @@ const DeviceLinksManagerV2 = () => {
                                                 Chọn hành động khi kích hoạt
                                             </h3>
                                         </div>
-                                        <div className="p-4">
+                                        <div className="p-4 space-y-4">
                                             <div className="text-sm text-gray-600 mb-3">
                                                 <span className="font-medium">{selectedInputDevice.name}</span> 
                                                 <span className="mx-2">→</span> 
                                                 <span className="font-medium">{selectedOutputDevice.name}</span>
                                             </div>
+                                            
+                                                                                        {/* Action Type Selection */}
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                    Hành động:
+                                                </label>
                                             <div className="flex space-x-6">
                                                 <label className="flex items-center">
                                                     <input
@@ -586,6 +697,89 @@ const DeviceLinksManagerV2 = () => {
                                                     <span className="text-sm">⏸️ Tắt thiết bị</span>
                                                 </label>
                                             </div>
+                                                
+                                                {/* Output Options - Only show when turn_on is selected */}
+                                                {outputAction === 'turn_on' && (
+                                                    <div className="mt-4 p-3 border rounded-lg bg-green-50">
+                                                        <label className="block text-sm font-medium text-green-700 mb-2">
+                                                            ⚙️ Tùy chọn khi bật thiết bị:
+                                                        </label>
+                                                        <div className="space-y-2">
+                                                            <label className="flex items-center">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={outputOptions.includes('alert')}
+                                                                    onChange={(e) => handleOutputOptionChange('alert', e.target.checked)}
+                                                                    className="mr-2"
+                                                                />
+                                                                <span className="text-sm">🚨 Bật chế độ cảnh báo</span>
+                                                            </label>
+                                                            <label className="flex items-center">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={outputOptions.includes('brightness_control')}
+                                                                    onChange={(e) => handleOutputOptionChange('brightness_control', e.target.checked)}
+                                                                    className="mr-2"
+                                                                />
+                                                                <span className="text-sm">💡 Tuỳ chỉnh độ sáng</span>
+                                                            </label>
+                                                        </div>
+                                                        
+                                                        {/* Show current selection */}
+                                                        {outputOptions.length > 0 && (
+                                                            <div className="mt-2 p-2 bg-green-100 rounded text-xs text-green-700">
+                                                                <strong>Đã chọn:</strong> {outputOptions.map(opt => 
+                                                                    opt === 'alert' ? '🚨 Cảnh báo' : '💡 Độ sáng'
+                                                                ).join(', ')}
+                                                                <br />
+                                                                <strong>Output value:</strong> {generateOutputValue()}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Output Value Configuration - Only show for turn_on action and when options selected */}
+                                            {outputAction === 'turn_on' && selectedOutputDevice && outputOptions.includes('brightness_control') && (
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        💡 Cấu hình độ sáng:
+                                                    </label>
+                                                    
+                                                    <div className="space-y-3">
+                                                        {/* Dynamic output components based on selected output device */}
+                                                        {deviceComponents[selectedOutputDevice.device_id] && 
+                                                         deviceComponents[selectedOutputDevice.device_id]
+                                                            .filter(comp => (comp.flow_type === 'output' || comp.flow_type === 'both') && comp.datatype === 'NUMBER')
+                                                            .map((component) => (
+                                                                <div key={component.component_id} className="border rounded-lg p-3 bg-blue-50">
+                                                                    <h4 className="text-sm font-medium text-blue-700 mb-2">
+                                                                        🎛️ {component.name_display || component.name}
+                                                                        {component.unit && ` (${component.unit})`}
+                                                                    </h4>
+                                                                    
+                                                                    {/* For NUMBER datatype - show input field */}
+                                                                    <div>
+                                                                        <input
+                                                                            type="number"
+                                                                            value={outputValue}
+                                                                            onChange={(e) => setOutputValue(e.target.value)}
+                                                                            placeholder={`Nhập giá trị (${component.min || 0} - ${component.max || 100})`}
+                                                                            min={component.min || 0}
+                                                                            max={component.max || 100}
+                                                                            className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                                                        />
+                                                                        <div className="text-xs text-blue-600 mt-1">
+                                                                            Phạm vi: {component.min || 0} - {component.max || 100} {component.unit || ''}
+                                                                            {component.default_value && ` | Mặc định: ${component.default_value}`}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))
+                                                        }
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -641,11 +835,49 @@ const DeviceLinksManagerV2 = () => {
                     </div>
 
                     {/* Create Button - Show only when ready */}
-                    {selectedInputDevice && selectedOutputDevice && Object.keys(componentValues).filter(key => componentValues[key]?.trim()).length > 0 && (
+                    {(() => {
+                        const componentValuesCount = Object.keys(componentValues).filter(key => componentValues[key]?.trim()).length;
+                        const hasComponentValues = componentValuesCount > 0;
+                        
+                        // Kiểm tra cấu hình output có hợp lệ không
+                        let hasValidOutputConfig = false;
+                        if (outputAction === 'turn_off') {
+                            hasValidOutputConfig = true; // Tắt thiết bị luôn hợp lệ
+                        } else if (outputAction === 'turn_on') {
+                            if (outputOptions.length === 0) {
+                                hasValidOutputConfig = true; // Chỉ bật thiết bị, không cần config thêm
+                            } else {
+                                // Có chọn options
+                                const hasAlert = outputOptions.includes('alert');
+                                const hasBrightness = outputOptions.includes('brightness_control');
+                                
+                                if (hasAlert && !hasBrightness) {
+                                    hasValidOutputConfig = true; // Chỉ cảnh báo
+                                } else if (!hasAlert && hasBrightness && outputValue?.trim()) {
+                                    hasValidOutputConfig = true; // Chỉ độ sáng có giá trị
+                                } else if (hasAlert && hasBrightness && outputValue?.trim()) {
+                                    hasValidOutputConfig = true; // Cả hai có giá trị độ sáng
+                                }
+                            }
+                        }
+                        
+                        const isReady = selectedInputDevice && selectedOutputDevice && hasComponentValues && hasValidOutputConfig;
+                        
+                        return isReady && (
                         <div className="border-t p-4 bg-gray-50">
                             <div className="flex justify-between items-center">
                                 <div className="text-sm text-gray-600">
-                                    ✅ Sẵn sàng tạo {Object.keys(componentValues).filter(key => componentValues[key]?.trim()).length} automation rule(s)
+                                        ✅ Sẵn sàng tạo {componentValuesCount} automation rule(s)
+                                        {outputOptions.length > 0 && (
+                                            <span className="block text-xs text-blue-600 mt-1">
+                                                Với tùy chọn: {outputOptions.map(opt => 
+                                                    opt === 'alert' ? '🚨 Cảnh báo' : 
+                                                    (opt === 'brightness_control' ? 
+                                                        (outputValue?.trim() ? `💡 Độ sáng: ${outputValue} lux` : '💡 Độ sáng (cần nhập giá trị)') 
+                                                        : opt)
+                                                ).join(', ')}
+                                            </span>
+                                        )}
                                 </div>
                                 <button
                                     onClick={handleCreateLink}
@@ -655,7 +887,8 @@ const DeviceLinksManagerV2 = () => {
                                 </button>
                             </div>
                         </div>
-                    )}
+                        );
+                    })()}
                     </div>
                 </div>
             </div>
